@@ -1,0 +1,173 @@
+---
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 📘 MongoDB Security Configuration
+
+This guide covers essential security configurations for MongoDB deployments. Learn how to secure your databases using best practices for both Atlas and On-premises installations.
+
+## Network security
+
+<Tabs>
+<TabItem value="atlas" label="MongoDB Atlas">
+
+### IP access list
+
+Control which IP addresses can connect to your cluster:
+
+```javascript
+// Using Atlas CLI
+atlas accessLists create --currentIp
+atlas accessLists create --ip "203.0.113.0/24"
+```
+**Importance:** Restricting access to known IP addresses prevents unauthorized connections and reduces the risk of external attacks.
+
+### Private endpoints
+
+Set up AWS PrivateLink:
+```javascript
+// Create private endpoint
+atlas privateEndpoints aws create --region us-east-1 --projectId 5e2211c17a3e5a48f5497de3 --output json
+```
+**Importance:** Private endpoints ensure that traffic between your application and MongoDB Atlas remains within your private network, enhancing security and reducing exposure to the public internet.
+
+### Network peering
+
+```javascript
+// Set up VPC peering
+atlas networking peering create aws --accountId 854333054055 --atlasCidrBlock 192.168.0.0/24 --region us-east-1 --routeTableCidrBlock 10.0.0.0/24 --vpcId vpc-078ac381aa90e1e63
+```
+**Importance:** Network peering allows you to connect your VPC to MongoDB Atlas's VPC, providing a secure and private connection without traversing the public internet.
+
+</TabItem>
+<TabItem value="onprem" label="On-Premises">
+
+### Firewall configuration
+
+Configure iptables rules:
+```bash
+# Allow MongoDB port
+iptables -A INPUT -p tcp --dport 27017 -j ACCEPT
+
+# Allow specific IP ranges
+iptables -A INPUT -s 203.0.113.0/24 -p tcp --dport 27017 -j ACCEPT
+```
+
+### Network binding
+
+Configure mongod.conf:
+```yaml
+net:
+  bindIp: 127.0.0.1,192.168.1.7
+  port: 27017
+```
+
+### VPN access
+
+Set up OpenVPN server:
+```bash
+# Install OpenVPN
+apt-get install openvpn
+
+# Configure client certificates
+./easyrsa build-client-full mongodb-client
+```
+
+</TabItem>
+</Tabs>
+
+## Encryption configuration
+
+<Tabs>
+<TabItem value="atlas" label="MongoDB Atlas">
+
+### Encryption at rest
+
+Atlas automatically encrypts all data using:
+- AWS: AWS KMS.
+- Azure: Azure Key Vault.
+- GCP: Cloud KMS.
+
+**Importance:** Encryption at rest protects your data from unauthorized access if the storage media is compromised.
+
+</TabItem>
+<TabItem value="onprem" label="On-Premises">
+
+### Encryption at rest
+
+Configure mongod.conf:
+```yaml
+security:
+  enableEncryption: true
+  encryptionKeyFile: /path/to/key.txt
+```
+
+Generate encryption key:
+```bash
+openssl rand -base64 32 > /path/to/key.txt
+chmod 600 /path/to/key.txt
+```
+**Importance:** Encryption at rest protects your data from unauthorized access if the storage media is compromised.
+
+### Transport encryption (TLS/SSL)
+
+```yaml
+net:
+  tls:
+    mode: requireTLS
+    certificateKeyFile: /path/to/mongodb.pem
+    CAFile: /path/to/ca.pem
+```
+**Importance:** Transport encryption ensures that data transmitted between clients and the database server is encrypted, preventing eavesdropping and tampering.
+
+</TabItem>
+</Tabs>
+
+## Best practices
+
+<Tabs>
+<TabItem value="atlas" label="MongoDB Atlas">
+
+1. **Network security**
+   - Use private endpoints where possible
+   - Regularly review IP access lists
+   - Implement VPC peering
+
+2. **Access management**
+   - Follow principle of least privilege
+   - Regular credential rotation
+   - Use strong authentication methods
+
+3. **Monitoring and alerts**
+   - Set up alerts for security events
+   - Monitor access patterns
+   - Review audit logs regularly
+
+</TabItem>
+<TabItem value="onprem" label="On-Premises">
+
+1. **System security**
+   - Regular system updates
+   - Security patch management
+   - Resource limits configuration
+
+2. **Network security**
+   - Configure firewalls
+   - Set up VPN access
+   - Implement network segmentation
+
+3. **Monitoring**
+   - Regular security audits
+   - Log monitoring and analysis
+   - Performance monitoring
+
+</TabItem>
+</Tabs>
+
+## Next steps
+
+Let's start the [network access control challenge](./challenge/network).
+

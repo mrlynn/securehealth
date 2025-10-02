@@ -1,0 +1,22 @@
+parameters:
+    mongodb_url: '%env(resolve:MONGODB_URI)%'
+    mongodb_db: '%env(resolve:MONGODB_DB)%'
+    mongodb_key_vault_namespace: '%env(resolve:MONGODB_KEY_VAULT_NAMESPACE)%'
+    mongodb_encryption_key_path: '%env(resolve:MONGODB_ENCRYPTION_KEY_PATH)%'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            
+    # Alias MongoDB\Client to the doctrine_mongodb.odm.default_connection service
+    MongoDB\Client:
+        alias: doctrine_mongodb.odm.default_connection
+        public: false

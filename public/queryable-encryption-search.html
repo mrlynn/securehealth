@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB Queryable Encryption Search Demo</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #f8f9fa; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .navbar-brand i {
+            margin-right: 0.5rem;
+        }
+        
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.125);
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-primary {
+            background-color: #2c3e50;
+            border-color: #2c3e50;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1a252f;
+            border-color: #1a252f;
+        }
+        
+        .text-primary {
+            color: #2c3e50 !important;
+        }
+        
+        .bg-primary {
+            background-color: #2c3e50 !important;
+        }
+        
+        .encryption-badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        
+        .encryption-deterministic { background-color: #0dcaf0; color: #055160; }
+        .encryption-range { background-color: #20c997; color: #0f5132; }
+        .encryption-standard { background-color: #6f42c1; color: white; }
+        
+        .search-type-badge {
+            position: absolute;
+            top: -8px;
+            right: 15px;
+            background-color: #dc3545;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .encryption-info {
+            background-color: #e9ecef;
+            border-left: 4px solid #2c3e50;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        
+        .patient-card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border-left: 4px solid #2c3e50;
+            transition: all 0.3s ease;
+        }
+        
+        .patient-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .encryption-indicator {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .search-stats {
+            background-color: #e9ecef;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        
+        .range-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .range-input-group input {
+            flex: 1;
+        }
+        
+        .encryption-type-info {
+            background-color: #f8f9fa;
+            border-left: 4px solid #2c3e50;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        
+        .demo-notice {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        
+        .search-tabs {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        .nav-pills .nav-link {
+            border-radius: 0.5rem;
+            margin: 0 2px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-pills .nav-link.active {
+            background-color: #2c3e50;
+        }
+        
+        .nav-pills .nav-link:hover:not(.active) {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+        }
+        
+        .footer {
+            background-color: #f8f9fa;
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i>
+                SecureHealth
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/patients.html">
+                            <i class="fas fa-users"></i> Patients
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin.html">
+                            <i class="fas fa-cog"></i> Admin
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/docs.html">
+                            <i class="fas fa-book"></i> Docs
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <!-- Header -->
+                <div class="card text-center mb-4">
+                    <div class="card-body">
+                        <h1 class="display-4 font-weight-bold text-primary mb-3">
+                            <i class="fas fa-shield-alt mr-3"></i>
+                            MongoDB Queryable Encryption Search Demo
+                        </h1>
+                        <p class="lead text-muted">
+                            Demonstrate encrypted search capabilities with equality, range, and complex queries
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Demo Notice -->
+                <div class="demo-notice">
+                    <h4><i class="fas fa-info-circle mr-2"></i>Demo Notice</h4>
+                    <p class="mb-0">
+                        This interface demonstrates MongoDB Queryable Encryption capabilities. All sensitive data is encrypted 
+                        at rest, in transit, and in use. Search operations work on encrypted data without server-side decryption.
+                    </p>
+                </div>
+
+                <!-- Encryption Info -->
+                <div class="encryption-info">
+                    <h4><i class="fas fa-lock mr-2"></i>Encryption Types Demonstrated</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Deterministic Encryption:</strong><br>
+                            <small>Enables exact match searches on encrypted fields</small>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Range Encryption:</strong><br>
+                            <small>Enables range queries on encrypted numeric/date fields</small>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Standard Encryption:</strong><br>
+                            <small>Maximum security for highly sensitive data</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Tabs -->
+                <div class="search-tabs">
+                    <ul class="nav nav-pills justify-content-center" id="searchTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="equality-tab" data-toggle="pill" data-target="#equality" type="button" role="tab">
+                                <i class="fas fa-equals mr-2"></i>Equality Search
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="range-tab" data-toggle="pill" data-target="#range" type="button" role="tab">
+                                <i class="fas fa-sort-numeric-up mr-2"></i>Range Search
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="complex-tab" data-toggle="pill" data-target="#complex" type="button" role="tab">
+                                <i class="fas fa-search-plus mr-2"></i>Complex Search
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="searchTabContent">
+                    <!-- Equality Search Tab -->
+                    <div class="tab-pane fade show active" id="equality" role="tabpanel">
+                        <div class="search-card position-relative">
+                            <div class="search-type-badge">Deterministic Encryption</div>
+                            <h3 class="mb-4">
+                                <i class="fas fa-equals text-primary me-2"></i>
+                                Equality Search
+                            </h3>
+                            <div class="encryption-type-info">
+                                <strong>How it works:</strong> Uses deterministic encryption to enable exact match searches on encrypted fields. 
+                                The same input always produces the same encrypted output, allowing for equality comparisons.
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="equalityLastName" class="form-label fw-bold">Last Name (Exact Match)</label>
+                                    <input type="text" class="form-control search-input" id="equalityLastName" 
+                                           placeholder="Enter exact last name">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="equalityFirstName" class="form-label fw-bold">First Name (Exact Match)</label>
+                                    <input type="text" class="form-control search-input" id="equalityFirstName" 
+                                           placeholder="Enter exact first name">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="equalityEmail" class="form-label fw-bold">Email (Exact Match)</label>
+                                    <input type="email" class="form-control search-input" id="equalityEmail" 
+                                           placeholder="Enter exact email address">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="equalityPhone" class="form-label fw-bold">Phone Number (Exact Match)</label>
+                                    <input type="tel" class="form-control search-input" id="equalityPhone" 
+                                           placeholder="Enter exact phone number (XXX-XXX-XXXX)">
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button class="btn btn-primary btn-search" onclick="performEqualitySearch()">
+                                    <i class="fas fa-search me-2"></i>Search Encrypted Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Range Search Tab -->
+                    <div class="tab-pane fade" id="range" role="tabpanel">
+                        <div class="search-card position-relative">
+                            <div class="search-type-badge">Range Encryption</div>
+                            <h3 class="mb-4">
+                                <i class="fas fa-sort-numeric-up text-success me-2"></i>
+                                Range Search
+                            </h3>
+                            <div class="encryption-type-info">
+                                <strong>How it works:</strong> Uses range encryption to enable comparison operations on encrypted fields. 
+                                Supports greater than, less than, and between operations on encrypted data.
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-12 mb-4">
+                                    <label class="form-label fw-bold">Birth Date Range</label>
+                                    <div class="range-input-group">
+                                        <input type="date" class="form-control search-input" id="rangeBirthDateFrom" 
+                                               placeholder="From date">
+                                        <span class="text-muted">to</span>
+                                        <input type="date" class="form-control search-input" id="rangeBirthDateTo" 
+                                               placeholder="To date">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="rangeMinAge" class="form-label fw-bold">Minimum Age</label>
+                                    <input type="number" class="form-control search-input" id="rangeMinAge" 
+                                           placeholder="Minimum age" min="0" max="120">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="rangeMaxAge" class="form-label fw-bold">Maximum Age</label>
+                                    <input type="number" class="form-control search-input" id="rangeMaxAge" 
+                                           placeholder="Maximum age" min="0" max="120">
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button class="btn btn-success btn-search" onclick="performRangeSearch()">
+                                    <i class="fas fa-search me-2"></i>Search Encrypted Ranges
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Complex Search Tab -->
+                    <div class="tab-pane fade" id="complex" role="tabpanel">
+                        <div class="search-card position-relative">
+                            <div class="search-type-badge">Multi-Field Search</div>
+                            <h3 class="mb-4">
+                                <i class="fas fa-search-plus text-warning me-2"></i>
+                                Complex Multi-Field Search
+                            </h3>
+                            <div class="encryption-type-info">
+                                <strong>How it works:</strong> Combines multiple encrypted field searches to demonstrate complex query capabilities. 
+                                Shows how different encryption types work together in a single query.
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="complexLastName" class="form-label fw-bold">Last Name</label>
+                                    <input type="text" class="form-control search-input" id="complexLastName" 
+                                           placeholder="Last name">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="complexEmail" class="form-label fw-bold">Email Domain</label>
+                                    <input type="text" class="form-control search-input" id="complexEmail" 
+                                           placeholder="Email domain (e.g., gmail.com)">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="complexMinAge" class="form-label fw-bold">Minimum Age</label>
+                                    <input type="number" class="form-control search-input" id="complexMinAge" 
+                                           placeholder="Min age" min="0" max="120">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="complexPhonePrefix" class="form-label fw-bold">Phone Area Code</label>
+                                    <input type="text" class="form-control search-input" id="complexPhonePrefix" 
+                                           placeholder="Area code (e.g., 555)">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="complexBirthYear" class="form-label fw-bold">Birth Year</label>
+                                    <input type="number" class="form-control search-input" id="complexBirthYear" 
+                                           placeholder="Birth year" min="1900" max="2024">
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button class="btn btn-warning btn-search" onclick="performComplexSearch()">
+                                    <i class="fas fa-search me-2"></i>Complex Encrypted Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Statistics -->
+                <div class="search-stats" id="searchStats" style="display: none;">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h3 id="totalResults">0</h3>
+                            <small>Total Results</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 id="searchTime">0ms</h3>
+                            <small>Search Time</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 id="encryptedFields">0</h3>
+                            <small>Encrypted Fields</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 id="queryType">-</h3>
+                            <small>Query Type</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Container -->
+                <div class="results-container" id="resultsContainer">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-search fa-3x mb-3"></i>
+                        <h4>Ready to Search Encrypted Data</h4>
+                        <p>Select a search type above and enter your criteria to see MongoDB Queryable Encryption in action.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-5">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2024 SecureHealth - HIPAA-Compliant Healthcare Application</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentSearchType = 'equality';
+        let searchStartTime = 0;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication first
+            const isAuthenticated = await checkAuthentication();
+            if (!isAuthenticated) {
+                return;
+            }
+
+            // Set up tab change handlers
+            const tabs = document.querySelectorAll('#searchTabs button[data-toggle="pill"]');
+            tabs.forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(event) {
+                    const target = event.target.getAttribute('data-target');
+                    currentSearchType = target.replace('#', '');
+                    clearResults();
+                });
+            });
+
+            // Set up enter key handlers for search inputs
+            document.querySelectorAll('.search-input').forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performCurrentSearch();
+                    }
+                });
+            });
+
+            // Load search capabilities
+            await loadSearchCapabilities();
+        });
+
+        // Load search capabilities from API
+        async function loadSearchCapabilities() {
+            try {
+                const response = await fetch('http://localhost:8082/api_encrypted_search_capabilities.php');
+                const capabilities = await response.json();
+                
+                // Update the encryption info section with real data
+                updateEncryptionInfo(capabilities);
+            } catch (error) {
+                console.warn('Could not load search capabilities:', error);
+            }
+        }
+
+        // Update encryption info with real capabilities
+        function updateEncryptionInfo(capabilities) {
+            const encryptionInfo = document.querySelector('.encryption-info');
+            if (encryptionInfo && capabilities.fieldEncryptionMap) {
+                const deterministicFields = Object.entries(capabilities.fieldEncryptionMap)
+                    .filter(([field, type]) => type === 'deterministic')
+                    .map(([field]) => field);
+                
+                const rangeFields = Object.entries(capabilities.fieldEncryptionMap)
+                    .filter(([field, type]) => type === 'range')
+                    .map(([field]) => field);
+                
+                const randomFields = Object.entries(capabilities.fieldEncryptionMap)
+                    .filter(([field, type]) => type === 'random')
+                    .map(([field]) => field);
+
+                encryptionInfo.innerHTML = `
+                    <h4><i class="fas fa-lock me-2"></i>Encryption Types Demonstrated</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Deterministic Encryption:</strong><br>
+                            <small>Enables exact match searches on: ${deterministicFields.join(', ')}</small>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Range Encryption:</strong><br>
+                            <small>Enables range queries on: ${rangeFields.join(', ')}</small>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Standard Encryption:</strong><br>
+                            <small>Maximum security for: ${randomFields.join(', ')}</small>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Perform search based on current tab
+        function performCurrentSearch() {
+            switch(currentSearchType) {
+                case 'equality':
+                    performEqualitySearch();
+                    break;
+                case 'range':
+                    performRangeSearch();
+                    break;
+                case 'complex':
+                    performComplexSearch();
+                    break;
+            }
+        }
+
+        // Equality Search
+        function performEqualitySearch() {
+            const lastName = document.getElementById('equalityLastName').value.trim();
+            const firstName = document.getElementById('equalityFirstName').value.trim();
+            const email = document.getElementById('equalityEmail').value.trim();
+            const phone = document.getElementById('equalityPhone').value.trim();
+
+            if (!lastName && !firstName && !email && !phone) {
+                showError('Please enter at least one search criteria for equality search.');
+                return;
+            }
+
+            const searchCriteria = {
+                lastName: lastName,
+                firstName: firstName,
+                email: email,
+                phone: phone
+            };
+
+            performSearch('equality', searchCriteria);
+        }
+
+        // Range Search
+        function performRangeSearch() {
+            const birthDateFrom = document.getElementById('rangeBirthDateFrom').value;
+            const birthDateTo = document.getElementById('rangeBirthDateTo').value;
+            const minAge = document.getElementById('rangeMinAge').value;
+            const maxAge = document.getElementById('rangeMaxAge').value;
+
+            if (!birthDateFrom && !birthDateTo && !minAge && !maxAge) {
+                showError('Please enter at least one range criteria for range search.');
+                return;
+            }
+
+            const searchCriteria = {
+                birthDateFrom: birthDateFrom,
+                birthDateTo: birthDateTo,
+                minAge: minAge,
+                maxAge: maxAge
+            };
+
+            performSearch('range', searchCriteria);
+        }
+
+        // Complex Search
+        function performComplexSearch() {
+            const lastName = document.getElementById('complexLastName').value.trim();
+            const email = document.getElementById('complexEmail').value.trim();
+            const minAge = document.getElementById('complexMinAge').value;
+            const phonePrefix = document.getElementById('complexPhonePrefix').value.trim();
+            const birthYear = document.getElementById('complexBirthYear').value;
+
+            if (!lastName && !email && !minAge && !phonePrefix && !birthYear) {
+                showError('Please enter at least one search criteria for complex search.');
+                return;
+            }
+
+            const searchCriteria = {
+                lastName: lastName,
+                email: email,
+                minAge: minAge,
+                phonePrefix: phonePrefix,
+                birthYear: birthYear
+            };
+
+            performSearch('complex', searchCriteria);
+        }
+
+        // Main search function
+        async function performSearch(searchType, criteria) {
+            searchStartTime = Date.now();
+            showLoading();
+
+            try {
+                // Call the real Symfony API endpoints
+                const response = await callSearchAPI(searchType, criteria);
+                
+                const searchTime = Date.now() - searchStartTime;
+                displayResults(response.results, searchType, searchTime);
+                updateSearchStats(response.totalResults, searchTime, searchType);
+                
+            } catch (error) {
+                showError('Search failed: ' + error.message);
+            }
+        }
+
+        // Call the actual PHP API
+        async function callSearchAPI(searchType, criteria) {
+            const endpoint = `http://localhost:8082/api_encrypted_search_${searchType}.php`;
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(criteria)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Search request failed');
+            }
+
+            return await response.json();
+        }
+
+        // Check authentication status
+        async function checkAuthentication() {
+            try {
+                const response = await fetch('/api/health', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    // For demo purposes, allow access without authentication
+                    console.log('Authentication check failed, but allowing demo access');
+                    return true;
+                }
+                
+                return true;
+            } catch (error) {
+                // For demo purposes, allow access without authentication
+                console.log('Authentication check failed, but allowing demo access');
+                return true;
+            }
+        }
+
+        // Show authentication required message
+        function showAuthenticationRequired() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="alert alert-warning" role="alert">
+                    <h4><i class="fas fa-lock me-2"></i>Authentication Required</h4>
+                    <p>You need to be logged in to perform encrypted searches. Please log in first.</p>
+                    <a href="/login.html" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </div>
+            `;
+        }
+
+        // Display search results
+        function displayResults(patients, searchType, searchTime) {
+            const container = document.getElementById('resultsContainer');
+            
+            if (patients.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search fa-3x mb-3 text-muted"></i>
+                        <h4>No Results Found</h4>
+                        <p>No patients match your search criteria. Try adjusting your search parameters.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3><i class="fas fa-users me-2"></i>Search Results (${patients.length} found)</h3>
+                    <small class="text-muted">Search completed in ${searchTime}ms</small>
+                </div>
+                <div class="row">
+            `;
+
+            patients.forEach(patient => {
+                const age = calculateAge(new Date(patient.birthDate));
+                html += `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="patient-card">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="mb-0">${patient.firstName} ${patient.lastName}</h5>
+                                <span class="encryption-indicator">Encrypted</span>
+                            </div>
+                            
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>Email:</strong></div>
+                                <div class="col-6">${patient.email}</div>
+                            </div>
+                            
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>Phone:</strong></div>
+                                <div class="col-6">${patient.phoneNumber}</div>
+                            </div>
+                            
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>Age:</strong></div>
+                                <div class="col-6">${age} years old</div>
+                            </div>
+                            
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>Birth Date:</strong></div>
+                                <div class="col-6">${patient.birthDate}</div>
+                            </div>
+                            
+                            <div class="row mb-2">
+                                <div class="col-6"><strong>SSN:</strong></div>
+                                <div class="col-6">${patient.ssn}</div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Created: ${patient.createdAt}
+                                </small>
+                            </div>
+                            
+                            <div class="mt-2">
+                                <span class="badge bg-primary me-1">${patient.diagnosis[0] || 'No diagnosis'}</span>
+                                <span class="badge bg-secondary">${patient.medications[0] || 'No medications'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Update search statistics
+        function updateSearchStats(resultCount, searchTime, searchType) {
+            document.getElementById('searchStats').style.display = 'block';
+            document.getElementById('totalResults').textContent = resultCount;
+            document.getElementById('searchTime').textContent = searchTime + 'ms';
+            document.getElementById('encryptedFields').textContent = getEncryptedFieldCount(searchType);
+            document.getElementById('queryType').textContent = searchType.charAt(0).toUpperCase() + searchType.slice(1);
+        }
+
+        // Get encrypted field count based on search type
+        function getEncryptedFieldCount(searchType) {
+            switch(searchType) {
+                case 'equality': return 4; // lastName, firstName, email, phone
+                case 'range': return 1; // birthDate
+                case 'complex': return 5; // lastName, email, age, phone, birthYear
+                default: return 0;
+            }
+        }
+
+        // Show loading state
+        function showLoading() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Searching...</span>
+                    </div>
+                    <h4 class="mt-3">Searching Encrypted Data...</h4>
+                    <p class="text-muted">Querying encrypted fields without server-side decryption</p>
+                </div>
+            `;
+        }
+
+        // Show error message
+        function showError(message) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${message}
+                </div>
+            `;
+        }
+
+        // Clear results
+        function clearResults() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <h4>Ready to Search Encrypted Data</h4>
+                    <p>Select a search type above and enter your criteria to see MongoDB Queryable Encryption in action.</p>
+                </div>
+            `;
+            document.getElementById('searchStats').style.display = 'none';
+        }
+
+        // Utility function to calculate age
+        function calculateAge(birthDate) {
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age;
+        }
+    </script>
+</body>
+</html>

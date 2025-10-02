@@ -1,0 +1,104 @@
+---
+sidebar_position: 2
+---
+
+
+# 👐 RUN: Authentication Challenge 
+
+:::info
+The provided scripts are incomplete. Replace all `<CODE_BLOCK>` with the correct code to complete the lab.
+:::
+
+> Hint: Remember to add `--projectId {project_id}`
+
+
+### 1. Create a SCRAM user
+
+```python
+# create a SCRAM user with username: "myUser", password: "mySecurePassword" and role: "readWriteAnyDatabase"
+username = "myUser"
+password = "mySecurePassword"
+!atlas dbusers create <CODE_BLOCK>
+```
+> Refer to documentation: [atlas dbusers](https://www.mongodb.com/docs/atlas/cli/current/command/atlas-dbusers-create/)
+
+:::tip
+<details>
+    <summary> Answer </summary>
+    ```python
+    # create a SCRAM user with username: "myUser", password: "mySecurePassword" and role: "readWriteAnyDatabase"
+    username = "myUser"
+    password = "mySecurePassword"
+    !atlas dbusers create --username {username} --password {password} --role readWriteAnyDatabase --projectId {project_id}
+    ```
+</details>
+:::
+
+### 2. Let's test our SCRAM user successful creation by performing the authentication process
+
+```python
+!pip install pymongo dnspython  
+```
+
+```python
+# retrieve connection string
+connection = !atlas clusters connectionStrings describe  MyNewCluster --projectId {project_id}
+
+# add username and password to connection string
+new_connection = connection[1].replace('mongodb+srv://', f'mongodb+srv://{username}:{password}@')
+print(new_connection)
+
+#make the connection get the list of databases
+from pymongo import MongoClient
+client = MongoClient(new_connection)
+client.list_database_names()
+```
+
+### 3. Create a X509 user and certificate
+
+```python
+# create a Atlas-managed X509 user with username: "myX509User" and role: "readAnyDatabase" 
+!atlas dbusers create <CODE_BLOCK>
+```
+> Refer to documentation: [atlas dbusers](https://www.mongodb.com/docs/atlas/cli/current/command/atlas-dbusers-create/)
+```python
+# Generate a certification for "myX509user", set monthsUntilExpiration to 1, and save it to /tmp/cert.pem
+!atlas dbusers certs create <CODE_BLOCK> > /tmp/cert.pem
+```
+> Refer to documentation: [atlas dbusers certs](https://www.mongodb.com/docs/atlas/cli/current/command/atlas-dbusers-certs-create/)
+
+:::tip
+<details>
+    <summary> Answer </summary>
+    ```python
+    # create a Atlas-managed X509 user with username: "myX509User" and role: "readAnyDatabase" 
+    !atlas dbusers create --username myX509User --role readAnyDatabase --x509Type MANAGED --projectId {project_id}
+    ```
+    ```python
+    # Generate a certification for "myX509user", set monthsUntilExpiration to 1, and save it to /tmp/cert.pem
+    !atlas dbusers certs create --username myX509User --monthsUntilExpiration 1 --projectId {project_id} > /tmp/cert.pem
+    ```
+</details>
+:::
+
+### 4. Let's test our X509 user
+
+```python
+# Get connection string
+connection = !atlas clusters connectionStrings describe MyNewCluster --projectId {project_id}
+
+# Modify connection string to use X509 as authentication mechanism 
+new_connection = connection[1].replace('.net', '.net?authSource=%24external&authMechanism=MONGODB-X509')
+print(new_connection)
+
+# Connect using the certificate
+from pymongo import MongoClient
+client = MongoClient(new_connection,
+                     tlsCertificateKeyFile='/tmp/cert.pem')
+
+# Access the database
+client.list_database_names()
+```
+## Next steps
+
+Start the chapter on [RBAC](./rbac) for role-based access user management.

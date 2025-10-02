@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Redirects</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 20px; 
+      max-width: 800px; 
+      margin: 0 auto;
+    }
+    button {
+      display: block;
+      margin: 10px 0;
+      padding: 10px;
+      width: 100%;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      min-height: 200px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>React App Navigation Test</h1>
+  <p>Click the buttons below to test different navigation options</p>
+  
+  <button onclick="testNavigation('/')">Go to /</button>
+  <button onclick="testNavigation('/patients')">Go to /patients</button>
+  <button onclick="testNavigation('/patients/1')">Go to /patients/1</button>
+  <button onclick="testNavigation('/audit-logs')">Go to /audit-logs</button>
+  
+  <h2>Login Test</h2>
+  <button onclick="testLogin()">Test Login</button>
+  
+  <h2>Result</h2>
+  <div id="result" class="result"></div>
+  
+  <script>
+    // Function to test navigation
+    function testNavigation(path) {
+      document.getElementById('result').textContent = 'Redirecting to ' + path + '...';
+      
+      // Create an iframe to test navigation without leaving this page
+      var iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.height = '300px';
+      iframe.style.border = '1px solid #ddd';
+      iframe.src = path;
+      
+      // Replace result with iframe
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('result').appendChild(iframe);
+      
+      // Also log the content of the response
+      fetch(path)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.text();
+        })
+        .then(text => {
+          console.log('Response from ' + path + ':', text.substring(0, 200) + '...');
+        })
+        .catch(error => {
+          console.error('Fetch error:', error);
+        });
+    }
+    
+    // Function to test login
+    function testLogin() {
+      // Simple hardcoded login
+      const user = {
+        email: 'doctor@example.com',
+        username: 'Dr. Smith',
+        roles: ['ROLE_DOCTOR']
+      };
+      
+      // Store user in localStorage
+      localStorage.setItem('securehealth_user', JSON.stringify(user));
+      
+      document.getElementById('result').textContent = 'Login successful! User stored in localStorage:\n\n' + 
+        JSON.stringify(user, null, 2);
+    }
+    
+    // Check if user is already logged in
+    window.onload = function() {
+      const storedUser = localStorage.getItem('securehealth_user');
+      if (storedUser) {
+        document.getElementById('result').textContent = 'User already logged in:\n\n' + 
+          JSON.stringify(JSON.parse(storedUser), null, 2);
+      }
+    };
+  </script>
+</body>
+</html>

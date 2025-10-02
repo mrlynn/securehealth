@@ -1,0 +1,213 @@
+---
+sidebar_position: 6
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 📘  Queryable Encryption
+
+Queryable Encryption is a groundbreaking technology that allows you to run specific queries on encrypted data without the need to decrypt it on the server. In MongoDB, this means sensitive data can remain encrypted throughout its lifecycle—at rest, in transit, and even during query processing. By enabling Queryable Encryption, you significantly reduce the attack surface by minimizing the exposure of plaintext data, even to authorized database administrators. This strengthens your security posture and helps meet stringent compliance requirements.
+
+## Why is Queryable Encryption important in MongoDB?
+
+MongoDB, while offering various security features, can benefit significantly from Queryable Encryption for scenarios involving highly sensitive data. By implementing it, you ensure:
+- **Enhanced data protection**: Sensitive data remains encrypted even when it is being processed on the database side, minimizing the risk of exposure in case of a security breach or unauthorized access.
+- **Compliance with regulations**: Meet stringent data privacy regulations—like GDPR and HIPAA—that mandate strong encryption and control over sensitive information.
+- **Reduced insider threat**: Even database administrators or authorized personnel with access to the database infrastructure cannot see the plaintext data without the appropriate decryption keys managed outside of the database.
+- **Maintained functionality**: Unlike traditional encryption where data needs to be decrypted for querying, Queryable Encryption allows you to perform specific types of queries directly on the encrypted data, preserving application functionality.
+
+## Overview
+
+<Tabs>
+<TabItem value="atlas" label="MongoDB Atlas">
+
+In MongoDB Atlas, Queryable Encryption is available for:
+- M10 or larger clusters.
+- MongoDB 7.0 or later.
+- Enterprise or Atlas deployments.
+
+To enable Queryable Encryption:
+1. Create an encryption key in your preferred key management system (local, AWS KMS, Azure Key Vault, GCP KMS).
+2. Configure your Atlas cluster to use the KMS provider.
+3. Use the MongoDB driver with Queryable Encryption support.
+
+</TabItem>
+<TabItem value="onprem" label="On-Premises">
+
+For self-hosted MongoDB deployments:
+- Requires Enterprise Edition for client-side field level encryption (community versions support Queryable Encryption only)
+- MongoDB 7.0 or later
+- A supported key management system
+
+Configuration steps:
+1. Set up a key management system
+2. Configure mongod with encryption settings
+3. Use the MongoDB driver with Queryable Encryption support
+
+</TabItem>
+</Tabs>
+
+## Key concepts in Queryable Encryption
+
+- **Key management system (KMS)**: A secure system for managing encryption keys. MongoDB Queryable Encryption relies on either local keys/on-premises vaults like Hashicorp, or external KMS providers like AWS KMS, Azure Key Vault, or Google Cloud KMS to store and manage the cryptographic keys.
+- **Encryption on Field Level Basis**: Encryption and decryption operations are performed on the client-side application before data is sent to or retrieved from the MongoDB server. This ensures that the server only handles encrypted data.
+- **Encryption Schema**: Defines which fields in your documents need to be encrypted and specifies the type of encryption to be used for each field, influencing the types of queries that can be performed on that field.
+
+## Implementation
+
+### Setting Up Queryable Encryption
+
+1. Configure KMS provider
+In this example, see how to configure AWS KMS by providing access key ID and secret access key. It also shows how to configure a master key with its key, region, and endpoint.
+```python
+const kmsProviders = {
+  aws: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
+};
+
+const masterKey = {
+  key: process.env.MASTER_KEY,
+  region: "us-east-1",
+  endpoint: "kms.us-east-1.amazonaws.com"
+};
+```
+
+Or local key:
+   This shows how to configure a local key for testing purposes.
+```
+local_master_key = os.urandom(96)
+kms_providers = {"local": {"key": local_master_key}}
+```
+
+
+2. Create client encryption
+   This step creates a client with auto encryption options.
+```python
+encrypted_client = MongoClient(
+    new_connection, auto_encryption_opts=auto_encryption_options)
+```
+
+3. Define encryption schema
+   This step defines the encryption schema for the fields that need to be encrypted. In this example, the "accountNumber" field is configured for equality queries.
+```python
+encrypted_fields_map = {
+    "fields": [
+        {
+            "path": "accountNumber",
+            "bsonType": "string",
+            "queries": [{"queryType": "equality"}] # potentially 'range'
+        }
+    ]
+}
+;
+```
+
+
+## Using encrypted fields
+
+### Creating & querying documents with encrypted fields
+
+The following example demonstrates the complete workflow for creating and querying documents with encrypted fields:
+
+```python
+# Step 1: Initialize the encrypted client with auto-encryption options
+# This client automatically handles encryption/decryption of specified fields
+encrypted_client = MongoClient(
+    new_connection, auto_encryption_opts=auto_encryption_options)
+
+# Step 2: Set up the client encryption object
+# This object manages the encryption keys and handles the encryption operations
+client_encryption = ClientEncryption(
+    kms_providers=kms_providers,
+    key_vault_namespace=key_vault_namespace,
+    key_vault_client=encrypted_client,
+    codec_options=CodecOptions()
+)
+
+# Step 3: Create an encrypted collection with the specified encryption schema
+# This sets up the collection with automatic field-level encryption
+client_encryption.create_encrypted_collection(
+    encrypted_client[encrypted_database_name],
+    encrypted_collection_name,
+    encrypted_fields_map,
+    kms_provider_name,
+    {},
+)
+
+# Step 4: Prepare a document with sensitive information
+# Note: The 'accountNumber' field will be automatically encrypted based on the schema
+doc = {
+    "owner": "Jon Doe",
+    "accountNumber": "987-65-4320",  # This field will be encrypted
+    "billing": {
+            "type": "Visa",
+            "number": "4111111111111111",  # Consider encrypting this field too
+        }
+}
+
+# Step 5: Get a reference to the encrypted collection
+encrypted_collection = encrypted_client[encrypted_database_name][encrypted_collection_name]
+
+# Step 6: Insert the document
+# The encryption happens automatically for the specified fields
+result = encrypted_collection.insert_one(doc)
+print(f"Inserted document ID: {result.inserted_id}")
+
+# Step 7: Query the encrypted collection
+# You can query encrypted fields normally - the encryption/decryption is handled automatically
+find_result = encrypted_collection.find_one({
+    "accountNumber": "987-65-4320"  # The query value is automatically encrypted
+})
+print(find_result)  # The result is automatically decrypted when retrieved
+```
+
+This example demonstrates the power of Queryable Encryption—you can work with encrypted data as if it were normal data, while the encryption and decryption happen automatically in the background based on your schema configuration.
+
+## Supported query types
+
+Queryable Encryption supports various query types depending on the encryption algorithm:
+
+1. **Equality queries**
+   - Exact matches on encrypted fields
+   - Supported with deterministic encryption
+   - Example: `{"encryptedField": "exactValue"}`
+
+
+2. **Range queries**
+   - Comparison operators ($gt, $gte, $lt, $lte)
+   - Available for range-queryable encrypted fields
+   - Example: `{"encryptedField": {"$gt": "value"}}`
+   - Requires RangePreview algorithm
+
+
+## Best practices
+
+1. **Key management**
+   - Securely manage KMS credentials: Protect your KMS access keys and credentials diligently. Use best practices for secret management.
+   - Regularly rotate encryption keys.
+   - Securely store and backup keys.
+   - Use separate keys for different environments.
+
+2. **Performance considerations**
+   - Understand performance implications: Queryable Encryption involves additional resources for indexing and storage on the server side. Test and optimize your application accordingly. Tune the relevant parameters and document design for best performance.
+   - Index encrypted fields when needed.
+   - Monitor query performance on encrypted fields.
+   - Use appropriate encryption algorithms.
+
+3. **Security guidelines**
+   - Principle of least privilege: Grant only the necessary permissions to access encryption keys.
+   - Follow the principle of least privilege.
+   - Encrypt only necessary fields.
+   - Regularly audit encryption configurations.
+
+## Challenges and exercises
+
+For hands-on practice with Queryable Encryption concepts, check out our [practical challenges](./challenge/queryable-encryption).
+
+## Next steps
+
+After implementing Queryable Encryption, you can reach the final closing phase of Additional Security Considerations and Summary.
+

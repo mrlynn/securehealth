@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureHealth Documentation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2d3748;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+        h2 {
+            margin-top: 30px;
+            color: #2d3748;
+        }
+        .container {
+            display: flex;
+            gap: 30px;
+        }
+        .sidebar {
+            flex: 0 0 250px;
+            border-right: 1px solid #e9ecef;
+            padding-right: 20px;
+        }
+        .content {
+            flex: 1;
+        }
+        .nav-list {
+            list-style: none;
+            padding: 0;
+        }
+        .nav-list li {
+            margin-bottom: 10px;
+        }
+        .nav-list a {
+            text-decoration: none;
+            color: #4a5568;
+        }
+        .nav-list a:hover {
+            text-decoration: underline;
+            color: #2b6cb0;
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>SecureHealth Documentation</h1>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>Navigation</h3>
+            <ul class="nav-list">
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#architecture">Architecture Overview</a></li>
+                <li><a href="#encryption">Encryption</a></li>
+                <li><a href="#api">API Reference</a></li>
+                <li><a href="#setup">Setup Guide</a></li>
+                <li><a href="#commands">Common Commands</a></li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <section id="overview">
+                <h2>Overview</h2>
+                <p>SecureHealth is a HIPAA-compliant healthcare records system built with MongoDB 8.2 Queryable Encryption. This documentation will help you understand how to use and extend the application.</p>
+                
+                <p>The system demonstrates how to build secure healthcare applications using field-level encryption while maintaining the ability to query encrypted data - a critical requirement for healthcare systems.</p>
+            </section>
+
+            <section id="architecture">
+                <h2>Architecture Overview</h2>
+                <p>The SecureHealth application uses a modern stack:</p>
+                <ul>
+                    <li><strong>Backend:</strong> Symfony 7.0 with PHP 8.2</li>
+                    <li><strong>Database:</strong> MongoDB 8.2 with Queryable Encryption</li>
+                    <li><strong>Authentication:</strong> JWT-based authentication</li>
+                    <li><strong>Containerization:</strong> Docker and Docker Compose</li>
+                </ul>
+
+                <p>Key components include:</p>
+                <ul>
+                    <li>MongoDB Queryable Encryption Service</li>
+                    <li>Role-based Access Control (Doctor, Nurse, Receptionist)</li>
+                    <li>HIPAA-compliant Audit Logging</li>
+                    <li>Patient Record Management</li>
+                </ul>
+            </section>
+
+            <section id="encryption">
+                <h2>Encryption Strategy</h2>
+                <p>SecureHealth uses MongoDB's Client-Side Field Level Encryption (CSFLE) with three different levels of encryption:</p>
+
+                <h3>Level 1: Searchable Fields (Deterministic)</h3>
+                <ul>
+                    <li>Patient last name (exact match searches)</li>
+                    <li>Patient first name (exact match searches)</li>
+                    <li>Email (exact match searches)</li>
+                    <li>Phone number (exact match searches)</li>
+                    <li>Patient ID (unique identifier lookups)</li>
+                </ul>
+
+                <h3>Level 2: Date Fields (Deterministic)</h3>
+                <ul>
+                    <li>Birth date (used for searchable age/date-related queries)</li>
+                </ul>
+
+                <h3>Level 3: Highly Sensitive (Random Encryption)</h3>
+                <ul>
+                    <li>Social Security Number</li>
+                    <li>Primary diagnosis</li>
+                    <li>Medications list</li>
+                    <li>Insurance details</li>
+                    <li>Medical notes</li>
+                </ul>
+            </section>
+
+            <section id="api">
+                <h2>API Reference</h2>
+                
+                <h3>Authentication</h3>
+                <pre>POST /api/login
+Content-Type: application/json
+
+{
+  "_username": "doctor@example.com",
+  "_password": "doctor"
+}</pre>
+
+                <h3>Patient Endpoints</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Description</th>
+                            <th>Required Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>GET</td>
+                            <td>/api/patients</td>
+                            <td>List all patients</td>
+                            <td>Any authenticated</td>
+                        </tr>
+                        <tr>
+                            <td>GET</td>
+                            <td>/api/patient/{id}</td>
+                            <td>Get a specific patient</td>
+                            <td>Any authenticated</td>
+                        </tr>
+                        <tr>
+                            <td>POST</td>
+                            <td>/api/patients</td>
+                            <td>Create a new patient</td>
+                            <td>Doctor</td>
+                        </tr>
+                        <tr>
+                            <td>PUT</td>
+                            <td>/api/patient/{id}</td>
+                            <td>Update a patient</td>
+                            <td>Doctor</td>
+                        </tr>
+                        <tr>
+                            <td>DELETE</td>
+                            <td>/api/patient/{id}</td>
+                            <td>Delete a patient</td>
+                            <td>Doctor</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="setup">
+                <h2>Setup Guide</h2>
+                <p>To set up SecureHealth locally:</p>
+                <ol>
+                    <li>Clone the repository</li>
+                    <li>Copy <code>.env.example</code> to <code>.env.local</code></li>
+                    <li>Start Docker containers: <code>docker-compose up -d</code></li>
+                    <li>Install dependencies: <code>docker-compose exec php composer install</code></li>
+                    <li>Access the application at http://localhost:8081</li>
+                </ol>
+            </section>
+
+            <section id="commands">
+                <h2>Common Commands</h2>
+                
+                <h3>Docker Environment</h3>
+                <pre>
+# Start the Docker environment
+docker-compose up -d
+
+# Install PHP dependencies
+docker-compose exec php composer install
+
+# Access the application
+# The API is available at http://localhost:8081/api</pre>
+
+                <h3>Testing</h3>
+                <pre>
+# Run all tests
+docker-compose exec php bin/phpunit
+
+# Run specific test file
+docker-compose exec php bin/phpunit tests/Controller/Api/PatientControllerTest.php
+
+# Run specific test method
+docker-compose exec php bin/phpunit --filter testCreatePatient</pre>
+
+                <h3>Debugging</h3>
+                <pre>
+# View Nginx logs
+docker-compose logs nginx
+
+# View PHP logs
+docker-compose logs php
+
+# Clear Symfony cache
+docker-compose exec php bin/console cache:clear</pre>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

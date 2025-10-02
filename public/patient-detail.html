@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Details - SecureHealth</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; }
+    .avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #e9ecef;
+      color: #495057;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.125rem;
+    }
+    .info-label { color: #6c757d; font-weight: 500; }
+    .loading { text-align: center; padding: 40px; color: #6c757d; }
+    .encryption-badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 12px; margin-left: 5px; vertical-align: middle; }
+    .encryption-deterministic {
+      background-color: #0dcaf0;
+      color: #055160;
+    }
+    .encryption-range {
+      background-color: #20c997;
+      color: #0f5132;
+    }
+    .encryption-standard {
+      background-color: #6f42c1;
+      color: white;
+    }
+    .status { display: none; }
+    .error { background-color: #f8d7da; color: #842029; }
+    .role-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .role-doctor { background-color: #dc3545; color: white; }
+    .role-nurse { background-color: #0d6efd; color: white; }
+    .role-receptionist { background-color: #6c757d; color: white; }
+    .role-admin { background-color: #6f42c1; color: white; }
+    .sensitive-field { background-color: #fff3cd; border-left: 3px solid #ffc107; padding: 8px; margin: 2px 0; }
+    .medical-field { background-color: #d1ecf1; border-left: 3px solid #0dcaf0; padding: 8px; margin: 2px 0; }
+    .insurance-field { background-color: #d4edda; border-left: 3px solid #28a745; padding: 8px; margin: 2px 0; }
+    .restricted-field { background-color: #f8d7da; border-left: 3px solid #dc3545; padding: 8px; margin: 2px 0; color: #842029; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="/index.html">SecureHealth</a>
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <span class="text-white-50" id="userName">Loading...</span>
+        <span id="userRole" class="role-badge"></span>
+        <a href="/admin.html" id="adminLink" class="btn btn-outline-light btn-sm" style="display: none;">
+          <i class="fas fa-cog me-1"></i>Admin
+        </a>
+        <a class="btn btn-outline-light btn-sm" href="/patients.html">Patients</a>
+        <button id="logoutBtn" class="btn btn-outline-light btn-sm">Log out</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/patients.html">Patients</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Patient Details</li>
+      </ol>
+    </nav>
+    <div id="status" class="status"></div>
+    <div id="patientDetail" class="loading">Loading patient details...</div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const userName = document.getElementById('userName');
+      const userRole = document.getElementById('userRole');
+      const adminLink = document.getElementById('adminLink');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const patientDetail = document.getElementById('patientDetail');
+      const statusDiv = document.getElementById('status');
+      
+      let currentUser = null;
+      
+      // Check authentication
+      checkAuth();
+      
+      // Get patient ID from URL
+      const params = new URLSearchParams(window.location.search);
+      const patientId = params.get('id');
+      
+      if (!patientId) {
+        showStatus('No patient ID provided', 'error');
+        patientDetail.innerHTML = '<p>Error: No patient ID provided</p>';
+        return;
+      }
+      
+      // Load patient data
+      loadPatientDetail(patientId);
+      
+      // Event listeners
+      logoutBtn.addEventListener('click', handleLogout);
+      
+      // Check if user is authenticated
+      function checkAuth() {
+        const storedUser = localStorage.getItem('securehealth_user');
+        console.log("checkAuth - stored user:", storedUser);
+        
+        if (!storedUser) {
+          console.log("No user found in localStorage, redirecting to login");
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        try {
+          const user = JSON.parse(storedUser);
+          console.log("User data parsed successfully:", user);
+          currentUser = user;
+          userName.textContent = user.username || user.email;
+          
+          // Determine user role
+          const userRoleType = determineUserRole(user);
+          userRole.textContent = userRoleType;
+          userRole.className = `role-badge role-${userRoleType.toLowerCase()}`;
+          
+          // Check for admin privileges
+          checkAdminStatus();
+        } catch (e) {
+          console.error("Error parsing user data:", e);
+          window.location.href = '/login.html';
+        }
+      }
+      
+      // Determine user role based on email/username patterns
+      function determineUserRole(user) {
+        const email = (user.email || '').toLowerCase();
+        const username = (user.username || '').toLowerCase();
+        
+        // Check for admin first
+        if (user.isAdmin || email.includes('admin') || username.includes('admin')) {
+          return 'ADMIN';
+        } else if (email.includes('doctor') || username.includes('doctor')) {
+          return 'DOCTOR';
+        } else if (email.includes('nurse') || username.includes('nurse')) {
+          return 'NURSE';
+        } else if (email.includes('receptionist') || username.includes('receptionist')) {
+          return 'RECEPTIONIST';
+        }
+        
+        // Default fallback
+        return 'RECEPTIONIST';
+      }
+      
+      // Check for admin privileges and show admin link
+      function checkAdminStatus() {
+        if (adminLink && currentUser && currentUser.isAdmin) {
+          adminLink.style.display = 'inline-block';
+        }
+      }
+      
+      // Load patient detail
+      async function loadPatientDetail(id) {
+        console.log("Loading patient detail for ID:", id);
+        
+        try {
+          // Fetch patient data from API
+          const response = await fetch(`/api/patient/${id}`);
+          
+          if (!response.ok) {
+            if (response.status === 404) {
+              throw new Error("Patient not found");
+            } else {
+              throw new Error(`Failed to load patient data: ${response.status} ${response.statusText}`);
+            }
+          }
+          
+          const patient = await response.json();
+          console.log("API response:", patient);
+          
+          // Process patient data
+          processPatientData(patient, id);
+        } catch (error) {
+          console.error("Error loading patient:", error);
+          showStatus('Error loading patient data', 'error');
+          patientDetail.innerHTML = `<p>Error: ${error.message || 'Failed to load patient'}</p>`;
+        }
+      }
+      
+      // Process patient data
+      function processPatientData(patient, id) {
+        // Handle potential MongoDB format differences
+        if (patient._id && !patient.id) {
+          patient.id = patient._id;
+        }
+        
+        // Map API fields to UI fields
+        patient.id = patient.id || id;
+        patient.allergies = patient.allergies || [];
+        patient.conditions = patient.diagnosis || [];
+        patient.address = patient.address || '';
+        patient.phone = patient.phoneNumber || patient.phone || '';
+        
+        // Handle insurance details which might be either object or array
+        if (patient.insuranceDetails) {
+          if (typeof patient.insuranceDetails === 'object' && patient.insuranceDetails !== null) {
+            patient.insuranceProvider = patient.insuranceDetails.provider || '';
+            patient.insuranceNumber = patient.insuranceDetails.policyNumber || '';
+          } else if (Array.isArray(patient.insuranceDetails) && patient.insuranceDetails.length > 0) {
+            // If it's an array, try to get the first item's properties
+            patient.insuranceProvider = patient.insuranceDetails[0].provider || '';
+            patient.insuranceNumber = patient.insuranceDetails[0].policyNumber || '';
+          }
+        } else {
+          // If no insurance details in the object, use the direct properties if available
+          patient.insuranceProvider = patient.insuranceProvider || '';
+          patient.insuranceNumber = patient.insuranceNumber || '';
+        }
+        
+        console.log("Patient data mapped for UI:", patient);
+        
+        // Render patient detail
+        renderPatientDetail(patient);
+      }
+      
+      // Render patient detail with role-based access control
+      function renderPatientDetail(patient) {
+        const userRole = determineUserRole(currentUser);
+        const initials = `${(patient.firstName || '?')[0] || '?'}` + `${(patient.lastName || '?')[0] || '?'}`;
+        const statusBadge = `<span class="badge rounded-pill ${patient.status === 'active' ? 'bg-success' : (patient.status === 'inactive' ? 'bg-secondary' : 'bg-warning text-dark')}">${patient.status || 'active'}</span>`;
+        
+        // Role-based data access
+        const allergies = patient.allergies && patient.allergies.length ? patient.allergies.map(a => `<span class="badge text-bg-light me-1 mb-1">${a}</span>`).join('') : '<span class="text-muted">None reported</span>';
+        const conditions = (patient.diagnosis && patient.diagnosis.length ? patient.diagnosis : (patient.conditions || []));
+        const conditionsHtml = conditions && conditions.length ? conditions.map(c => `<span class="badge text-bg-light me-1 mb-1">${c}</span>`).join('') : '<span class="text-muted">None reported</span>';
+        const medsHtml = patient.medications && patient.medications.length ? patient.medications.map(m => `<span class="badge text-bg-light me-1 mb-1">${m}</span>`).join('') : '<span class="text-muted">None</span>';
+        
+        // Determine what data to show based on role
+        const canViewMedical = userRole === 'DOCTOR' || userRole === 'NURSE';
+        const canViewSSN = userRole === 'DOCTOR';
+        const canViewInsurance = userRole === 'DOCTOR' || userRole === 'NURSE' || userRole === 'RECEPTIONIST' || userRole === 'ADMIN';
+        const canEdit = userRole === 'DOCTOR';
+
+        const html = `
+          <div class="row g-4">
+            <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="avatar">${initials.toUpperCase()}</div>
+                      <div>
+                        <h3 class="mb-0">${patient.firstName || ''} ${patient.lastName || ''} ${statusBadge}</h3>
+                        <small class="text-muted">ID: ${patient.id}</small>
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                      ${canEdit ? `
+                        <a href="/patient-edit.html?id=${patient.id}" class="btn btn-primary">Edit Patient</a>
+                        <button onclick="deletePatient('${patient.id}')" class="btn btn-outline-danger">Delete</button>
+                      ` : `
+                        <span class="text-muted small">View Only - ${userRole} Access</span>
+                      `}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-12 col-lg-6">
+              <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                  <strong>Contact & Demographics</strong>
+                </div>
+                <div class="card-body">
+                  <div class="row gy-3">
+                    <div class="col-6">
+                      <div class="info-label">Date of Birth <span class="encryption-badge encryption-range">R</span></div>
+                      <div>${formatDate(patient.birthDate)}</div>
+                    </div>
+                    <div class="col-6">
+                      <div class="info-label">Email <span class="encryption-badge encryption-deterministic">D</span></div>
+                      <div>${patient.email || ''}</div>
+                    </div>
+                    <div class="col-6">
+                      <div class="info-label">Phone</div>
+                      <div>${patient.phone || ''}</div>
+                    </div>
+                    <div class="col-12">
+                      <div class="info-label">Address <span class="encryption-badge encryption-standard">S</span></div>
+                      <div>${patient.address || ''}</div>
+                    </div>
+                    ${canViewSSN ? `
+                    <div class="col-12">
+                      <div class="info-label sensitive-field">Social Security Number <span class="encryption-badge encryption-standard">S</span></div>
+                      <div>${patient.ssn || 'Not provided'}</div>
+                    </div>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            ${canViewInsurance ? `
+            <div class="col-12 col-lg-6">
+              <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                  <strong>Insurance <span class="encryption-badge encryption-standard">S</span></strong>
+                </div>
+                <div class="card-body">
+                  <div class="row gy-3">
+                    <div class="col-6">
+                      <div class="info-label">Provider</div>
+                      <div class="insurance-field">${patient.insuranceProvider || patient.insuranceDetails?.provider || 'Not provided'}</div>
+                    </div>
+                    <div class="col-6">
+                      <div class="info-label">Policy Number <span class="encryption-badge encryption-standard">S</span></div>
+                      <div class="insurance-field">${patient.insuranceNumber || patient.insuranceDetails?.policyNumber || 'Not provided'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ` : ''}
+
+            ${canViewMedical ? `
+            <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                  <strong>Medical Overview <span class="encryption-badge encryption-standard">S</span></strong>
+                </div>
+                <div class="card-body">
+                  <div class="row gy-4">
+                    <div class="col-12 col-lg-4">
+                      <div class="info-label mb-2">Allergies</div>
+                      <div class="medical-field">${allergies}</div>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                      <div class="info-label mb-2">Conditions / Diagnosis <span class="encryption-badge encryption-standard">S</span></div>
+                      <div class="medical-field">${conditionsHtml}</div>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                      <div class="info-label mb-2">Medications <span class="encryption-badge encryption-standard">S</span></div>
+                      <div class="medical-field">${medsHtml}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ` : `
+            <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                  <strong>Access Restrictions</strong>
+                </div>
+                <div class="card-body">
+                  <div class="restricted-field">
+                    <i class="fas fa-lock me-2"></i>
+                    <strong>Medical information is restricted to medical staff only.</strong>
+                    <br>
+                    <small>Your role (${userRole}) does not have permission to view medical data, diagnosis, or medications.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            `}
+
+            <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                  <strong>Encryption Info</strong>
+                </div>
+                <div class="card-body">
+                  <div class="row gy-3">
+                    <div class="col-12 col-md-4">
+                      <div class="info-label"><span class="encryption-badge encryption-deterministic">D</span> Deterministic Encryption</div>
+                      <small class="text-muted d-block mt-1">Exact match queries (equality). Used for fields like email and lastName that need to be searched.</small>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <div class="info-label"><span class="encryption-badge encryption-range">R</span> Range Encryption</div>
+                      <small class="text-muted d-block mt-1">Inequality and range queries. Used for date fields like birthDate to enable age-based queries.</small>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <div class="info-label"><span class="encryption-badge encryption-standard">S</span> Standard Encryption</div>
+                      <small class="text-muted d-block mt-1">Maximum security for highly sensitive fields like address, insurance number, conditions, and medications.</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                  <strong>Role-Based Access Control (RBAC) - ${userRole} View</strong>
+                </div>
+                <div class="card-body">
+                  ${generateRoleExplanation(userRole)}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        patientDetail.classList.remove('loading');
+        patientDetail.innerHTML = html;
+      }
+      
+      // Generate role-based access explanation
+      function generateRoleExplanation(role) {
+        let explanation = `
+          <p class="card-text small mb-3">This system demonstrates HIPAA-compliant role-based access control using MongoDB Queryable Encryption:</p>
+        `;
+        
+        switch(role) {
+          case 'DOCTOR':
+            explanation += `
+              <div class="row">
+                <div class="col-md-6">
+                  <h6 class="text-success">✓ What you can see:</h6>
+                  <ul class="small">
+                    <li><strong>All patient data</strong> including SSN, medical history, medications</li>
+                    <li><strong>Insurance information</strong> for billing purposes</li>
+                    <li><strong>Full edit/delete permissions</strong> for patient records</li>
+                  </ul>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-info">Encryption types shown:</h6>
+                  <ul class="small">
+                    <li><span class="encryption-badge encryption-deterministic">D</span> Deterministic - Searchable fields</li>
+                    <li><span class="encryption-badge encryption-range">R</span> Range - Date queries</li>
+                    <li><span class="encryption-badge encryption-standard">S</span> Standard - Maximum security</li>
+                  </ul>
+                </div>
+              </div>
+            `;
+            break;
+          case 'NURSE':
+            explanation += `
+              <div class="row">
+                <div class="col-md-6">
+                  <h6 class="text-success">✓ What you can see:</h6>
+                  <ul class="small">
+                    <li><strong>Medical information</strong> (diagnosis, medications, allergies)</li>
+                    <li><strong>Basic patient data</strong> (name, DOB, contact info)</li>
+                    <li><strong>View-only access</strong> to patient records</li>
+                  </ul>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-danger">✗ What you cannot see:</h6>
+                  <ul class="small">
+                    <li><strong>SSN</strong> - Not needed for medical care</li>
+                    <li><strong>Insurance details</strong> - Handled by reception</li>
+                    <li><strong>Edit/Delete permissions</strong> - Doctor-only actions</li>
+                  </ul>
+                </div>
+              </div>
+            `;
+            break;
+          case 'RECEPTIONIST':
+            explanation += `
+              <div class="row">
+                <div class="col-md-6">
+                  <h6 class="text-success">✓ What you can see:</h6>
+                  <ul class="small">
+                    <li><strong>Insurance information</strong> for billing and scheduling</li>
+                    <li><strong>Basic patient data</strong> (name, DOB, contact info)</li>
+                    <li><strong>View-only access</strong> to patient records</li>
+                  </ul>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-danger">✗ What you cannot see:</h6>
+                  <ul class="small">
+                    <li><strong>Medical information</strong> - Not needed for scheduling</li>
+                    <li><strong>SSN</strong> - Not needed for front desk operations</li>
+                    <li><strong>Edit/Delete permissions</strong> - Doctor-only actions</li>
+                  </ul>
+                </div>
+              </div>
+            `;
+            break;
+          case 'ADMIN':
+            explanation += `
+              <div class="row">
+                <div class="col-md-6">
+                  <h6 class="text-success">✓ What you can see:</h6>
+                  <ul class="small">
+                    <li><strong>Basic patient data</strong> (name, DOB, contact info)</li>
+                    <li><strong>Insurance information</strong> for administrative purposes</li>
+                    <li><strong>Audit logs and system monitoring</strong></li>
+                    <li><strong>User management capabilities</strong></li>
+                  </ul>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-danger">✗ What you cannot see:</h6>
+                  <ul class="small">
+                    <li><strong>Medical information</strong> - Not needed for administration</li>
+                    <li><strong>SSN</strong> - Not needed for administrative tasks</li>
+                    <li><strong>Edit/Delete patient records</strong> - Medical staff only</li>
+                  </ul>
+                </div>
+              </div>
+            `;
+            break;
+        }
+        
+        explanation += `
+          <div class="mt-3">
+            <p class="small text-muted mb-0">
+              <strong>Note:</strong> This demonstrates the "minimum necessary" rule of HIPAA - users only see the data they need for their job function. 
+              All sensitive data is encrypted using MongoDB Queryable Encryption, ensuring even database administrators cannot access patient information.
+            </p>
+          </div>
+        `;
+        
+        return explanation;
+      }
+      
+      // Format date
+      function formatDate(dateString) {
+        if (!dateString) return '';
+        
+        try {
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) {
+            return dateString; // If not a valid date, return the original string
+          }
+          return date.toLocaleDateString();
+        } catch (e) {
+          console.error('Error formatting date:', e);
+          return dateString;
+        }
+      }
+      
+      // Logout function
+      function handleLogout() {
+        console.log("Logging out, removing user from localStorage");
+        localStorage.removeItem('securehealth_user');
+        window.location.href = '/login.html';
+      }
+      
+      // Display status message
+      function showStatus(message, type) {
+        statusDiv.textContent = message;
+        statusDiv.className = 'status ' + type;
+        statusDiv.style.display = 'block';
+      }
+    });
+    
+    // Delete patient function (in global scope for button handler)
+    function deletePatient(id) {
+      if (confirm(`Are you sure you want to delete this patient record? This action cannot be undone.`)) {
+        alert(`Patient ${id} would be deleted in a real application`);
+        window.location.href = '/patients.html';
+      }
+    }
+  </script>
+</body>
+</html>

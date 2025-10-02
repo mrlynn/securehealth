@@ -1,0 +1,3 @@
+main_routes:
+  resource: '../../src/Controller/MainController.php'
+  type: attribute

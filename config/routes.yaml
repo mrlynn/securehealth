@@ -1,0 +1,27 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+# Import specific route files
+docs_static_routes:
+    resource: ../src/Controller/DocsStaticController.php
+    type: attribute
+
+main_routes:
+    resource: ../src/Controller/MainController.php
+    type: attribute
+
+app_login:
+    path: /api/login
+    methods: POST
+
+app_logout:
+    path: /api/logout
+    methods: POST
+
+app_health:
+    path: /api/health
+    controller: App\Controller\HealthCheckController::index
+    methods: GET

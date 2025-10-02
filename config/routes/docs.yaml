@@ -1,0 +1,3 @@
+docs_routes:
+  resource: '../../src/Controller/DocsController.php'
+  type: attribute

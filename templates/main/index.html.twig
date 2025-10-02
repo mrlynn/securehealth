@@ -1,0 +1,45 @@
+{% extends 'main/layout.html.twig' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="jumbotron">
+        <h1 class="display-4">Welcome to SecureHealth</h1>
+        <p class="lead">A HIPAA-compliant healthcare records system using MongoDB 8.2's Queryable Encryption.</p>
+        <hr class="my-4">
+        <p>Securely manage patient records while maintaining the ability to search encrypted data.</p>
+        <a class="btn btn-primary btn-lg" href="{{ path('docs_index') }}" role="button">View Documentation</a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Patient Records</h5>
+                    <p class="card-text">Manage patient information securely with field-level encryption.</p>
+                    <a href="/patients" class="btn btn-outline-primary">Access Patients</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Documentation</h5>
+                    <p class="card-text">Learn how to use and extend the SecureHealth application.</p>
+                    <a href="{{ path('docs_index') }}" class="btn btn-outline-primary">Read Docs</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">API Reference</h5>
+                    <p class="card-text">Integrate with the SecureHealth API for custom applications.</p>
+                    <a href="{{ path('docs_category', {'category': 'api'}) }}" class="btn btn-outline-primary">View API Docs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

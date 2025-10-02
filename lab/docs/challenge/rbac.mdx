@@ -1,0 +1,133 @@
+---
+sidebar_position: 2
+---
+
+# 👐 RUN : RBAC Challenge
+
+:::info
+The provided scripts are incomplete. Replace all `<CODE_BLOCK>` with the correct code to complete the lab.
+:::
+
+:::tip
+ Hint: Remember to add `--projectId {project_id}`
+ Refer to the documentation: [atlas dbusers](https://www.mongodb.com/docs/atlas/cli/current/command/atlas-dbusers-create/) , [atlas customDbRoles](https://www.mongodb.com/docs/atlas/cli/current/command/atlas-customDbRoles-create/)
+:::
+### 1. Create a user for "MyNewCluster" database with role-based access.
+
+Create a new user with the built-in role `readWriteAnyDatabase` and the username and password below.
+
+The user access should be scoped to the `myNewCluster` cluster. Use the `--scope` option.
+
+Refer to the documentation: https://www.mongodb.com/docs/atlas/cli/current/command/atlas-dbusers-create/.
+
+```python
+# Create a user:'myNewClusterAdmin', password:'myNewClusterAdminPass', role: 'readWriteAnyDatabase'
+# and scoped to "MyNewCluster" database
+newClusterAdminUser = 'myNewClusterAdmin'
+newClusterAdminPass = 'myNewClusterAdminPass'
+!atlas dbusers create <CODE_BLOCK>
+```
+
+:::tip
+<details>
+    <summary> Answer </summary>
+    ```python
+    # Create a user:'myNewClusterAdmin', password:'myNewClusterAdminPass', role: 'readWriteAnyDatabase'
+    # and scoped to "MyNewCluster" database
+    newClusterAdminUser = 'myNewClusterAdmin'
+    newClusterAdminPass = 'myNewClusterAdminPass'
+    !atlas dbusers create --username {newClusterAdminUser} --password {newClusterAdminPass} --role readWriteAnyDatabase --scope 'MyNewCluster' --projectId {project_id} 
+```
+</details>
+:::
+
+### 2. Create a user with read-only access to the "salesDB" database.
+
+Create a custom role named `salesRead` with read-only access to the `salesDB` database.
+
+Refer to the documentation: [atlas customDbRoles](https://www.mongodb.com/docs/atlas/cli/current/command/atlas-customDbRoles-create).
+
+```python
+#Create a role "salesRead" which access to read-only role to salesDB database
+!atlas customDbRoles create <CODE_BLOCK>
+```
+
+:::tip
+<details>
+    <summary> Answer </summary>
+    ```python
+    #Create a role "salesRead" which access to read-only role to salesDB database
+    !atlas customDbRoles create salesRead --inheritedRole read@salesDB --projectId {project_id}
+    ```
+</details>
+:::
+
+
+Now, we will create a user `salesReadUser` with password `salesReadPass` which has the `salesRead` role.
+
+
+```python
+salesReadUser = 'salesReadUser'
+salesReadPass = 'salesReadPass'
+!atlas dbusers create <CODE_BLOCK>
+```
+
+:::tip
+<details>
+    <summary> Answer </summary>
+    ```python
+    #Create a user "salesReadUser" with password "salesReadPass" which has the "salesRead" role
+    salesReadUser = 'salesReadUser'
+    salesReadPass = 'salesReadPass'
+    !atlas dbusers create --username salesReadUser --password salesReadPass --role salesRead --projectId {project_id}
+    ```
+</details>
+:::
+
+### 3. Test that "salesReadUser" cannot insert data into the "salesDB" database.
+
+We will test that indeed `salesReadUser` can't write to the database.
+
+```python
+# Get connection string
+connection = !atlas clusters connectionStrings describe MyNewCluster --projectId {project_id}
+
+# Replace connection string with username and password
+new_connection = connection[1].replace('mongodb+srv://', f'mongodb+srv://{salesReadUser}:{salesReadPass}@')
+
+# Attempt to insert data
+client = MongoClient(new_connection)
+db = client['salesDB']
+collection = db['mycollection']
+try:
+  data = {'name': 'John Doe', 'age': 30}
+  result = collection.insert_one(data)
+  print(f"Inserted document with ID: {result.inserted_id}")
+except Exception as e:
+  print(f"Error inserting data: {e}")
+```
+
+### 4. Test that "myNewClusterAdmin" can insert data into the "salesDB" database.
+
+```python
+# Get connection string
+connection = !atlas clusters connectionStrings describe MyNewCluster --projectId {project_id}
+
+# Replace connection string with username and password
+new_connection = connection[1].replace('mongodb+srv://', f'mongodb+srv://{newClusterAdminUser}:{newClusterAdminPass}@')
+
+# Attempt to insert data
+client = MongoClient(new_connection)
+db = client['salesDB']
+collection = db['mycollection']
+try:
+  data = {'name': 'John Doe', 'age': 30}
+  result = collection.insert_one(data)
+  print(f"Inserted document with ID: {result.inserted_id}")
+except Exception as e:
+  print(f"Error inserting data: {e}")
+```
+
+## Next steps
+
+Start the chapter on [queryable encryption](./queryable-encryption) for data encryption.

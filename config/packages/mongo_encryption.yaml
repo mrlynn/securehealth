@@ -1,0 +1,5 @@
+services:
+    App\Service\MongoDBEncryptionService:
+        arguments:
+            $mongoUrl: '%env(MONGODB_URL)%'
+            $keyVaultNamespace: '%env(MONGODB_KEY_VAULT_NAMESPACE)%'

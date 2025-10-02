@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        input { width: 100%; padding: 8px; margin: 10px 0; }
+        button { padding: 10px; background: blue; color: white; border: none; cursor: pointer; }
+        .message { margin: 20px 0; padding: 10px; border-radius: 4px; }
+        .error { background: #ffdddd; border: 1px solid red; }
+        .success { background: #ddffdd; border: 1px solid green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simple Login</h1>
+        
+        <div id="loginForm">
+            <input type="text" id="email" placeholder="Email" value="doctor@example.com">
+            <input type="password" id="password" placeholder="Password" value="doctor">
+            <button onclick="login()">Login</button>
+        </div>
+        
+        <div id="message" class="message" style="display: none;"></div>
+    </div>
+    
+    <script>
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            
+            messageDiv.style.display = 'block';
+            messageDiv.className = 'message';
+            messageDiv.textContent = 'Logging in...';
+            
+            // Direct API call with raw XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/login', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            messageDiv.textContent = 'Success! Response: ' + xhr.responseText;
+                            messageDiv.className = 'message success';
+                            
+                            // Store in localStorage
+                            const user = {
+                                email: email,
+                                username: data.username || email,
+                                roles: data.roles || []
+                            };
+                            localStorage.setItem('securehealth_user', JSON.stringify(user));
+                            
+                            // Redirect after successful login
+                            setTimeout(function() {
+                                window.location.href = '/patients.html';
+                            }, 2000);
+                            
+                        } catch (e) {
+                            messageDiv.textContent = 'Error parsing response: ' + e.message;
+                            messageDiv.className = 'message error';
+                        }
+                    } else {
+                        messageDiv.textContent = 'Error: ' + xhr.status + ' ' + xhr.statusText;
+                        messageDiv.className = 'message error';
+                    }
+                }
+            };
+            xhr.send(JSON.stringify({
+                _username: email,
+                _password: password
+            }));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureHealth - HIPAA Compliant Medical Records Management</title>
+    <meta name="description" content="SecureHealth is a HIPAA-compliant medical records management system powered by MongoDB Queryable Encryption, ensuring patient data security and regulatory compliance.">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c5aa0;
+            --secondary-color: #1e3a5f;
+            --accent-color: #4a90e2;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-text);
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+        
+        .security-badge {
+            background: linear-gradient(45deg, var(--success-color), #20c997);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .encryption-demo {
+            background: var(--light-bg);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 5px solid var(--accent-color);
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .stats-section {
+            background: var(--light-bg);
+            padding: 60px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: block;
+        }
+        
+        .cta-section {
+            background: var(--primary-color);
+            color: white;
+            padding: 80px 0;
+        }
+        
+        .btn-custom {
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom {
+            background: var(--accent-color);
+            border: 2px solid var(--accent-color);
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            background: transparent;
+            color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline-custom {
+            border: 2px solid white;
+            color: white;
+            background: transparent;
+        }
+        
+        .btn-outline-custom:hover {
+            background: white;
+            color: var(--primary-color);
+        }
+        
+        .navbar-custom {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .footer {
+            background: var(--secondary-color);
+            color: white;
+            padding: 60px 0 30px;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .encryption-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0 2px;
+        }
+        
+        .encryption-deterministic {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .encryption-range {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .encryption-standard {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="#">
+                <i class="fas fa-shield-alt text-primary me-2"></i>SecureHealth
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#security">Security</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#demo">Demo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/documentation.html">Documentation</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin.html" id="adminLink" style="display: none;">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary-custom btn-custom ms-3" href="/login.html">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 hero-content">
+                    <div class="security-badge">
+                        <i class="fas fa-lock me-2"></i>HIPAA Compliant
+                    </div>
+                    <h1 class="display-4 fw-bold mb-4">
+                        Secure Medical Records Management
+                    </h1>
+                    <p class="lead mb-4">
+                        Advanced patient data protection using MongoDB Queryable Encryption. 
+                        Ensure HIPAA compliance while maintaining searchable, encrypted medical records.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="/login.html" class="btn btn-primary-custom btn-custom">
+                            <i class="fas fa-play me-2"></i>Start Demo
+                        </a>
+                        <a href="#features" class="btn btn-outline-custom btn-custom">
+                            <i class="fas fa-info-circle me-2"></i>Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <div class="encryption-demo">
+                        <h5 class="mb-3">
+                            <i class="fas fa-eye-slash me-2"></i>Encrypted at Rest
+                        </h5>
+                        <div class="code-block">
+                            <div class="text-success">// Raw MongoDB Document</div>
+                            <div class="text-warning">{</div>
+                            <div class="text-info">  "firstName": {</div>
+                            <div class="text-info">    "$binary": "AV2qZ9q5zEzjoqzStvMORNwCiUppKpfQ...",</div>
+                            <div class="text-info">    "$type": "06"  <span class="text-muted">// Encrypted</span></div>
+                            <div class="text-info">  },</div>
+                            <div class="text-warning">  "ssn": {</div>
+                            <div class="text-warning">    "$binary": "AV2qZ9q5zEzjoqzStvMORNwCBZkfu+sB6R...",</div>
+                            <div class="text-warning">    "$type": "06"  <span class="text-muted">// Encrypted</span></div>
+                            <div class="text-warning">  }</div>
+                            <div class="text-warning">}</div>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            Data encrypted using MongoDB Queryable Encryption
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center mb-5">
+                    <h2 class="display-5 fw-bold mb-4">Advanced Security Features</h2>
+                    <p class="lead text-muted">
+                        Built with enterprise-grade security and compliance in mind
+                    </p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <h4>Queryable Encryption</h4>
+                        <p class="text-muted">
+                            Search encrypted data without decryption. MongoDB Queryable Encryption 
+                            enables secure queries while maintaining data privacy.
+                        </p>
+                        <div class="mt-3">
+                            <span class="encryption-badge encryption-deterministic">D</span>
+                            <span class="encryption-badge encryption-range">R</span>
+                            <span class="encryption-badge encryption-standard">S</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <h4>Role-Based Access Control</h4>
+                        <p class="text-muted">
+                            Granular permissions ensure users only access data they need. 
+                            Doctor, Nurse, and Receptionist roles with different data visibility.
+                        </p>
+                        <ul class="list-unstyled mt-3">
+                            <li><i class="fas fa-check text-success me-2"></i>Doctor: Full access</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Nurse: Medical data only</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Receptionist: Basic info only</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <h4>HIPAA Compliance</h4>
+                        <p class="text-muted">
+                            Built-in compliance features including audit logging, 
+                            data encryption, and access controls to meet HIPAA requirements.
+                        </p>
+                        <ul class="list-unstyled mt-3">
+                            <li><i class="fas fa-check text-success me-2"></i>Audit trails</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Data encryption</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Access logging</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section id="security" class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center mb-5">
+                    <h2 class="display-5 fw-bold mb-4">Security by Design</h2>
+                    <p class="lead text-muted">
+                        Multiple layers of protection ensure your patient data remains secure
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-item">
+                        <span class="stat-number">256</span>
+                        <h5>Bit Encryption</h5>
+                        <p class="text-muted">AES-256 encryption for maximum security</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <h5>Encrypted Storage</h5>
+                        <p class="text-muted">All sensitive data encrypted at rest</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-item">
+                        <span class="stat-number">3</span>
+                        <h5>Access Levels</h5>
+                        <p class="text-muted">Role-based access control system</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-item">
+                        <span class="stat-number">24/7</span>
+                        <h5>Audit Logging</h5>
+                        <p class="text-muted">Continuous monitoring and logging</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h2 class="display-5 fw-bold mb-4">See It In Action</h2>
+                    <p class="lead mb-4">
+                        Experience the power of encrypted medical records management. 
+                        Try our interactive demo to see how data remains secure while being fully searchable.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-search text-primary me-3 fs-4"></i>
+                                <div>
+                                    <h6 class="mb-1">Search Encrypted Data</h6>
+                                    <small class="text-muted">Query without decryption</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-lock text-primary me-3 fs-4"></i>
+                                <div>
+                                    <h6 class="mb-1">Role-Based Access</h6>
+                                    <small class="text-muted">Different views per role</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-eye text-primary me-3 fs-4"></i>
+                                <div>
+                                    <h6 class="mb-1">X-Ray View</h6>
+                                    <small class="text-muted">See raw encrypted data</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-chart-line text-primary me-3 fs-4"></i>
+                                <div>
+                                    <h6 class="mb-1">Audit Trails</h6>
+                                    <small class="text-muted">Complete access logging</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="/login.html" class="btn btn-primary-custom btn-custom me-3">
+                            <i class="fas fa-play me-2"></i>Try Demo
+                        </a>
+                        <a href="/documentation.html" class="btn btn-outline-primary btn-custom">
+                            <i class="fas fa-book me-2"></i>Documentation
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="text-center">
+                        <div class="encryption-demo">
+                            <h5 class="mb-3">
+                                <i class="fas fa-shield-alt me-2"></i>Encryption Types
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <div class="encryption-badge encryption-deterministic mb-2" style="font-size: 1.2rem; padding: 8px 12px;">D</div>
+                                        <small class="text-muted">Deterministic<br>Searchable</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <div class="encryption-badge encryption-range mb-2" style="font-size: 1.2rem; padding: 8px 12px;">R</div>
+                                        <small class="text-muted">Range<br>Date Queries</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <div class="encryption-badge encryption-standard mb-2" style="font-size: 1.2rem; padding: 8px 12px;">S</div>
+                                        <small class="text-muted">Standard<br>Maximum Security</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container text-center">
+            <h2 class="display-5 fw-bold mb-4">Ready to Secure Your Medical Data?</h2>
+            <p class="lead mb-5">
+                Experience the future of HIPAA-compliant medical records management 
+                with MongoDB Queryable Encryption.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="/login.html" class="btn btn-outline-custom btn-custom">
+                    <i class="fas fa-rocket me-2"></i>Start Demo Now
+                </a>
+                <a href="/documentation.html" class="btn btn-outline-custom btn-custom">
+                    <i class="fas fa-file-alt me-2"></i>Read Documentation
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                    </h5>
+                    <p class="text-light">
+                        HIPAA-compliant medical records management powered by 
+                        MongoDB Queryable Encryption technology.
+                    </p>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Product</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#features" class="text-light text-decoration-none">Features</a></li>
+                        <li><a href="#security" class="text-light text-decoration-none">Security</a></li>
+                        <li><a href="#demo" class="text-light text-decoration-none">Demo</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Resources</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="/documentation.html" class="text-light text-decoration-none">Documentation</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Support</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <h6 class="fw-bold mb-3">Technology Stack</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-light text-dark">MongoDB</span>
+                        <span class="badge bg-light text-dark">Queryable Encryption</span>
+                        <span class="badge bg-light text-dark">PHP</span>
+                        <span class="badge bg-light text-dark">Symfony</span>
+                        <span class="badge bg-light text-dark">Bootstrap</span>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-light">
+                        &copy; 2024 SecureHealth. Built for educational and demonstration purposes.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-light">
+                        <i class="fas fa-lock me-1"></i>
+                        HIPAA Compliant • Encrypted at Rest • Role-Based Access
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    
+    <!-- Smooth scrolling and admin check -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is admin and show admin link
+            checkAdminStatus();
+            
+            // Smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+        
+        function checkAdminStatus() {
+            const storedUser = localStorage.getItem('securehealth_user');
+            const adminLink = document.getElementById('adminLink');
+            
+            if (storedUser && adminLink) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    if (user.isAdmin) {
+                        adminLink.style.display = 'block';
+                    }
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

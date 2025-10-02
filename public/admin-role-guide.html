@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Role Implementation Guide - SecureHealth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .admin-badge { background: linear-gradient(45deg, #6f42c1, #e83e8c); }
+        .permission-card { transition: transform 0.2s; }
+        .permission-card:hover { transform: translateY(-2px); }
+        .code-block { background: #2d3748; color: #e2e8f0; padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt me-2"></i>SecureHealth Admin Role Guide
+            </a>
+            <div class="ms-auto">
+                <a href="/admin.html" class="btn btn-outline-light btn-sm me-2">Admin Dashboard</a>
+                <a href="/patients.html" class="btn btn-outline-light btn-sm">Patients</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="text-center mb-5">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <span class="admin-badge text-white px-3 py-2 rounded-pill me-3">ADMIN</span>
+                        Role Implementation
+                    </h1>
+                    <p class="lead text-muted">
+                        Complete guide to the admin role implementation in SecureHealth's RBAC system.
+                    </p>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Admin Role Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>The admin role in SecureHealth provides <strong>administrative access</strong> without compromising patient medical data security. Admins can manage users, review audit logs, and access basic patient information for administrative purposes.</p>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> Admins are explicitly <strong>denied access</strong> to sensitive medical data (diagnosis, medications, SSN) to maintain HIPAA compliance and the principle of least privilege.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="card permission-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                                    <h5 class="mb-0">Admin Permissions</h5>
+                                </div>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>View basic patient information</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Access insurance details</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Review audit logs</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Manage user accounts</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>System monitoring</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Access admin dashboard</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card permission-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-times-circle fa-2x text-danger me-3"></i>
+                                    <h5 class="mb-0">Admin Restrictions</h5>
+                                </div>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-times text-danger me-2"></i>Cannot view medical diagnosis</li>
+                                    <li><i class="fas fa-times text-danger me-2"></i>Cannot view medications</li>
+                                    <li><i class="fas fa-times text-danger me-2"></i>Cannot view SSN</li>
+                                    <li><i class="fas fa-times text-danger me-2"></i>Cannot create patient records</li>
+                                    <li><i class="fas fa-times text-danger me-2"></i>Cannot edit patient records</li>
+                                    <li><i class="fas fa-times text-danger me-2"></i>Cannot delete patient records</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-code me-2"></i>Technical Implementation</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>1. PatientVoter.php - Backend Authorization</h6>
+                        <div class="code-block">
+<pre>private function checkAdminPermissions(string $attribute): bool
+{
+    switch ($attribute) {
+        case self::VIEW:
+            return true;  // Can view basic patient info
+            
+        case self::VIEW_INSURANCE:
+        case self::EDIT_INSURANCE:
+            return true;  // Can access insurance
+            
+        case self::VIEW_DIAGNOSIS:
+        case self::VIEW_MEDICATIONS:
+        case self::VIEW_SSN:
+        case self::CREATE:
+        case self::EDIT:
+        case self::DELETE:
+            return false; // Cannot access medical data
+    }
+}</pre>
+                        </div>
+
+                        <h6 class="mt-4">2. patients.html - Frontend Role Detection</h6>
+                        <div class="code-block">
+<pre>function determineUserRole(user) {
+    // Check for admin first
+    if (user.isAdmin || email.includes('admin')) {
+        return 'ADMIN';
+    }
+    // ... other roles
+}</pre>
+                        </div>
+
+                        <h6 class="mt-4">3. Role-Based UI Rendering</h6>
+                        <div class="code-block">
+<pre>case 'ADMIN':
+    // Admins see insurance but no medical data or SSN
+    row += `&lt;td class="insurance-field"&gt;
+        &lt;div&gt;&lt;strong&gt;Provider:&lt;/strong&gt; ${patient.insuranceDetails?.provider}&lt;/div&gt;
+        &lt;div&gt;&lt;strong&gt;Policy:&lt;/strong&gt; ${patient.insuranceDetails?.policyNumber}&lt;/div&gt;
+    &lt;/td&gt;`;
+    break;</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Role Hierarchy</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <div class="p-3 border rounded">
+                                    <i class="fas fa-user-md fa-2x text-danger mb-2"></i>
+                                    <h6>Doctor</h6>
+                                    <small class="text-muted">Full medical access</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="p-3 border rounded">
+                                    <i class="fas fa-user-nurse fa-2x text-primary mb-2"></i>
+                                    <h6>Nurse</h6>
+                                    <small class="text-muted">Medical data only</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="p-3 border rounded">
+                                    <i class="fas fa-user-tie fa-2x text-secondary mb-2"></i>
+                                    <h6>Receptionist</h6>
+                                    <small class="text-muted">Basic info + insurance</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="p-3 border rounded bg-light">
+                                    <i class="fas fa-cog fa-2x text-purple mb-2"></i>
+                                    <h6>Admin</h6>
+                                    <small class="text-muted">System management</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Security Considerations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-lock me-2"></i>HIPAA Compliance</h6>
+                                <ul class="small">
+                                    <li>Admin role follows "minimum necessary" rule</li>
+                                    <li>No access to sensitive medical data</li>
+                                    <li>Audit logging for all admin actions</li>
+                                    <li>Role-based access control enforcement</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-key me-2"></i>Access Control</h6>
+                                <ul class="small">
+                                    <li>Backend authorization via PatientVoter</li>
+                                    <li>Frontend role detection and UI filtering</li>
+                                    <li>Database-level encryption for sensitive fields</li>
+                                    <li>Session-based authentication</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-play me-2"></i>Testing Admin Role</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>How to Test Admin Functionality:</h6>
+                        <ol>
+                            <li><strong>Login as Admin:</strong>
+                                <ul>
+                                    <li>Email: admin@securehealth.com</li>
+                                    <li>Password: admin123</li>
+                                </ul>
+                            </li>
+                            <li><strong>Verify Access:</strong>
+                                <ul>
+                                    <li>Admin badge appears in navigation</li>
+                                    <li>Can access admin dashboard</li>
+                                    <li>Can view patient list with limited data</li>
+                                    <li>Cannot see medical information or SSN</li>
+                                </ul>
+                            </li>
+                            <li><strong>Test Restrictions:</strong>
+                                <ul>
+                                    <li>No edit/delete buttons for patients</li>
+                                    <li>No medical data in patient table</li>
+                                    <li>Can view insurance information</li>
+                                </ul>
+                            </li>
+                        </ol>
+                        
+                        <div class="mt-3">
+                            <a href="/admin.html" class="btn btn-primary me-2">
+                                <i class="fas fa-tachometer-alt me-2"></i>Test Admin Dashboard
+                            </a>
+                            <a href="/patients.html" class="btn btn-outline-primary">
+                                <i class="fas fa-users me-2"></i>Test Patient View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">
+                <i class="fas fa-shield-alt me-2"></i>
+                SecureHealth Admin Role Implementation - HIPAA Compliant RBAC System
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

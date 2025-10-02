@@ -1,0 +1,227 @@
+---
+sidebar_position: 3
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Authentication in MongoDB
+
+Authentication is a crucial security feature that verifies the identity of clients attempting to connect to your MongoDB deployment. MongoDB provides several authentication mechanisms to accommodate different security requirements.
+
+## Authentication Mechanisms
+
+<Tabs groupId="deployment">
+<TabItem value="atlas" label="MongoDB Atlas">
+
+:::info[Atlas User Types]
+In MongoDB Atlas, there are two main types of users:
+- **Atlas Control Plane Users**: These users manage the Atlas infrastructure, projects, and services (e.g., creating clusters, configuring network access, managing billing). They interact with the Atlas UI, API, or CLI.
+- **Atlas Data Plane Users**: These users are created within an Atlas project and are used by applications and clients to connect to and authenticate against the actual MongoDB databases hosted on Atlas. They have specific database roles and privileges.
+:::
+
+MongoDB Atlas supports multiple authentication mechanisms:
+
+- **SCRAM (Default)**: The default and simplest mechanism for MongoDB, providing secure authentication using salted challenge-response methods. (For production deployment we recommend using a more advanced authentication mechanism)
+- **X.509 Certificate Authentication**: Certificate-based authentication that uses SSL/TLS certificates for verifying client identity, typically used in environments that require high security.
+- **AWS IAM Authentication**:MongoDB Atlas supports AWS IAM authentication, allowing users to authenticate using their AWS Identity and Access Management roles, which is useful for integration with AWS services.
+- **Workforce Identity Federation Authentication**: Allows users to integrate MongoDB Atlas with external identity providers (IdPs) like Okta or Azure AD for centralized access management and single sign-on (SSO).
+- **Workload Identity Federation Authentication**: Enables authentication for applications and workloads by allowing them to assume predefined roles, simplifying access management for services running in hybrid or multi-cloud environments.
+- **LDAP Authentication**: Allows integration with corporate directory services, enabling centralized management of user access across the organization.
+
+### SCRAM Authentication
+
+SCRAM (Salted Challenge Response Authentication Mechanism) is MongoDB's default authentication mechanism. It provides secure username/password authentication.
+
+#### Creating a User with SCRAM Authentication
+
+```javascript
+// In MongoDB Atlas UI: Database Access > Add New Database User
+// Or using Atlas CLI:
+atlas dbusers create --username demoUser --password mySecurePassword --role readWriteAnyDatabase --projectId 
+
+Database user 'demoUser' successfully created.
+```
+
+<details>
+<summary> Atlas Administration API</summary>
+```
+//Use Atlas Admin API
+POST /api/atlas/v1.0/groups/{GROUP-ID}/databaseUsers
+{
+ "databaseName": "admin",
+ "username": "demoUser",
+ "password": "secure_password",
+ "roles": [{
+   "roleName": "readWrite",
+   "databaseName": "myDatabase"
+ }]
+}
+```
+</details>
+
+#### Connecting with SCRAM Authentication
+
+```shell
+mongosh "mongodb+srv://cluster0.example.mongodb.net/myDatabase" \
+  --username demoUser \
+  --password mySecurePassword
+```
+
+### AWS IAM Authentication
+
+Atlas clusters on AWS can use IAM authentication:
+
+1. Configure IAM Authentication in Atlas UI
+2. Create an IAM Role with necessary permissions
+3. Connect using AWS credentials:
+
+```javascript
+mongosh "mongodb+srv://<atlas-host-name>/test?authSource=%24external&authMechanism=MONGODB-AWS" --username <access-key-id> --password <secret-key>
+```
+
+### X.509 Certificate Authentication
+
+Certificate-based authentication that uses SSL/TLS certificates for verifying client identity, typically used in environments that require high security.
+
+```
+## Create User
+!atlas dbusers create --username demoX509User --x509Type MANAGED --role readAnyDatabase --projectId {project_id}
+
+## Create the relevant certificate
+!atlas dbusers certs create --username demoX509User --monthsUntilExpiration 1 --projectId {project_id} > /tmp/cert.pem
+```
+
+Connect using X509 via shell
+```
+mongosh "mongodb+srv://<atlas-host-name>/test?authSource=%24external&authMechanism=MONGODB-X509"  --tlsCertificateKeyFile /tmp/cert.pem
+```
+
+
+</TabItem>
+<TabItem value="onprem" label="On-Premises">
+
+:::info[On-Premises User Management]
+In on-premises MongoDB deployments, user management is handled directly on the MongoDB server. Administrators create and manage users and their roles using the mongo shell or drivers, and these users authenticate directly against the database instances.
+:::
+
+On-premises MongoDB deployments support:
+
+- **SCRAM (Default)**: Username/Password Authentication
+- **X.509 Certificate Authentication**
+- **LDAP Authentication** (Enterprise Only)
+- **Kerberos Authentication** (Enterprise Only)
+
+### SCRAM Authentication
+
+Configure SCRAM authentication in mongod.conf:
+
+```yaml
+security:
+  authorization: enabled
+```
+
+Create administrative user:
+
+```javascript
+use admin
+db.createUser({
+  user: "demoUser",
+  pwd: "mySecurePassword",
+  roles: [ { role: "readWrite", db: "myDatabase" } ]
+})
+```
+
+Connect with authentication:
+
+```shell
+mongosh --username demoUser --password mySecurePassword --authenticationDatabase admin
+```
+
+### X.509 Certificate Authentication
+
+1. Generate certificates:
+```bash
+openssl req -newkey rsa:2048 -new -x509 -days 365 -nodes \
+  -out mongodb-cert.crt -keyout mongodb-cert.key
+```
+
+2. Configure mongod.conf:
+```yaml
+net:
+  tls:
+    mode: requireTLS
+    certificateKeyFile: /path/to/mongodb-cert.pem
+    CAFile: /path/to/ca.pem
+security:
+  authorization: enabled
+```
+
+3. Create X.509 user:
+```javascript
+db.getSiblingDB("$external").runCommand({
+  createUser: "CN=myClient,OU=myOrgUnit,O=myOrg,L=myLocality,ST=myState,C=myCountry",
+  roles: [
+    { role: "readWrite", db: "myDatabase" }
+  ]
+})
+```
+
+4. Connect with X.509:
+```shell
+mongosh --tls --tlsCertificateKeyFile client.pem \
+  --authenticationMechanism MONGODB-X509 \
+  --authenticationDatabase '$external'
+```
+
+</TabItem>
+</Tabs>
+
+## Best Practices
+
+<Tabs>
+<TabItem value="atlas" label="MongoDB Atlas">
+
+1. **User Management**
+   - Use Database Access page in Atlas UI for user management
+   - Implement role-based access control (RBAC)
+   - Regularly audit user access and permissions
+
+2. **Connection Security**
+   - Use connection strings with `mongodb+srv://` protocol
+   - Enable Network Access List restrictions
+   - Implement IP access lists
+
+3. **Authentication Methods**
+   - Use AWS IAM authentication when possible for AWS deployments
+   - Implement strong password policies
+   - Consider X.509 for application authentication
+
+</TabItem>
+<TabItem value="onprem" label="On-Premises">
+
+1. **Security Configuration**
+   - Always enable authentication and authorization
+   - Use TLS/SSL for all connections
+   - Regularly rotate credentials and certificates
+
+2. **User Management**
+   - Follow principle of least privilege
+   - Regular audit of user permissions
+   - Implement role-based access control
+
+3. **Infrastructure Security**
+   - Secure the underlying operating system
+   - Configure network security (firewalls, VPNs)
+   - Regular security patches and updates
+
+</TabItem>
+</Tabs>
+
+## Challenges and Exercises
+
+Let's move to the [Authentication challenge](./challenge/authentication).
+
+## Next Steps
+
+After mastering authentication, proceed to learn about Role-Based Access Control (RBAC) to implement fine-grained access control for your MongoDB deployment.

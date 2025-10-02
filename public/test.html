@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Test</title>
+</head>
+<body>
+  <h1>Login Test</h1>
+  
+  <div id="result"></div>
+  
+  <script>
+    // Test login with doctor credentials
+    fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: 'doctor@example.com',
+        password: 'doctor'
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('result').innerHTML = `
+        <h2>Login Result</h2>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      `;
+      
+      if (data.success) {
+        localStorage.setItem('securehealth_user', JSON.stringify(data.user));
+        document.getElementById('result').innerHTML += `
+          <div style="color: green; margin-top: 20px;">
+            User saved to localStorage. You should now be able to login.
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      document.getElementById('result').innerHTML = `
+        <h2>Login Error</h2>
+        <pre style="color: red;">${error.message}</pre>
+      `;
+    });
+  </script>
+</body>
+</html>

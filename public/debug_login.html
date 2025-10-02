@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Login</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border: 1px solid #ddd;
+      overflow-x: auto;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 16px;
+    }
+    .success { color: green; }
+    .error { color: red; }
+    .debug { color: blue; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Login Debug Tool</h1>
+
+    <h2>1. Local Storage Inspector</h2>
+    <div>
+      <button onclick="checkLocalStorage()">Inspect localStorage</button>
+      <button onclick="clearLocalStorage()">Clear localStorage</button>
+    </div>
+    <pre id="localStorage-output"></pre>
+
+    <h2>2. Login API Test</h2>
+    <div>
+      <button onclick="testLogin('doctor@example.com', 'doctor')">Login as Doctor</button>
+      <button onclick="testLogin('nurse@example.com', 'nurse')">Login as Nurse</button>
+      <button onclick="testLogin('receptionist@example.com', 'receptionist')">Login as Receptionist</button>
+    </div>
+    <pre id="api-output"></pre>
+    
+    <h2>3. Direct Patient Access</h2>
+    <p>This bypasses React routing to test API access with current localStorage credentials</p>
+    <div>
+      <button onclick="testPatientApi()">Test Patient API Access</button>
+    </div>
+    <pre id="patient-output"></pre>
+
+    <h2>4. Fix Local Storage</h2>
+    <div>
+      <button onclick="fixLocalStorage()">Fix User Object Format</button>
+    </div>
+    <pre id="fix-output"></pre>
+  </div>
+
+  <script>
+    // Check localStorage contents
+    function checkLocalStorage() {
+      const output = document.getElementById('localStorage-output');
+      const user = localStorage.getItem('securehealth_user');
+      
+      output.innerHTML = '';
+      output.innerHTML += '<div class="debug">localStorage contents for key "securehealth_user":</div>';
+      
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          output.innerHTML += `<div class="success">Valid JSON found:</div>\n${JSON.stringify(userData, null, 2)}`;
+          
+          // Check format
+          output.innerHTML += '\n\n<div class="debug">Checking required properties:</div>';
+          if (userData.email) {
+            output.innerHTML += '\n<div class="success">✓ Has email property: ' + userData.email + '</div>';
+          } else {
+            output.innerHTML += '\n<div class="error">✗ Missing email property!</div>';
+          }
+          
+          if (userData.username) {
+            output.innerHTML += '\n<div class="success">✓ Has username property: ' + userData.username + '</div>';
+          } else {
+            output.innerHTML += '\n<div class="error">✗ Missing username property!</div>';
+          }
+          
+          if (userData.roles && Array.isArray(userData.roles)) {
+            output.innerHTML += '\n<div class="success">✓ Has roles array: ' + JSON.stringify(userData.roles) + '</div>';
+          } else {
+            output.innerHTML += '\n<div class="error">✗ Missing roles array or not an array!</div>';
+          }
+        } catch (e) {
+          output.innerHTML += `<div class="error">Invalid JSON: ${e.message}</div>\n${user}`;
+        }
+      } else {
+        output.innerHTML += '<div class="error">No user data in localStorage</div>';
+      }
+    }
+
+    // Clear localStorage
+    function clearLocalStorage() {
+      localStorage.removeItem('securehealth_user');
+      checkLocalStorage();
+    }
+
+    // Test login API
+    function testLogin(email, password) {
+      const output = document.getElementById('api-output');
+      output.innerHTML = '<div class="debug">Sending login request...</div>';
+      
+      fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          _username: email,
+          _password: password
+        })
+      })
+      .then(response => {
+        output.innerHTML += `<div class="debug">Response status: ${response.status}</div>`;
+        return response.json();
+      })
+      .then(data => {
+        output.innerHTML += `<div class="success">API Response:</div>\n${JSON.stringify(data, null, 2)}`;
+        
+        if (data.success) {
+          const user = {
+            email: email,
+            username: data.user ? data.user.username : email,
+            roles: data.user ? data.user.roles : []
+          };
+          
+          localStorage.setItem('securehealth_user', JSON.stringify(user));
+          output.innerHTML += '\n\n<div class="success">User data stored in localStorage</div>';
+          checkLocalStorage();
+        }
+      })
+      .catch(error => {
+        output.innerHTML += `<div class="error">Error: ${error.message}</div>`;
+      });
+    }
+
+    // Test patient API access
+    function testPatientApi() {
+      const output = document.getElementById('patient-output');
+      output.innerHTML = '<div class="debug">Fetching patients...</div>';
+      
+      fetch('/api/patients')
+        .then(response => {
+          output.innerHTML += `<div class="debug">Response status: ${response.status}</div>`;
+          return response.json();
+        })
+        .then(data => {
+          output.innerHTML += `<div class="success">Patient API Response:</div>\n${JSON.stringify(data, null, 2)}`;
+        })
+        .catch(error => {
+          output.innerHTML += `<div class="error">Error: ${error.message}</div>`;
+        });
+    }
+
+    // Fix localStorage format
+    function fixLocalStorage() {
+      const output = document.getElementById('fix-output');
+      const user = localStorage.getItem('securehealth_user');
+      
+      if (user) {
+        try {
+          let userData = JSON.parse(user);
+          
+          // Fix format
+          if (!userData.email && userData.username) {
+            userData.email = userData.username;
+          }
+          
+          if (!userData.username && userData.email) {
+            userData.username = userData.email;
+          }
+          
+          if (!userData.roles || !Array.isArray(userData.roles)) {
+            userData.roles = [];
+          }
+          
+          localStorage.setItem('securehealth_user', JSON.stringify(userData));
+          output.innerHTML = `<div class="success">Fixed user data:</div>\n${JSON.stringify(userData, null, 2)}`;
+        } catch (e) {
+          output.innerHTML = `<div class="error">Error fixing user data: ${e.message}</div>`;
+        }
+      } else {
+        output.innerHTML = '<div class="error">No user data in localStorage to fix</div>';
+      }
+    }
+    
+    // Run localStorage check on page load
+    checkLocalStorage();
+  </script>
+</body>
+</html>

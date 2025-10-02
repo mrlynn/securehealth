@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f8f9fa;
+    }
+    .container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0069d9;
+    }
+    .alert {
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+    }
+    .alert-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .test-accounts {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 20px;
+      text-align: center;
+    }
+    .test-accounts p {
+      margin-bottom: 15px;
+      color: #6c757d;
+    }
+    .quick-login {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .role-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+    .role-btn.doctor {
+      background-color: #4361ee;
+    }
+    .role-btn.nurse {
+      background-color: #3a86ff;
+    }
+    .role-btn.receptionist {
+      background-color: #4895ef;
+    }
+    .role-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .role-icon {
+      font-style: normal;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SecureHealth Login</h1>
+    
+    <div id="alert" style="display: none;" class="alert"></div>
+    
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Enter email" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Password" required>
+    </div>
+    
+    <button id="loginBtn">Login</button>
+    
+    <div class="test-accounts">
+      <p>Quick login with test accounts:</p>
+      <div class="quick-login">
+        <button class="role-btn doctor" data-email="doctor@example.com" data-password="doctor">
+          <i class="role-icon">👨‍⚕️</i> Login as Doctor
+        </button>
+        <button class="role-btn nurse" data-email="nurse@example.com" data-password="nurse">
+          <i class="role-icon">👩‍⚕️</i> Login as Nurse
+        </button>
+        <button class="role-btn receptionist" data-email="receptionist@example.com" data-password="receptionist">
+          <i class="role-icon">👩‍💼</i> Login as Receptionist
+        </button>
+        <button class="role-btn receptionist" data-email="admin@securehealth.com" data-password="admin123">
+          <i class="role-icon">🤖</i> Login as Administrator
+        </button>
+      </div>
+      <p style="margin-top: 15px;"><a href="/documentation.html" target="_blank">📚 View Documentation</a> </p>
+    </div>
+  </div>
+  
+  <script>
+    // Debug helper function
+    function debugLog(msg, data) {
+      console.log("🔍 " + msg, data);
+      // You can also show debug info on the page if needed
+    }
+    
+    // Check if we were redirected back here
+    window.addEventListener('load', function() {
+      debugLog("Page loaded", { 
+        url: window.location.href, 
+        referrer: document.referrer,
+        localStorage: localStorage.getItem('securehealth_user')
+      });
+      
+      // If we have user data but still ended up here, something went wrong
+      const userData = localStorage.getItem('securehealth_user');
+      if (userData) {
+        console.log("WARNING: Already logged in but back at login page!", JSON.parse(userData));
+      }
+      
+      // Add click handlers to role buttons
+      document.querySelectorAll('.role-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const email = this.getAttribute('data-email');
+          const password = this.getAttribute('data-password');
+          
+          // Fill in the form
+          document.getElementById('email').value = email;
+          document.getElementById('password').value = password;
+          
+          // Submit the form
+          document.getElementById('loginBtn').click();
+        });
+      });
+    });
+    
+    document.getElementById('loginBtn').addEventListener('click', function() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const alertEl = document.getElementById('alert');
+      
+      if (!email || !password) {
+        alertEl.className = 'alert alert-danger';
+        alertEl.textContent = 'Please enter email and password';
+        alertEl.style.display = 'block';
+        return;
+      }
+      
+      // API login
+      alertEl.className = 'alert alert-info';
+      alertEl.textContent = 'Authenticating...';
+      alertEl.style.display = 'block';
+      
+      debugLog("Attempting login", { email });
+      
+      // Call the login API endpoint
+      fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          _username: email,
+          _password: password
+        })
+      })
+      .then(response => {
+        debugLog("API response received", { 
+          status: response.status, 
+          statusText: response.statusText 
+        });
+        return response.json();
+      })
+      .then(data => {
+        debugLog("API response data", data);
+        
+        if (data.success) {
+          // Login successful - use the complete user object from the API response
+          const user = data.user || {
+            email: email,
+            username: data.username || email,
+            roles: data.roles || [],
+            isAdmin: data.isAdmin || false
+          };
+          
+          debugLog("Created user object", user);
+          
+          // Store user data in localStorage
+          localStorage.setItem('securehealth_user', JSON.stringify(user));
+          debugLog("Saved to localStorage", localStorage.getItem('securehealth_user'));
+          
+          alertEl.className = 'alert alert-success';
+          alertEl.textContent = 'Login successful! Redirecting...';
+          
+          // Direct link to patients page
+          debugLog("Will redirect to patients.html in 1.5 seconds");
+          setTimeout(function() {
+            debugLog("Redirecting now to patients.html");
+            window.location.href = 'patients.html';
+          }, 1500);
+        } else {
+          // Login failed
+          alertEl.className = 'alert alert-danger';
+          alertEl.textContent = data.message || data.error || 'Invalid credentials';
+          alertEl.style.display = 'block';
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alertEl.className = 'alert alert-danger';
+        alertEl.textContent = 'Authentication error. Please try again.';
+        alertEl.style.display = 'block';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -26,7 +26,32 @@ git clone <repository-url>
 cd hipaa
 ```
 
-### 2. Start Docker Environment
+### 2. Configure Environment Variables
+
+**🔐 SECURITY FIRST**: Never commit secrets to version control!
+
+#### Option A: Automated Setup (Recommended)
+```bash
+./setup-env.sh
+```
+
+#### Option B: Manual Setup
+```bash
+# Copy the environment template
+cp .env.example .env
+
+# Edit with your actual values
+nano .env
+```
+
+**Required Configuration:**
+- MongoDB connection string with credentials
+- Application secret keys
+- JWT configuration
+
+See [SECURITY.md](SECURITY.md) for detailed security guidelines.
+
+### 3. Start Docker Environment
 
 ```bash
 docker-compose up -d
@@ -37,13 +62,13 @@ This will start:
 - MongoDB with encryption enabled
 - Nginx web server
 
-### 3. Install Dependencies
+### 4. Install Dependencies
 
 ```bash
 docker-compose exec php composer install
 ```
 
-### 4. Access the API
+### 5. Access the API
 
 The API is available at:
 
@@ -121,6 +146,24 @@ The system uses MongoDB's Queryable Encryption with three levels of protection:
 1. **Deterministic Encryption**: For searchable fields like lastName (enables exact matches)
 2. **Range Encryption**: For fields like birthDate (enables range queries)
 3. **Standard Encryption**: For highly sensitive data like SSN and diagnosis (no search)
+
+## Security
+
+### 🔐 Environment Security
+
+This project uses environment variables to manage sensitive configuration. **Never commit `.env` files to version control.**
+
+- Use `.env.example` as a template
+- Run `./setup-env.sh` for automated setup
+- See [SECURITY.md](SECURITY.md) for comprehensive security guidelines
+
+### 🛡️ Security Features
+
+- **MongoDB Queryable Encryption**: Client-side encryption with server-side search
+- **Role-Based Access Control**: Fine-grained permissions using Symfony Security Voters
+- **Audit Logging**: Comprehensive activity tracking for HIPAA compliance
+- **JWT Authentication**: Secure token-based authentication
+- **Environment Isolation**: Secrets managed through environment variables
 
 ## HIPAA Compliance Features
 

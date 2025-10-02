@@ -1,0 +1,75 @@
+{% extends 'docs/layout.html.twig' %}
+
+{% block title %}{{ category }} - {{ title }}{% endblock %}
+
+{% block docs_content %}
+    <div class="docs-page">
+        <div class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>{{ category }}</h3>
+                <a href="{{ path('docs_static_index') }}" class="back-link">&larr; Back to categories</a>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    {% for item in navigation %}
+                        <li{% if current_page == item.path %} class="active"{% endif %}>
+                            <a href="{{ path('docs_static_page', {'category': category|lower, 'page': item.path}) }}">
+                                {{ item.title }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+        
+        <div class="docs-main">
+            <div class="content">
+                {{ content|raw }}
+            </div>
+            
+            <div class="content-footer">
+                <div class="pagination">
+                    {% set prevPage = null %}
+                    {% set nextPage = null %}
+                    {% set foundCurrent = false %}
+                    
+                    {% for item in navigation %}
+                        {% if foundCurrent %}
+                            {% if nextPage is null %}
+                                {% set nextPage = item %}
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if current_page == item.path %}
+                            {% set foundCurrent = true %}
+                        {% elseif not foundCurrent %}
+                            {% set prevPage = item %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <div class="pagination-prev">
+                        {% if prevPage %}
+                            <a href="{{ path('docs_static_page', {'category': category|lower, 'page': prevPage.path}) }}">
+                                &larr; {{ prevPage.title }}
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="pagination-next">
+                        {% if nextPage %}
+                            <a href="{{ path('docs_static_page', {'category': category|lower, 'page': nextPage.path}) }}">
+                                {{ nextPage.title }} &rarr;
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="edit-link">
+                    <a href="https://github.com/yourusername/securehealth/edit/main/public/docs/{{ category|lower }}/{{ current_page }}.md" target="_blank">
+                        Edit this page on GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

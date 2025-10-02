@@ -1,0 +1,135 @@
+---
+sidebar_position: 1
+---
+
+# MongoDB Security Basics
+
+Welcome to the MongoDB Security Basics guide. This comprehensive tutorial covers essential security concepts and implementations for both MongoDB Atlas and On-premises deployments.
+
+## Overview
+
+This guide is structured to help you understand and implement MongoDB security features effectively. Each section provides side-by-side comparisons of implementing security features in both MongoDB Atlas and On-premises environments.
+
+In the navigation bar and in some pages, you will notice some icons. Here are their meanings:
+
+|Icon|Meaning| Description
+|-|-|-|
+|📘|Lecture material|If you are following along in an instructor-led session, they probably have covered this already.|
+|👐|Hands-on content|Get ready to do some hands-on work. You should follow these steps.|
+|📚|Documentation| Reference documentation for hands-on portions of the lab.|
+|🦹|Advanced content|This content isn't covered during the lab, but if you're interested in learning more, you can check it out.|
+
+## Topics covered
+
+### 1. Intro and network security
+Explore Atlas-specific security features:
+- Network access controls
+- Private endpoints
+
+Explore self-hosted considerations for network security.
+
+### 2. Authentication
+Learn about different authentication mechanisms and how to:
+- Set up user authentication.
+- Implement X.509 certificate authentication.
+- Manage credentials securely.
+
+### 3. Role-based access control (RBAC)
+Understand how to:
+- Create and manage roles.
+- Assign privileges to roles.
+- Implement role inheritance.
+- Follow security best practices for access control.
+
+### 4. Queryable encryption
+
+Learn how to handle your sensitive information with our most advanced encryption technique:
+- Set up encryption keys.
+- Create an encrypted client.
+- Write and read encrypted field data.
+
+
+### 5. Security considerations and summary
+Learn about additional Atlas and self-hosted security configurations:
+- System hardening
+- Encryption options
+- Database auditing
+- Backup security
+- Audit logging
+- Backup strategies
+
+## Getting started
+
+### Prerequisites
+
+Before implementing security measures, ensure you have:
+
+1. **MongoDB Atlas users**
+   - An Atlas account
+   - Access to a notebook environment to install Atlas CLI on.
+
+   **Recommended one of:**
+   - [Google colab](https://colab.research.google.com/), for general concepts: [Get yourself familiar with Jupyter Notebooks](https://mongodb-developer.github.io/vector-search-lab/docs/dev-env/jupyter-notebooks). 
+   - [Github Codespaces](https://docs.github.com/en/codespaces/developing-in-a-codespace/getting-started-with-github-codespaces-for-machine-learning)
+   - [VS Code](https://code.visualstudio.com/docs/datascience/jupyter-notebooks) 
+
+2. **On-premises users**
+   - MongoDB installed
+   - Administrative access
+   - Basic understanding of Linux/Unix systems
+
+## Using this guide
+
+Each section provides:
+- Side-by-side comparisons of Atlas and On-premises implementations.
+- Practical code examples.
+- Best practices.
+- Security checklists.
+- Hands-on exercises by using `.ipynb` notebooks.
+
+### Tab navigation
+
+Throughout this guide, you'll find content organized in tabs:
+- **Atlas**: MongoDB Atlas-specific instructions
+- **On-premises**: Self-hosted deployment instructions
+
+This allows you to focus on the content relevant to your deployment type while understanding the differences between approaches.
+
+## Security best practices
+
+Regardless of your deployment type, always:
+
+1. **Network security**
+   - Restrict network access.
+   - Use TLS/SSL encryption.
+   - Implement proper firewall rules.
+
+2. **Enable authentication**
+   - Never run MongoDB without authentication.
+   - Use strong passwords.
+   - Implement appropriate authentication mechanisms.
+
+2. **Use access controls**
+   - Follow the principle of least privilege.
+   - Regularly audit user access.
+   - Implement role-based access control.
+
+4. **Use queryable encryption**
+   - Set up queryable encryption.
+   - Create database encrypted client and collections.
+   - Read and write encrypted documents.
+
+## Next steps
+
+1. Start with [Initial Setup](./setup) to get started on completing the challenge sections.
+2. Progress to [Network Setup](./atlas) for authorising access and [Authentication](./authentication) for database user management and [Authorization](./rbac).
+3. Explore [queryable encryption](./queryable-encryption) for document-based security.
+4. Finally, recap everything in Security Considerations and Summary.
+
+## Additional resources
+
+- [MongoDB security documentation](https://docs.mongodb.com/manual/security/)
+- [MongoDB Atlas documentation](https://docs.atlas.mongodb.com/)
+- [Security checklist](https://docs.mongodb.com/manual/administration/security-checklist/)
+
+Remember to regularly review and update your security configurations to maintain the safety of your MongoDB deployments.

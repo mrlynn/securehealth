@@ -1,0 +1,40 @@
+{% extends 'docs/layout.html.twig' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block docs_content %}
+    <div class="docs-home">
+        <div class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Categories</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    {% for category in categories %}
+                        <li>
+                            <a href="{{ path('docs_static_category', {'category': category.path}) }}">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+        
+        <div class="docs-main">
+            <div class="content">
+                {{ content|raw }}
+            </div>
+            
+            <div class="category-grid">
+                {% for category in categories %}
+                    <div class="category-card">
+                        <h2>{{ category.name }}</h2>
+                        <p>Browse the {{ category.name }} documentation</p>
+                        <a href="{{ path('docs_static_category', {'category': category.path}) }}" class="btn">View Documentation</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,54 @@
+---
+sidebar_position: 1
+---
+
+
+# 👐 RUN : Network Challenge 
+
+:::info
+The provided scripts are incomplete. Replace all `<CODE_BLOCK>` with the correct code to complete the lab.
+:::
+
+### 1. Add "My current IP" temporary into the atlas project
+
+```python
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo 
+
+# Calculate the date and time 24 hours from now
+delete_after = (datetime.now(ZoneInfo('UTC')) + timedelta(hours=24)).isoformat()
+
+!atlas accessLists <CODE_BLOCK>
+```
+
+:::tip
+Docs : atlas [accessList](https://www.mongodb.com/docs/atlas/cli/current/command/atlas-accessLists/#std-label-atlas-accessLists)
+:::
+
+<details>
+    <summary> Answer </summary>
+    ```python
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo 
+
+# Calculate the date and time 24 hours from now
+delete_after = (datetime.now(ZoneInfo('UTC')) + timedelta(hours=24)).isoformat()
+
+!atlas accessLists <CODE_BLOCK> --projectId {project_id} --deleteAfter {delete_after}
+```
+</details>
+
+:::info
+The IP added is the "local" IP for the environment running the notebook. If you're running this in Collab / Codespaces this local IP will not be your computer's local IP.
+:::
+
+### 2. Check that "My current IP" was added
+```python
+!atlas accessLists list --output json --projectId {project_id}
+```
+
+You should get a JSON document that contains information in the `results` array.
+
+## Next steps
+
+Start the chapter on [authentication](./authentication) for database user management.

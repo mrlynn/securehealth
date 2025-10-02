@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureHealth Documentation - Developer Guide</title>
+    <meta name="description" content="Comprehensive developer documentation for SecureHealth HIPAA-compliant medical records system with MongoDB Queryable Encryption and Symfony Security Voters.">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c5aa0;
+            --secondary-color: #1e3a5f;
+            --accent-color: #4a90e2;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-text);
+            padding-top: 80px; /* Account for fixed navbar */
+        }
+        
+        .navbar-custom {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .code-block .comment {
+            color: #68d391;
+        }
+        
+        .code-block .keyword {
+            color: #f687b3;
+        }
+        
+        .code-block .string {
+            color: #fbb6ce;
+        }
+        
+        .code-block .class {
+            color: #90cdf4;
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border-left: 5px solid var(--accent-color);
+        }
+        
+        .encryption-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0 2px;
+        }
+        
+        .encryption-deterministic {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .encryption-range {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .encryption-standard {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+        
+        .api-endpoint {
+            background: var(--light-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .api-endpoint .method {
+            font-weight: bold;
+            color: var(--success-color);
+        }
+        
+        .footer {
+            background: var(--secondary-color);
+            color: white;
+            padding: 60px 0 30px;
+            margin-top: 4rem;
+        }
+        
+        .toc {
+            background: var(--light-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .toc ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .toc a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="/index.html">
+                <i class="fas fa-shield-alt text-primary me-2"></i>SecureHealth
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/index.html#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/index.html#security">Security</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/index.html#demo">Demo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/documentation.html">Documentation</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin.html" id="adminLink" style="display: none;">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary-custom btn-custom ms-3" href="/login.html">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 hero-content">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Developer Documentation
+                    </h1>
+                    <p class="lead mb-4">
+                        Comprehensive guide to implementing MongoDB Queryable Encryption with Symfony Security Voters 
+                        for HIPAA-compliant medical records management.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="#symfony-encryption" class="btn btn-primary-custom btn-custom">
+                            <i class="fas fa-code me-2"></i>Symfony Implementation
+                        </a>
+                        <a href="#security-voters" class="btn btn-outline-custom btn-custom">
+                            <i class="fas fa-shield-alt me-2"></i>Security Voters
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h4><i class="fas fa-list me-2"></i>Table of Contents</h4>
+            <ul>
+                <li><a href="#overview">Project Overview</a></li>
+                <li><a href="#symfony-encryption">Symfony MongoDB Queryable Encryption</a></li>
+                <li><a href="#security-voters">Symfony Security Voters & RBAC</a></li>
+                <li><a href="#implementation-patterns">Implementation Patterns</a></li>
+                <li><a href="#api-reference">API Reference</a></li>
+                <li><a href="#development-guide">Development Guide</a></li>
+            </ul>
+        </div>
+
+        <!-- Project Overview -->
+        <div class="section-card" id="overview">
+            <h2><i class="fas fa-info-circle me-2"></i>Project Overview</h2>
+            <p>SecureHealth is a HIPAA-compliant medical records management system designed to demonstrate advanced data protection using MongoDB Queryable Encryption with PHP/Symfony. This project serves as both a functional healthcare application and a comprehensive educational resource for developers learning secure data handling practices.</p>
+            
+            <h3>Primary Objectives</h3>
+            <ul>
+                <li>Build a production-ready medical records API with field-level encryption</li>
+                <li>Demonstrate MongoDB Queryable Encryption capabilities in real-world healthcare scenarios</li>
+                <li>Create reusable patterns for HIPAA-compliant PHP applications</li>
+                <li>Establish best practices for encrypted data operations and compliance</li>
+            </ul>
+
+            <h3>Technology Stack</h3>
+            <div class="code-block">
+<span class="comment">Backend Framework:</span> Symfony 7.0<br>
+<span class="comment">Language:</span> PHP 8.2+<br>
+<span class="comment">Database:</span> MongoDB 8.2 Enterprise (with Queryable Encryption)<br>
+<span class="comment">ODM:</span> Doctrine MongoDB ODM Bundle 5.0+<br>
+<span class="comment">Authentication:</span> JWT with Symfony Security<br>
+<span class="comment">Encryption:</span> MongoDB Client-Side Field Level Encryption<br>
+<span class="comment">Development:</span> Docker + Docker Compose<br>
+<span class="comment">Testing:</span> PHPUnit + MongoDB Test Framework
+            </div>
+        </div>
+
+        <!-- Symfony MongoDB Queryable Encryption -->
+        <div class="section-card" id="symfony-encryption">
+            <h2><i class="fas fa-database me-2"></i>Symfony MongoDB Queryable Encryption Implementation</h2>
+            
+            <p>This section details how SecureHealth implements MongoDB Queryable Encryption within the Symfony framework, providing developers with a complete understanding of the encryption architecture and implementation patterns.</p>
+
+            <h3>Encryption Service Architecture</h3>
+            <p>The core of our encryption implementation is the <code>MongoDBEncryptionService</code> class, which manages all encryption operations and integrates seamlessly with Symfony's dependency injection system.</p>
+
+            <div class="code-block">
+<span class="keyword">class</span> <span class="class">MongoDBEncryptionService</span><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Encryption algorithms for MongoDB Atlas</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> <span class="string">ALGORITHM_DETERMINISTIC</span> = <span class="string">'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic'</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> <span class="string">ALGORITHM_RANDOM</span> = <span class="string">'AEAD_AES_256_CBC_HMAC_SHA_512-Random'</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> <span class="string">ALGORITHM_RANGE</span> = <span class="string">'range'</span>; <span class="comment">// Use 'range' for MongoDB Atlas</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public function</span> <span class="class">__construct</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="class">ParameterBagInterface</span> <span class="string">$params</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="class">LoggerInterface</span> <span class="string">$logger</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Initialize MongoDB client with encryption</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$this</span>-><span class="string">client</span> = <span class="keyword">new</span> <span class="class">Client</span>(<span class="string">$mongoUrl</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$this</span>-><span class="string">clientEncryption</span> = <span class="keyword">$this</span>-><span class="class">createClientEncryption</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$this</span>-><span class="class">configureEncryptedFieldsDefinitions</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}
+            </div>
+        </div>
+
+        <!-- Symfony Security Voters & RBAC -->
+        <div class="section-card" id="security-voters">
+            <h2><i class="fas fa-shield-alt me-2"></i>Symfony Security Voters & Role-Based Access Control</h2>
+            
+            <p>SecureHealth implements a sophisticated role-based access control system using Symfony Security Voters, ensuring that users can only access data appropriate to their role and responsibilities.</p>
+
+            <h3>Security Voter Implementation</h3>
+            <p>The <code>PatientVoter</code> class demonstrates how to implement fine-grained permissions using Symfony's voter system:</p>
+
+            <div class="code-block">
+<span class="keyword">class</span> <span class="class">PatientVoter</span> <span class="keyword">extends</span> <span class="class">Voter</span><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Define constants for patient-related permissions</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public const</span> <span class="string">VIEW</span> = <span class="string">'PATIENT_VIEW'</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public const</span> <span class="string">CREATE</span> = <span class="string">'PATIENT_CREATE'</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public const</span> <span class="string">EDIT</span> = <span class="string">'PATIENT_EDIT'</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public const</span> <span class="string">DELETE</span> = <span class="string">'PATIENT_DELETE'</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public const</span> <span class="string">VIEW_DIAGNOSIS</span> = <span class="string">'PATIENT_VIEW_DIAGNOSIS'</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public const</span> <span class="string">VIEW_SSN</span> = <span class="string">'PATIENT_VIEW_SSN'</span>;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">protected function</span> <span class="class">voteOnAttribute</span>(<span class="keyword">string</span> <span class="string">$attribute</span>, <span class="keyword">mixed</span> <span class="string">$subject</span>, <span class="class">TokenInterface</span> <span class="string">$token</span>): <span class="keyword">bool</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$user</span> = <span class="keyword">$token</span>-><span class="class">getUser</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$roles</span> = <span class="keyword">$user</span>-><span class="class">getRoles</span>();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Check permission based on role and attribute</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="keyword">$this</span>-><span class="class">checkPermission</span>(<span class="keyword">$attribute</span>, <span class="keyword">$roles</span>, <span class="keyword">$subject</span>, <span class="keyword">$user</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}
+            </div>
+
+            <h3>Role Hierarchy</h3>
+            <p>Our security configuration defines a clear role hierarchy:</p>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-user-md me-2"></i>Doctor (ROLE_DOCTOR)</h5>
+                            <ul>
+                                <li>Full patient access</li>
+                                <li>View/edit all medical data</li>
+                                <li>Access SSN information</li>
+                                <li>Create/update/delete patients</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-user-nurse me-2"></i>Nurse (ROLE_NURSE)</h5>
+                            <ul>
+                                <li>View patient basic info</li>
+                                <li>Access diagnosis & medications</li>
+                                <li>Update patient records</li>
+                                <li>No SSN access</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-user-tie me-2"></i>Receptionist (ROLE_RECEPTIONIST)</h5>
+                            <ul>
+                                <li>View basic patient info</li>
+                                <li>Access insurance details</li>
+                                <li>Create new patients</li>
+                                <li>No medical data access</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Controller Integration</h3>
+            <p>Controllers use voters to enforce permissions:</p>
+
+            <div class="code-block">
+<span class="keyword">class</span> <span class="class">PatientController</span> <span class="keyword">extends</span> <span class="class">AbstractController</span><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public function</span> <span class="class">show</span>(<span class="keyword">string</span> <span class="string">$id</span>): <span class="class">JsonResponse</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$patient</span> = <span class="keyword">$this</span>-><span class="class">getPatientById</span>(<span class="keyword">$id</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$this</span>-><span class="class">denyAccessUnlessGranted</span>(<span class="class">PatientVoter</span>::<span class="string">VIEW</span>, <span class="keyword">$patient</span>);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Return data with role-based filtering</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="keyword">$this</span>-><span class="class">json</span>(<span class="keyword">$patient</span>-><span class="class">toArray</span>(<span class="keyword">$this</span>-><span class="class">getUser</span>()));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}
+            </div>
+        </div>
+
+        <!-- API Reference -->
+        <div class="section-card" id="api-reference">
+            <h2><i class="fas fa-code me-2"></i>API Reference</h2>
+            
+            <h3>Authentication</h3>
+            <p>SecureHealth uses JWT-based authentication. Here's how to authenticate:</p>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/login<br>
+                <strong>Headers:</strong> Content-Type: application/json<br>
+                <strong>Body:</strong> {"_username":"doctor@example.com","_password":"doctor"}
+            </div>
+
+            <h3>Available Test Users</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Permissions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge bg-primary">Doctor</span></td>
+                        <td>doctor@example.com</td>
+                        <td>doctor</td>
+                        <td>Full access to all patient data</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-info">Nurse</span></td>
+                        <td>nurse@example.com</td>
+                        <td>nurse</td>
+                        <td>Medical data access (no SSN)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-secondary">Receptionist</span></td>
+                        <td>receptionist@example.com</td>
+                        <td>receptionist</td>
+                        <td>Basic info and insurance only</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Patient Management Endpoints</h3>
+            <div class="api-endpoint">
+                <span class="method">GET</span> /api/patients<br>
+                <strong>Description:</strong> List all patients with optional filtering<br>
+                <strong>Required Role:</strong> Any authenticated healthcare staff<br>
+                <strong>Query Parameters:</strong> lastName, firstName, page, limit
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">GET</span> /api/patients/{id}<br>
+                <strong>Description:</strong> Get a specific patient<br>
+                <strong>Required Role:</strong> Any authenticated healthcare staff<br>
+                <strong>Response:</strong> Patient data filtered by user role
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/patients<br>
+                <strong>Description:</strong> Create a new patient<br>
+                <strong>Required Role:</strong> Doctor only<br>
+                <strong>Body:</strong> Patient data (JSON)
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">PUT</span> /api/patients/{id}<br>
+                <strong>Description:</strong> Update a patient<br>
+                <strong>Required Role:</strong> Doctor or Nurse<br>
+                <strong>Body:</strong> Updated patient data (JSON)
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">DELETE</span> /api/patients/{id}<br>
+                <strong>Description:</strong> Delete a patient<br>
+                <strong>Required Role:</strong> Doctor only
+            </div>
+
+            <h3>Encrypted Search Endpoints</h3>
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/encrypted-search/equality<br>
+                <strong>Description:</strong> Search using exact matches on encrypted fields<br>
+                <strong>Body:</strong> {"lastName": "Smith", "email": "john@example.com"}
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/encrypted-search/range<br>
+                <strong>Description:</strong> Search using date/age ranges<br>
+                <strong>Body:</strong> {"minAge": 18, "maxAge": 65, "birthDateFrom": "1990-01-01"}
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/encrypted-search/complex<br>
+                <strong>Description:</strong> Complex multi-field searches<br>
+                <strong>Body:</strong> {"lastName": "Smith", "minAge": 30, "birthYear": 1985}
+            </div>
+        </div>
+
+        <!-- Development Guide -->
+        <div class="section-card" id="development-guide">
+            <h2><i class="fas fa-tools me-2"></i>Development Guide</h2>
+            
+            <h3>Environment Setup</h3>
+            <p>Follow these steps to set up the SecureHealth development environment:</p>
+
+            <div class="code-block">
+<span class="comment"># Clone the repository</span><br>
+<span class="keyword">git clone</span> <span class="string">https://github.com/your-repo/securehealth.git</span><br>
+<span class="keyword">cd</span> <span class="string">securehealth</span><br>
+<br>
+<span class="comment"># Start the Docker environment</span><br>
+<span class="keyword">docker-compose up -d</span><br>
+<br>
+<span class="comment"># Install PHP dependencies</span><br>
+<span class="keyword">docker-compose exec php composer install</span><br>
+<br>
+<span class="comment"># Generate encryption keys</span><br>
+<span class="keyword">docker-compose exec php bin/console app:generate-encryption-key</span><br>
+<br>
+<span class="comment"># Access the application</span><br>
+<span class="comment"># API: http://localhost:8081/api</span><br>
+<span class="comment"># Frontend: http://localhost:8081</span>
+            </div>
+
+            <h3>Testing</h3>
+            <div class="code-block">
+<span class="comment"># Run all tests</span><br>
+<span class="keyword">docker-compose exec php bin/phpunit</span><br>
+<br>
+<span class="comment"># Run specific test file</span><br>
+<span class="keyword">docker-compose exec php bin/phpunit tests/Controller/Api/PatientControllerTest.php</span><br>
+<br>
+<span class="comment"># Run specific test method</span><br>
+<span class="keyword">docker-compose exec php bin/phpunit --filter testCreatePatient</span><br>
+<br>
+<span class="comment"># Run tests with coverage</span><br>
+<span class="keyword">docker-compose exec php bin/phpunit --coverage-html coverage/</span>
+            </div>
+
+            <h3>Debugging</h3>
+            <div class="code-block">
+<span class="comment"># View application logs</span><br>
+<span class="keyword">docker-compose logs php</span><br>
+<br>
+<span class="comment"># View Nginx logs</span><br>
+<span class="keyword">docker-compose logs nginx</span><br>
+<br>
+<span class="comment"># View MongoDB logs</span><br>
+<span class="keyword">docker-compose logs mongodb</span><br>
+<br>
+<span class="comment"># Clear Symfony cache</span><br>
+<span class="keyword">docker-compose exec php bin/console cache:clear</span><br>
+<br>
+<span class="comment"># Access MongoDB shell</span><br>
+<span class="keyword">docker-compose exec mongodb mongosh</span>
+            </div>
+
+            <h3>Implementation Patterns</h3>
+            <p>Key patterns used in SecureHealth for developers to understand and extend:</p>
+
+            <h4>1. Service Layer Pattern</h4>
+            <p>Business logic is encapsulated in service classes that can be easily tested and reused:</p>
+            <div class="code-block">
+<span class="keyword">class</span> <span class="class">PatientService</span><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public function</span> <span class="class">__construct</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="class">PatientRepository</span> <span class="string">$repository</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="class">MongoDBEncryptionService</span> <span class="string">$encryption</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="class">AuditLogService</span> <span class="string">$audit</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Dependency injection</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}
+            </div>
+
+            <h4>2. Repository Pattern</h4>
+            <p>Data access is abstracted through repository classes that handle encryption/decryption:</p>
+            <div class="code-block">
+<span class="keyword">class</span> <span class="class">PatientRepository</span><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public function</span> <span class="class">findByEncryptedCriteria</span>(<span class="keyword">array</span> <span class="string">$criteria</span>): <span class="keyword">array</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Encrypt search criteria</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$encryptedQuery</span> = <span class="keyword">$this</span>-><span class="class">encryptSearchCriteria</span>(<span class="keyword">$criteria</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Execute encrypted query</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="keyword">$this</span>-><span class="class">executeQuery</span>(<span class="keyword">$encryptedQuery</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}
+            </div>
+
+            <h4>3. Event-Driven Architecture</h4>
+            <p>Audit logging and other cross-cutting concerns are handled through Symfony events:</p>
+            <div class="code-block">
+<span class="keyword">class</span> <span class="class">PatientEventListener</span><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public function</span> <span class="class">onPatientCreated</span>(<span class="class">PatientCreatedEvent</span> <span class="string">$event</span>): <span class="keyword">void</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Log patient creation</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$this</span>-><span class="string">auditLogService</span>-><span class="class">logPatientCreation</span>(<span class="keyword">$event</span>-><span class="class">getPatient</span>());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                    </h5>
+                    <p class="text-light">
+                        HIPAA-compliant medical records management powered by 
+                        MongoDB Queryable Encryption technology.
+                    </p>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Documentation</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#overview" class="text-light text-decoration-none">Overview</a></li>
+                        <li><a href="#symfony-encryption" class="text-light text-decoration-none">Encryption</a></li>
+                        <li><a href="#security-voters" class="text-light text-decoration-none">Security</a></li>
+                        <li><a href="#api-reference" class="text-light text-decoration-none">API Reference</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Resources</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="/index.html" class="text-light text-decoration-none">Home</a></li>
+                        <li><a href="/login.html" class="text-light text-decoration-none">Demo</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Support</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <h6 class="fw-bold mb-3">Technology Stack</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-light text-dark">MongoDB</span>
+                        <span class="badge bg-light text-dark">Queryable Encryption</span>
+                        <span class="badge bg-light text-dark">PHP</span>
+                        <span class="badge bg-light text-dark">Symfony</span>
+                        <span class="badge bg-light text-dark">Security Voters</span>
+                        <span class="badge bg-light text-dark">Bootstrap</span>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-light">
+                        &copy; 2024 SecureHealth. Built for educational and demonstration purposes.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-light">
+                        <i class="fas fa-lock me-1"></i>
+                        HIPAA Compliant • Encrypted at Rest • Role-Based Access
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    
+    <!-- Smooth scrolling and admin check -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is admin and show admin link
+            checkAdminStatus();
+            
+            // Smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+        
+        function checkAdminStatus() {
+            const storedUser = localStorage.getItem('securehealth_user');
+            const adminLink = document.getElementById('adminLink');
+            
+            if (storedUser && adminLink) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    if (user.isAdmin) {
+                        adminLink.style.display = 'block';
+                    }
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

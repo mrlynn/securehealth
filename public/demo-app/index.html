@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureHealth Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 20px;
+      background-color: #f8f9fa;
+    }
+    .sidebar {
+      background-color: #343a40;
+      min-height: 100vh;
+      color: white;
+      padding: 20px 0;
+    }
+    .sidebar .nav-link {
+      color: rgba(255, 255, 255, 0.75);
+      padding: 0.5rem 1rem;
+    }
+    .sidebar .nav-link:hover {
+      color: white;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .sidebar .nav-link.active {
+      color: white;
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    .content {
+      padding: 20px;
+    }
+    .page {
+      display: none;
+    }
+    .page.active {
+      display: block;
+    }
+    #logoutBtn {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid app-container p-0 vh-100 d-flex flex-column">
+    <div class="row g-0 flex-grow-1">
+      <!-- Sidebar -->
+      <div class="col-md-2 sidebar">
+        <h3 class="px-3 mb-4">SecureHealth</h3>
+        <div id="userInfo" class="px-3 mb-4 text-white-50"></div>
+        
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link active" href="#" data-page="patients">Patients</a>
+          </li>
+          <li class="nav-item doctor-only" style="display:none">
+            <a class="nav-link" href="#" data-page="audit-logs">Audit Logs</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="helpBtn" data-bs-toggle="modal" data-bs-target="#helpModal">
+              <span role="img" aria-label="Help" class="me-2">❓</span>
+              Help & Encryption Info
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="logoutBtn">Logout</a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Content -->
+      <div class="col-md-10 content">
+        <!-- Patients Page -->
+        <div id="patients-page" class="page active">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Patients</h2>
+            <button id="addPatientBtn" class="btn btn-primary doctor-only" style="display:none">Add Patient</button>
+          </div>
+          
+          <div class="card mb-4">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label for="lastNameFilter" class="form-label">Last Name</label>
+                  <input type="text" class="form-control" id="lastNameFilter" placeholder="Filter by last name">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="minAgeFilter" class="form-label">Minimum Age</label>
+                  <input type="number" class="form-control" id="minAgeFilter" placeholder="Minimum age">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="statusFilter" class="form-label">Status</label>
+                  <select class="form-select" id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="pending">Pending</option>
+                  </select>
+                </div>
+              </div>
+              <div class="d-flex justify-content-end">
+                <button class="btn btn-secondary me-2" id="clearFiltersBtn">Clear</button>
+                <button class="btn btn-primary" id="searchBtn">Search</button>
+              </div>
+            </div>
+          </div>
+          
+          <div id="patientsList" class="row"></div>
+        </div>
+        
+        <!-- Patient Detail Page -->
+        <div id="patient-detail-page" class="page">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 id="patientName"></h2>
+            <div>
+              <button class="btn btn-outline-secondary me-2" id="backToListBtn">Back</button>
+              <button class="btn btn-primary me-2 doctor-only" id="editPatientBtn" style="display:none">Edit Patient</button>
+              <button class="btn btn-danger doctor-only" id="deletePatientBtn" style="display:none">Delete</button>
+            </div>
+          </div>
+          
+          <div id="patientDetails"></div>
+        </div>
+        
+        <!-- Audit Logs Page -->
+        <div id="audit-logs-page" class="page">
+          <h2 class="mb-4">Audit Logs</h2>
+          
+          <div class="card mb-4">
+            <div class="card-body">
+              <h5 class="card-title">Recent Activity</h5>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Date/Time</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody id="auditLogsList">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Deletion</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this patient record?
+          This action cannot be undone.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Patient</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Help & Encryption Info Modal -->
+  <div class="modal fade" id="helpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">SecureHealth - Queryable Encryption</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <h4>What is MongoDB Queryable Encryption?</h4>
+          <p>
+            SecureHealth uses MongoDB's Queryable Encryption to protect sensitive patient data while still allowing necessary search operations.
+            This ensures your data is secure both at rest and in transit, meeting HIPAA compliance requirements.
+          </p>
+          
+          <h5>Three Encryption Levels</h5>
+          <ul>
+            <li>
+              <strong>Equality Encryption:</strong> Used for exact-match searches (e.g., patient lastName, email).
+              Allows searching for exact values while keeping data encrypted in the database.
+            </li>
+            <li>
+              <strong>Range Encryption:</strong> Applied to date and numeric fields (e.g., birthDate).
+              Enables range queries (like finding patients born after a certain date) while maintaining encryption.
+            </li>
+            <li>
+              <strong>Standard Encryption:</strong> For highly sensitive data like diagnoses and SSNs.
+              Maximum security but cannot be directly searched - decrypted only when needed.
+            </li>
+          </ul>
+          
+          <h5>Security Features</h5>
+          <ul>
+            <li>Client-side encryption - data is encrypted before leaving the application</li>
+            <li>Automatic key management and rotation</li>
+            <li>Field-level encryption - different fields can have different encryption levels</li>
+            <li>Comprehensive audit logging of all data access</li>
+            <li>Role-based access control determines which fields a user can see</li>
+          </ul>
+          
+          <p>
+            <strong>Technical Note:</strong> Data keys are stored in a secure key vault and the master key is managed securely by the application.
+            MongoDB 8.2 provides strong cryptographic guarantees while maintaining the ability to perform necessary healthcare operations.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Demo data
+    const patientData = [
+      {
+        id: '1',
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 45,
+        birthDate: '1980-05-15',
+        status: 'active',
+        contactPhone: '(555) 123-4567',
+        contactEmail: 'john.doe@example.com',
+        socialSecurityNumber: '123-45-6789',
+        primaryDiagnosis: 'Hypertension',
+        medications: ['Lisinopril', 'Aspirin'],
+        allergies: ['Penicillin'],
+        createdAt: '2025-08-15 10:30:00',
+        updatedAt: '2025-09-01 14:22:00'
+      },
+      {
+        id: '2',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        age: 32,
+        birthDate: '1993-11-22',
+        status: 'active',
+        contactPhone: '(555) 987-6543',
+        contactEmail: 'jane.smith@example.com',
+        socialSecurityNumber: '987-65-4321',
+        primaryDiagnosis: 'Asthma',
+        medications: ['Albuterol', 'Flonase'],
+        allergies: ['Shellfish', 'Pollen'],
+        createdAt: '2025-08-20 09:15:00',
+        updatedAt: null
+      },
+      {
+        id: '3',
+        firstName: 'Robert',
+        lastName: 'Johnson',
+        age: 67,
+        birthDate: '1958-03-10',
+        status: 'inactive',
+        contactPhone: '(555) 555-5555',
+        contactEmail: 'robert.j@example.com',
+        socialSecurityNumber: '456-78-9012',
+        primaryDiagnosis: 'Type 2 Diabetes',
+        medications: ['Metformin', 'Insulin'],
+        allergies: [],
+        createdAt: '2025-07-05 13:45:00',
+        updatedAt: '2025-08-25 11:10:00'
+      }
+    ];
+
+    const auditLogsData = [
+      {
+        id: '1',
+        timestamp: '2025-09-05 14:22:10',
+        username: 'Dr. Smith',
+        actionType: 'VIEW',
+        description: 'Viewed patient John Doe'
+      },
+      {
+        id: '2',
+        timestamp: '2025-09-05 14:20:05',
+        username: 'Dr. Smith',
+        actionType: 'UPDATE',
+        description: 'Updated patient John Doe'
+      },
+      {
+        id: '3',
+        timestamp: '2025-09-05 13:15:30',
+        username: 'Nurse Johnson',
+        actionType: 'VIEW',
+        description: 'Viewed patient Jane Smith'
+      },
+      {
+        id: '4',
+        timestamp: '2025-09-05 10:05:22',
+        username: 'Dr. Smith',
+        actionType: 'CREATE',
+        description: 'Created patient Robert Johnson'
+      }
+    ];
+
+    // Current user state
+    let currentUser;
+    
+    // DOM elements
+    const userInfo = document.getElementById('userInfo');
+    const patientsPage = document.getElementById('patients-page');
+    const patientDetailPage = document.getElementById('patient-detail-page');
+    const auditLogsPage = document.getElementById('audit-logs-page');
+    const patientsList = document.getElementById('patientsList');
+    const patientName = document.getElementById('patientName');
+    const patientDetails = document.getElementById('patientDetails');
+    const auditLogsList = document.getElementById('auditLogsList');
+    const lastNameFilter = document.getElementById('lastNameFilter');
+    const minAgeFilter = document.getElementById('minAgeFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    // Initialize app
+    window.addEventListener('load', init);
+    
+    function init() {
+      // Check for existing user session
+      const storedUser = localStorage.getItem('securehealth_user');
+      if (!storedUser) {
+        // If not logged in, redirect to login page
+        window.location.replace('http://localhost:8081/login.html');
+        return;
+      }
+      
+      try {
+        // Set current user and display user info
+        currentUser = JSON.parse(storedUser);
+        
+        // Validate user object
+        if (!currentUser || !currentUser.username || !Array.isArray(currentUser.roles)) {
+          throw new Error('Invalid user data');
+        }
+      } catch (error) {
+        // Clear invalid data and redirect to login
+        console.error('Invalid user data:', error);
+        localStorage.removeItem('securehealth_user');
+        window.location.replace('http://localhost:8081/login.html');
+        return;
+      }
+      userInfo.textContent = `Logged in as: ${currentUser.username}`;
+      
+      // Apply role-based UI changes
+      const doctorOnlyElements = document.querySelectorAll('.doctor-only');
+      if (hasRole('ROLE_DOCTOR')) {
+        doctorOnlyElements.forEach(el => el.style.display = 'block');
+      }
+      
+      // Display patient list
+      displayPatientList(patientData);
+      
+      // Display audit logs if doctor
+      if (hasRole('ROLE_DOCTOR')) {
+        displayAuditLogs(auditLogsData);
+      }
+      
+      // Set up event listeners
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+      document.getElementById('backToListBtn').addEventListener('click', showPatientsList);
+      document.getElementById('searchBtn').addEventListener('click', handleSearch);
+      document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+      
+      // Menu navigation
+      document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const pageId = link.getAttribute('data-page');
+          showPage(pageId);
+          
+          // Set active link
+          document.querySelectorAll('.nav-link').forEach(navLink => {
+            navLink.classList.remove('active');
+          });
+          link.classList.add('active');
+        });
+      });
+    }
+    
+    function hasRole(role) {
+      return currentUser && currentUser.roles && currentUser.roles.includes(role);
+    }
+    
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+      document.getElementById(`${pageId}-page`).classList.add('active');
+    }
+    
+    function showPatientsList() {
+      showPage('patients');
+      document.querySelector('.nav-link[data-page="patients"]').classList.add('active');
+    }
+    
+    function logout() {
+      localStorage.removeItem('securehealth_user');
+      window.location.replace('http://localhost:8081/login.html');
+    }
+    
+    function displayPatientList(patients) {
+      patientsList.innerHTML = '';
+      
+      if (patients.length === 0) {
+        patientsList.innerHTML = `
+          <div class="col-12">
+            <div class="alert alert-info">No patients found matching the criteria.</div>
+          </div>
+        `;
+        return;
+      }
+      
+      patients.forEach(patient => {
+        const patientCard = document.createElement('div');
+        patientCard.className = 'col-md-4 mb-4';
+        patientCard.innerHTML = `
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5 class="card-title">${patient.firstName} ${patient.lastName}</h5>
+                <span class="badge ${getBadgeClass(patient.status)}">${patient.status}</span>
+              </div>
+              <p class="card-text">
+                <strong>Age:</strong> ${patient.age}<br>
+                ${patient.contactPhone ? `<strong>Phone:</strong> ${patient.contactPhone}<br>` : ''}
+                ${patient.contactEmail ? `<strong>Email:</strong> ${patient.contactEmail}<br>` : ''}
+              </p>
+              <div class="text-end">
+                <button class="btn btn-outline-primary btn-sm view-patient" data-id="${patient.id}">
+                  View Details
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        patientsList.appendChild(patientCard);
+        
+        // Add event listener for view patient button
+        patientCard.querySelector('.view-patient').addEventListener('click', () => {
+          displayPatientDetail(patient.id);
+        });
+      });
+    }
+    
+    function displayPatientDetail(patientId) {
+      // Find patient by id
+      const patient = patientData.find(p => p.id === patientId);
+      if (!patient) return;
+      
+      // Show patient detail page
+      showPage('patient-detail');
+      
+      // Display patient name
+      patientName.innerHTML = `
+        ${patient.firstName} ${patient.lastName}
+        <span class="badge ${getBadgeClass(patient.status)}">${patient.status}</span>
+      `;
+      
+      // Filter sensitive data based on user role
+      let html = `
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <div class="card">
+              <div class="card-header">Basic Information</div>
+              <div class="card-body">
+                <table class="table table-borderless">
+                  <tr>
+                    <td width="40%"><strong>First Name:</strong></td>
+                    <td>${patient.firstName}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Last Name:</strong></td>
+                    <td>${patient.lastName}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Age:</strong></td>
+                    <td>${patient.age}</td>
+                  </tr>
+                  ${hasRole('ROLE_DOCTOR') && patient.birthDate ? `
+                    <tr>
+                      <td><strong>Birth Date:</strong></td>
+                      <td>${patient.birthDate}</td>
+                    </tr>
+                  ` : ''}
+                  <tr>
+                    <td><strong>Status:</strong></td>
+                    <td>${patient.status}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 mb-4">
+            <div class="card">
+              <div class="card-header">Contact Information</div>
+              <div class="card-body">
+                <table class="table table-borderless">
+                  ${patient.contactPhone ? `
+                    <tr>
+                      <td width="40%"><strong>Phone:</strong></td>
+                      <td>${patient.contactPhone}</td>
+                    </tr>
+                  ` : ''}
+                  ${patient.contactEmail ? `
+                    <tr>
+                      <td><strong>Email:</strong></td>
+                      <td>${patient.contactEmail}</td>
+                    </tr>
+                  ` : ''}
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Sensitive medical information for doctors only
+      if (hasRole('ROLE_DOCTOR')) {
+        html += `
+          <div class="row mt-2">
+            <div class="col-md-12 mb-4">
+              <div class="card">
+                <div class="card-header">
+                  <div class="d-flex align-items-center">
+                    <span>Sensitive Medical Information</span>
+                    <span class="badge bg-warning ms-2">HIPAA Protected</span>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <table class="table table-borderless">
+                    ${patient.socialSecurityNumber ? `
+                      <tr>
+                        <td width="20%"><strong>SSN:</strong></td>
+                        <td>${patient.socialSecurityNumber}</td>
+                      </tr>
+                    ` : ''}
+                    ${patient.primaryDiagnosis ? `
+                      <tr>
+                        <td><strong>Primary Diagnosis:</strong></td>
+                        <td>${patient.primaryDiagnosis}</td>
+                      </tr>
+                    ` : ''}
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Medications and allergies for doctors and nurses
+      if (hasRole('ROLE_DOCTOR') || hasRole('ROLE_NURSE')) {
+        html += `
+          <div class="row mt-2">
+            <div class="col-md-6 mb-4">
+              <div class="card">
+                <div class="card-header">Medications</div>
+                <div class="card-body">
+                  ${patient.medications && patient.medications.length > 0 ? `
+                    <ul class="list-group">
+                      ${patient.medications.map(med => `
+                        <li class="list-group-item">${med}</li>
+                      `).join('')}
+                    </ul>
+                  ` : `
+                    <p class="text-muted">No medications recorded</p>
+                  `}
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+              <div class="card">
+                <div class="card-header">Allergies</div>
+                <div class="card-body">
+                  ${patient.allergies && patient.allergies.length > 0 ? `
+                    <ul class="list-group">
+                      ${patient.allergies.map(allergy => `
+                        <li class="list-group-item">${allergy}</li>
+                      `).join('')}
+                    </ul>
+                  ` : `
+                    <p class="text-muted">No allergies recorded</p>
+                  `}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Record information
+      html += `
+        <div class="row mt-2">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <small class="text-muted">
+                  <strong>Created:</strong> ${patient.createdAt}
+                  ${patient.updatedAt ? `
+                    <br>
+                    <strong>Last Updated:</strong> ${patient.updatedAt}
+                  ` : ''}
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      patientDetails.innerHTML = html;
+    }
+    
+    function displayAuditLogs(logs) {
+      auditLogsList.innerHTML = '';
+      logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${log.timestamp}</td>
+          <td>${log.username}</td>
+          <td>
+            <span class="badge ${getActionBadgeClass(log.actionType)}">${log.actionType}</span>
+          </td>
+          <td>${log.description}</td>
+        `;
+        auditLogsList.appendChild(tr);
+      });
+    }
+    
+    function handleSearch() {
+      const lastName = lastNameFilter.value.toLowerCase();
+      const minAge = parseInt(minAgeFilter.value, 10) || 0;
+      const status = statusFilter.value;
+      
+      const filteredPatients = patientData.filter(patient => {
+        const lastNameMatch = !lastName || patient.lastName.toLowerCase().includes(lastName);
+        const minAgeMatch = !minAgeFilter.value || patient.age >= minAge;
+        const statusMatch = !status || patient.status === status;
+        return lastNameMatch && minAgeMatch && statusMatch;
+      });
+      
+      displayPatientList(filteredPatients);
+    }
+    
+    function clearFilters() {
+      lastNameFilter.value = '';
+      minAgeFilter.value = '';
+      statusFilter.value = '';
+      displayPatientList(patientData);
+    }
+    
+    function getBadgeClass(status) {
+      switch (status) {
+        case 'active':
+          return 'bg-success';
+        case 'inactive':
+          return 'bg-secondary';
+        default:
+          return 'bg-warning';
+      }
+    }
+    
+    function getActionBadgeClass(actionType) {
+      switch (actionType) {
+        case 'CREATE':
+          return 'bg-success';
+        case 'UPDATE':
+          return 'bg-primary';
+        case 'DELETE':
+          return 'bg-danger';
+        case 'VIEW':
+          return 'bg-info';
+        default:
+          return 'bg-secondary';
+      }
+    }
+  </script>
+</body>
+</html>

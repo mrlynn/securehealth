@@ -1,0 +1,90 @@
+{% extends 'main/layout.html.twig' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-8">
+            <h1>Help & Documentation</h1>
+            <p class="lead">Find resources to help you get the most out of SecureHealth.</p>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Documentation</h2>
+                </div>
+                <div class="card-body">
+                    <p>Our comprehensive documentation covers everything you need to know about using and extending SecureHealth.</p>
+                    <div class="list-group">
+                        <a href="{{ path('docs_index') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-book mr-2"></i> Main Documentation
+                        </a>
+                        <a href="{{ path('docs_category', {'category': 'getting-started'}) }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-rocket mr-2"></i> Getting Started Guide
+                        </a>
+                        <a href="{{ path('docs_category', {'category': 'security'}) }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-shield-alt mr-2"></i> Security Documentation
+                        </a>
+                        <a href="{{ path('docs_category', {'category': 'encryption'}) }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-lock mr-2"></i> MongoDB Encryption Guide
+                        </a>
+                        <a href="{{ path('docs_category', {'category': 'api'}) }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-code mr-2"></i> API Reference
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h2 class="h5 mb-0">Troubleshooting</h2>
+                </div>
+                <div class="card-body">
+                    <p>Having issues? Check out our troubleshooting guides:</p>
+                    <div class="list-group">
+                        <a href="{{ path('docs_page', {'category': 'help', 'page': 'troubleshooting'}) }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-wrench mr-2"></i> Troubleshooting Guide
+                        </a>
+                        <a href="{{ path('docs_page', {'category': 'help', 'page': 'faqs'}) }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-question-circle mr-2"></i> Frequently Asked Questions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h3 class="h5 mb-0">Quick Links</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{{ path('docs_page', {'category': 'getting-started', 'page': 'installation'}) }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-download mr-2"></i> Installation Guide
+                        </a>
+                        <a href="{{ path('docs_page', {'category': 'encryption', 'page': 'basics'}) }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-key mr-2"></i> Encryption Basics
+                        </a>
+                        <a href="{{ path('docs_page', {'category': 'security', 'page': 'access-control'}) }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user-lock mr-2"></i> Access Control
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h3 class="h5 mb-0">Need More Help?</h3>
+                </div>
+                <div class="card-body">
+                    <p>Can't find what you're looking for? Try these resources:</p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-github mr-2"></i> <a href="https://github.com/yourusername/securehealth/issues" target="_blank">GitHub Issues</a></li>
+                        <li><i class="fas fa-comments mr-2"></i> <a href="#">Community Forum</a></li>
+                        <li><i class="fas fa-envelope mr-2"></i> <a href="mailto:support@example.com">Email Support</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureHealth Direct Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+      color: #212529;
+    }
+    .container {
+      max-width: 500px;
+      margin: 50px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #0d6efd;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #0b5ed7;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      display: none;
+    }
+    .success {
+      background-color: #d1e7dd;
+      color: #0f5132;
+      border: 1px solid #badbcc;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #842029;
+      border: 1px solid #f5c2c7;
+    }
+    .info {
+      background-color: #cfe2ff;
+      color: #084298;
+      border: 1px solid #b6d4fe;
+    }
+    .test-accounts {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #dee2e6;
+      font-size: 14px;
+    }
+    .account-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-top: 10px;
+    }
+    .account {
+      padding: 10px;
+      border-radius: 5px;
+      background-color: #f8f9fa;
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .hidden {
+      display: none;
+    }
+    #patientBtn {
+      background-color: #198754;
+      margin-top: 10px;
+    }
+    #patientBtn:hover {
+      background-color: #157347;
+    }
+    #logoutBtn {
+      background-color: #dc3545;
+      margin-top: 10px;
+    }
+    #logoutBtn:hover {
+      background-color: #bb2d3b;
+    }
+    .logged-in-actions {
+      margin-top: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SecureHealth Login</h1>
+    
+    <div id="loginForm">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Enter your email">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password">
+      </div>
+      
+      <button id="loginBtn">
+        <span id="loginSpinner" class="loading hidden"></span>
+        Log in
+      </button>
+    </div>
+    
+    <div id="loggedInInfo" class="logged-in-actions">
+      <h3 id="welcomeMessage"></h3>
+      <button id="patientBtn">View Patients</button>
+      <button id="logoutBtn">Log out</button>
+    </div>
+    
+    <div id="status"></div>
+    
+    <div class="test-accounts">
+      <p>Test Accounts:</p>
+      <div class="account-grid">
+        <div class="account">
+          <strong>Doctor</strong><br>
+          Email: doctor@example.com<br>
+          Password: doctor
+        </div>
+        <div class="account">
+          <strong>Nurse</strong><br>
+          Email: nurse@example.com<br>
+          Password: nurse
+        </div>
+        <div class="account">
+          <strong>Receptionist</strong><br>
+          Email: receptionist@example.com<br>
+          Password: receptionist
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginForm = document.getElementById('loginForm');
+      const loggedInInfo = document.getElementById('loggedInInfo');
+      const welcomeMessage = document.getElementById('welcomeMessage');
+      const loginBtn = document.getElementById('loginBtn');
+      const loginSpinner = document.getElementById('loginSpinner');
+      const patientBtn = document.getElementById('patientBtn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const statusDiv = document.getElementById('status');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      
+      // Check if already logged in
+      checkAuthStatus();
+      
+      // Event listeners
+      loginBtn.addEventListener('click', handleLogin);
+      patientBtn.addEventListener('click', () => {
+        window.location.href = '/patients.html';
+      });
+      logoutBtn.addEventListener('click', handleLogout);
+      
+      // Login function
+      async function handleLogin() {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        
+        if (!email || !password) {
+          showStatus('Please enter both email and password', 'error');
+          return;
+        }
+        
+        try {
+          // Show loading state
+          loginBtn.disabled = true;
+          loginSpinner.classList.remove('hidden');
+          loginBtn.textContent = ' Logging in...';
+          loginBtn.prepend(loginSpinner);
+          
+          // Call login API
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              _username: email,
+              _password: password
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Create user object
+            const user = {
+              email: email,
+              username: data.user ? data.user.username : (data.username || email),
+              roles: data.user ? data.user.roles : (data.roles || []),
+              isAdmin: email.includes('admin') || email.includes('administrator') || (data.user && data.user.isAdmin)
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('securehealth_user', JSON.stringify(user));
+            
+            // Update UI
+            showStatus('Login successful!', 'success');
+            
+            // Show logged in state after a brief delay
+            setTimeout(() => {
+              updateLoggedInState(user);
+            }, 1000);
+            
+          } else {
+            showStatus(data.message || 'Login failed', 'error');
+            resetLoginBtn();
+          }
+        } catch (error) {
+          showStatus('Error connecting to login service', 'error');
+          resetLoginBtn();
+        }
+      }
+      
+      // Logout function
+      function handleLogout() {
+        localStorage.removeItem('securehealth_user');
+        showStatus('You have been logged out', 'info');
+        updateLoggedInState(null);
+      }
+      
+      // Check if user is already logged in
+      function checkAuthStatus() {
+        const storedUser = localStorage.getItem('securehealth_user');
+        
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            // Ensure isAdmin flag is set for existing users
+            if (user.isAdmin === undefined) {
+              user.isAdmin = user.email && (user.email.includes('admin') || user.email.includes('administrator'));
+              localStorage.setItem('securehealth_user', JSON.stringify(user));
+            }
+            updateLoggedInState(user);
+          } catch (e) {
+            localStorage.removeItem('securehealth_user');
+          }
+        }
+      }
+      
+      // Update UI based on auth state
+      function updateLoggedInState(user) {
+        if (user) {
+          // User is logged in
+          loginForm.style.display = 'none';
+          loggedInInfo.style.display = 'block';
+          
+          // Set welcome message
+          welcomeMessage.textContent = `Welcome, ${user.username || user.email}`;
+          
+          // Reset login form
+          emailInput.value = '';
+          passwordInput.value = '';
+        } else {
+          // User is logged out
+          loginForm.style.display = 'block';
+          loggedInInfo.style.display = 'none';
+          resetLoginBtn();
+        }
+      }
+      
+      // Display status message
+      function showStatus(message, type) {
+        statusDiv.textContent = message;
+        statusDiv.className = '';
+        statusDiv.classList.add(type);
+        statusDiv.style.display = 'block';
+        
+        // Auto-hide success/info messages after 5 seconds
+        if (type === 'success' || type === 'info') {
+          setTimeout(() => {
+            statusDiv.style.display = 'none';
+          }, 5000);
+        }
+      }
+      
+      // Reset login button
+      function resetLoginBtn() {
+        loginBtn.disabled = false;
+        loginSpinner.classList.add('hidden');
+        loginBtn.textContent = 'Log in';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+---
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+
+# 👐 Initial Setup and Access for Atlas CLI
+
+This section will cover the required notebook operations that must be fulfilled to run the challenges.
+
+## Open the template notebook
+
+:::tip
+We recommend using one of the online environments below to run Jupyter Notebooks. 
+:::
+
+| Google Colab      | GitHub Codespaces    | Clone locally |
+| :------------- | :---------- |  :---------- |
+| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mongodb-developer/security-lab-notebooks/blob/main/template_notebook.ipynb) | [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=mongodb-developer/security-lab-notebooks) | [Template notebook](https://github.com/mongodb-developer/security-lab-notebooks/blob/main/template_notebook.ipynb)|
+
+
+
+## 1. Install Atlas CLI on the notebook environment.
+
+Run the 1st cell in the notebook to install the [Atlas CLI](https://www.mongodb.com/docs/atlas/atlas-cli/), a command line interface to manage MongoDB clusters. 
+
+:::note
+If you're running the notebook in a Codespace you'll be prompted to install two suggested extensions: a Python environment and Jupyter Notebooks support. Install them. When finsished, select the Python environment when prompted.
+:::
+
+```python
+# Install atlas-cli
+
+!wget https://fastdl.mongodb.org/mongocli/mongodb-atlas-cli_1.46.3_linux_x86_64.deb
+!sudo dpkg -i mongodb-atlas-cli_1.46.3_linux_x86_64.deb
+
+# If you require sudo privilege, run the following instead:
+# !sudo dpkg -i mongodb-atlas-cli_1.46.3_linux_x86_64.deb
+```
+
+## 2. Authenticate the CLI against your Atlas organization.
+
+`atlas auth login` typically enters interactive mode. 
+We are piping a new line character so that it selects a default organization for you. 
+
+```python
+# Authenticate with Atlas CLI
+!echo -e "\n" | atlas auth login --noBrowser
+```
+
+
+:::tip
+
+**Important!** This task requires you to click the connect link https://account.mongodb.com/account/connect and input the eight-digit code prompted. 
+
+Once logged in, you should see a success mark on that cell.
+
+
+<details>
+<summary> Expand to see example </summary>
+
+Run the cell and get the verification code as well as the authentication link and open it in a new tab:
+
+
+<img src="../img/Init_CLI.png" />
+
+Proceed to login into https://account.mongodb.com/account/connect  and provide the code in the opened authentication tab:
+
+<img src="../img/InputKey.png" />
+
+Confirm the CLI access and go back to the notebook:
+
+<img src="../img/AuthCLI.png" />
+
+You should see an output in the notebook cell similar to:
+
+
+```
+To verify your account, copy your one-time verification code:
+X9G4-KP98
+
+Paste the code in the browser when prompted to activate your Atlas CLI. Your code will expire after 10 minutes.
+
+To continue, go to https://account.mongodb.com/account/connect
+Successfully logged in as pavel.duchovny@mongodb.com.
+
+...
+```
+
+
+
+
+</details>
+:::
+
+### 2.1 Get the organization ID
+
+If you are a member of more than one Atlas organization, after login in you'll see a list of your organizations and you can select the one you prefer to run the lab. But if you're using a free account you only have one organization, and the list won't appear.
+
+
+<Tabs groupId="orgId">
+<TabItem value="moreThanOne" label="You have more than one organization">
+
+Take a note of the relevant Organization ID for next steps and "STOP" the cell.
+
+<img src="../img/SuccessPhase.png" />
+
+
+</TabItem>
+
+<TabItem value="justOne" label="You have only one organization (free accounts most likely)">
+
+You won't see any organization id in the response. Run the 2.1 Cell `Get Organization ID` and copy the `Organization ID`.
+
+```
+ID                         NAME
+31415926535                My Org's Name
+```
+
+</TabItem>
+</Tabs>
+
+## 3. Create a new project called "MySecureProj."
+Replace `<ORGANIZATION_ID>` with the Organization ID from the previous step.
+```
+# Retain the quotes ("") when pasting the Organization ID
+org_id = "<ORGANIZATION_ID>"
+!atlas projects create MySecureProj --orgId {org_id}
+```
+There should be an output which shows the Project ID of the project created. Use this Project ID for the next step.
+
+
+## 4. Create your challenge cluster.
+Replace `<PROJECT_ID>` with the Project ID from the previous step.
+
+This will provision an M0, free forever cluster, running in AWS in region US_EAST_1. That cluster will be associated to the project we just created.
+
+```python
+# Retain the quotes ("") when pasting the Project ID
+project_id = "<PROJECT_ID>"
+# You may select a region closer to you instead of "US_EAST_1"
+
+!atlas clusters create MyNewCluster --provider AWS --region US_EAST_1 --tier M0 --projectId {project_id}
+```
+
+## Next steps
+
+Progress to [Network Setup](./atlas) for authorising access to your Atlas deployment.

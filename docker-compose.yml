@@ -1,0 +1,28 @@
+# Docker Compose configuration
+services:
+  php:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_URL=${MONGODB_URL}
+      - MONGODB_DB=${MONGODB_DB}
+      - MONGODB_DISABLED=${MONGODB_DISABLED}
+      - MONGODB_KEY_VAULT_NAMESPACE=${MONGODB_KEY_VAULT_NAMESPACE}
+      - APP_ENV=${APP_ENV}
+      - MONGODB_ENCRYPTION_KEY_PATH=${MONGODB_ENCRYPTION_KEY_PATH}
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8081:80"
+    volumes:
+      - ./docker/nginx/custom.conf:/etc/nginx/conf.d/default.conf
+      - .:/var/www/html
+    depends_on:
+      - php

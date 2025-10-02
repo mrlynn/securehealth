@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/docs.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="docs-container">
+        <header class="docs-header">
+            <div class="container">
+                <div class="docs-logo">
+                    <a href="{{ path('docs_index') }}">SecureHealth Documentation</a>
+                </div>
+                <div class="docs-search">
+                    <input type="text" id="searchInput" placeholder="Search documentation...">
+                </div>
+            </div>
+        </header>
+        
+        <div class="docs-content-wrapper container">
+            {% block docs_content %}{% endblock %}
+        </div>
+        
+        <footer class="docs-footer">
+            <div class="container">
+                <p>&copy; {{ "now"|date("Y") }} SecureHealth - HIPAA-Compliant Healthcare Application</p>
+            </div>
+        </footer>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/js/docs.js') }}"></script>
+{% endblock %}
