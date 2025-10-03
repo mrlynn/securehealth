@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.2-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libssl-dev \
     pkg-config \
-    libcrypto++-dev
+    libcrypto++-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath
@@ -23,19 +24,24 @@ RUN pecl install mongodb && docker-php-ext-enable mongodb
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
-WORKDIR /var/www/html
+WORKDIR /app
 
-# Configure non-root user
-RUN groupadd -g 1000 www && \
-    useradd -u 1000 -g www -m www
+# Copy composer files first for better caching
+COPY composer.json composer.lock ./
 
-# Change ownership
-RUN chown -R www:www /var/www
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Switch to non-root user
-USER www
+# Copy application code
+COPY . .
 
-# Expose port 9000 (PHP-FPM)
-EXPOSE 9000
+# Create necessary directories and set permissions
+RUN mkdir -p var/cache var/log \
+    && chmod -R 755 var \
+    && chmod -R 755 public
 
-CMD ["php-fpm"]
+# Expose port (Railway will set PORT environment variable)
+EXPOSE 8080
+
+# Start PHP built-in server
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]

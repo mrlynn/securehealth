@@ -1,0 +1,40 @@
+# Railway Environment Variables Template
+# Copy these variables to your Railway project's Variables tab
+# Replace the placeholder values with your actual values
+
+# MongoDB Configuration
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/database
+MONGODB_DB=securehealth
+MONGODB_DISABLED=false
+MONGODB_KEY_VAULT_NAMESPACE=encryption.__keyVault
+
+# Application Configuration
+APP_ENV=prod
+APP_SECRET=your-32-character-secret-key-here
+SYMFONY_ENV=prod
+SYMFONY_DEBUG=false
+
+# Security Configuration
+JWT_SECRET_KEY=your-32-character-jwt-secret-here
+JWT_PASSPHRASE=your-16-character-passphrase-here
+
+# Encryption Configuration
+MONGODB_ENCRYPTION_KEY_PATH=/app/docker/encryption.key
+
+# Railway Configuration (automatically set by Railway)
+PORT=8080
+
+# Additional Railway Environment Variables
+RAILWAY_ENVIRONMENT=production
+RAILWAY_STATIC_URL=
+
+# Instructions:
+# 1. Go to your Railway project dashboard
+# 2. Click on the "Variables" tab
+# 3. Add each variable above with its corresponding value
+# 4. Generate secure secrets using:
+#    - openssl rand -hex 16 (for 32-character secrets)
+#    - openssl rand -hex 8 (for 16-character secrets)
+# 5. Use your actual MongoDB Atlas connection string
+# 6. Set APP_ENV=prod and SYMFONY_DEBUG=false for production
