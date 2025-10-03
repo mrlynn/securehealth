@@ -1,10 +1,16 @@
 <?php
 
 use App\Kernel;
+use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\HttpFoundation\Request;
 
 require dirname(__DIR__).'/vendor/autoload.php';
+
+// Load environment variables from .env file
+if (method_exists(Dotenv::class, 'bootEnv')) {
+    (new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
+}
 
 // The check is to ensure we don't use .env in production
 $env = $_SERVER['APP_ENV'] ?? 'dev';

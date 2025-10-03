@@ -231,6 +231,7 @@ class AuditLogService
                     // If retry also fails, log the error but don't break the login flow
                     error_log("Audit log retry failed: " . $retryException->getMessage());
                     // Continue without throwing - login should still succeed
+                    return; // Exit early to prevent the original exception from being thrown
                 }
             } else {
                 throw $e;

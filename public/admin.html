@@ -61,7 +61,9 @@
         if (limitSel.value) params.set('limit', limitSel.value);
         if (actionSel.value) params.set('action', actionSel.value);
         if (entitySel.value) params.set('entityType', entitySel.value);
-        const res = await fetch(`/api_audit_logs.php?${params.toString()}`);
+        const res = await fetch(`/api_audit_logs.php?${params.toString()}`, {
+          credentials: 'include'
+        });
         const data = await res.json();
         renderAudit(data.logs || []);
         metricsTotal.textContent = data.metrics?.total ?? '—';

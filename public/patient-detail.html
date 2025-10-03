@@ -177,7 +177,9 @@
         
         try {
           // Fetch patient data from API
-          const response = await fetch(`/api/patient/${id}`);
+          const response = await fetch(`/api/patient/${id}`, {
+            credentials: 'include'
+          });
           
           if (!response.ok) {
             if (response.status === 404) {

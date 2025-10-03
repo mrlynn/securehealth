@@ -49,7 +49,7 @@ class MongoDBEncryptionService
         }
         
         // Get connection parameters
-        $mongoUrl = $params->get('mongodb_url', $params->get('mongodb_uri', 'mongodb://localhost:27017'));
+        $mongoUrl = $params->get('mongodb_url', 'mongodb://localhost:27017');
         $this->keyVaultNamespace = $params->get('mongodb_key_vault_namespace', 'encryption.__keyVault');
         
         try {
@@ -88,6 +88,11 @@ class MongoDBEncryptionService
         if (!$mongodbDisabled) {
             // Load master key
             $keyFile = $params->get('mongodb_encryption_key_path', __DIR__ . '/../../docker/encryption.key');
+            // Ensure the directory exists
+            $keyDir = dirname($keyFile);
+            if (!is_dir($keyDir)) {
+                mkdir($keyDir, 0755, true);
+            }
             if (!file_exists($keyFile)) {
                 $this->logger->warning('Encryption key file not found, generating new key: ' . $keyFile);
                 file_put_contents($keyFile, random_bytes(96));

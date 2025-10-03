@@ -40,10 +40,10 @@ class AuditLogSubscriber implements EventSubscriberInterface
         $username = $user->getUserIdentifier();
         
         $this->auditLogService->logSecurityEvent(
-            $username,
+            $user,
             'LOGIN',
-            'Successful login for user ' . $username,
             [
+                'description' => 'Successful login for user ' . $username,
                 'roles' => $user->getRoles(),
                 'ip' => $event->getRequest()->getClientIp()
             ]
@@ -57,11 +57,14 @@ class AuditLogSubscriber implements EventSubscriberInterface
         
         $username = $request->request->get('_username', 'unknown');
         
+        // Create an anonymous user for failed login attempts
+        $anonymousUser = new \Symfony\Component\Security\Core\User\InMemoryUser($username, null, []);
+        
         $this->auditLogService->logSecurityEvent(
-            $username,
+            $anonymousUser,
             'LOGIN_FAILURE',
-            'Failed login attempt for user ' . $username . ': ' . $exception->getMessage(),
             [
+                'description' => 'Failed login attempt for user ' . $username . ': ' . $exception->getMessage(),
                 'ip' => $request->getClientIp(),
                 'error' => $exception->getMessage()
             ]
@@ -77,10 +80,10 @@ class AuditLogSubscriber implements EventSubscriberInterface
             $username = $user ? $user->getUserIdentifier() : 'unknown';
             
             $this->auditLogService->logSecurityEvent(
-                $username,
+                $user,
                 'LOGOUT',
-                'User ' . $username . ' logged out',
                 [
+                    'description' => 'User ' . $username . ' logged out',
                     'ip' => $event->getRequest()->getClientIp()
                 ]
             );
@@ -114,17 +117,16 @@ class AuditLogSubscriber implements EventSubscriberInterface
             $user = $token->getUser();
             $username = $user->getUserIdentifier();
             
-            $this->auditLogService->logEvent(
-                $username,
+            $this->auditLogService->log(
+                $user,
                 'API_REQUEST',
-                sprintf(
-                    'API request: %s %s',
-                    $request->getMethod(),
-                    $request->getPathInfo()
-                ),
-                null,
-                'API',
                 [
+                    'description' => sprintf(
+                        'API request: %s %s',
+                        $request->getMethod(),
+                        $request->getPathInfo()
+                    ),
+                    'entityType' => 'API',
                     'method' => $request->getMethod(),
                     'path' => $request->getPathInfo(),
                     'query' => $request->query->all(),

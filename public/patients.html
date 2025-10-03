@@ -212,7 +212,8 @@
             headers: {
               'Content-Type': 'application/json',
               // No auth header needed for health check
-            }
+            },
+            credentials: 'include'
           });
           
           console.log("Health check response:", testResponse.status);
@@ -222,7 +223,8 @@
             headers: {
               'Content-Type': 'application/json',
               // Add any authentication headers if needed
-            }
+            },
+            credentials: 'include'
           });
           
           console.log("Patients API response status:", response.status);
@@ -549,8 +551,19 @@
       }
       
       // Logout function
-      function handleLogout() {
+      async function handleLogout() {
         console.log("Logging out, removing user from localStorage");
+        
+        // Call logout API to clear server session
+        try {
+          await fetch('/api/logout', {
+            method: 'POST',
+            credentials: 'include'
+          });
+        } catch (e) {
+          console.log("Logout API call failed, continuing with client-side logout");
+        }
+        
         localStorage.removeItem('securehealth_user');
         window.location.href = '/login.html';
       }
@@ -591,7 +604,9 @@
   // Show raw MongoDB document in a Bootstrap modal (X-Ray)
   async function viewRaw(id) {
     try {
-      const res = await fetch(`/api_mongo_patient_raw.php?id=${encodeURIComponent(id)}`);
+      const res = await fetch(`/api_mongo_patient_raw.php?id=${encodeURIComponent(id)}`, {
+        credentials: 'include'
+      });
       const text = await res.text();
       showRawModal(text);
     } catch (e) {

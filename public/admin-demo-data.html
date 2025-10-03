@@ -347,7 +347,8 @@
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 });
 
                 if (!response.ok) {
@@ -406,6 +407,7 @@
                         'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         count: count,
                         clear: clear
@@ -442,7 +444,8 @@
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 });
 
                 const data = await response.json();
