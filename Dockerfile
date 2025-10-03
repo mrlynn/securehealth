@@ -29,8 +29,8 @@ WORKDIR /app
 # Copy all files first
 COPY . .
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Install dependencies (skip scripts to avoid .env requirement)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Create necessary directories and set permissions
 RUN mkdir -p var/cache var/log \
