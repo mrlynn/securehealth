@@ -209,22 +209,28 @@ class AuditLogService
         } catch (\MongoDB\Driver\Exception\BulkWriteException $e) {
             // Handle "not primary" error by retrying with primary read preference
             if (strpos($e->getMessage(), 'not primary') !== false) {
-                // Create a new client with explicit primary read preference
-                $mongoUrl = $_ENV['MONGODB_URI'] ?? 'mongodb://localhost:27017';
-                $mongoDb = $_ENV['MONGODB_DB'] ?? 'securehealth';
-                
-                $client = new \MongoDB\Client($mongoUrl, [
-                    'readPreference' => 'primary',
-                    'writeConcern' => ['w' => 'majority']
-                ]);
-                
-                $database = $client->selectDatabase($mongoDb);
-                $collection = $database->selectCollection($this->auditLogCollection);
-                
-                $result = $collection->insertOne($document);
-                
-                if ($result->getInsertedId()) {
-                    $auditLog->setId($result->getInsertedId());
+                try {
+                    // Create a new client with explicit primary read preference
+                    $mongoUrl = $_ENV['MONGODB_URI'] ?? 'mongodb://localhost:27017';
+                    $mongoDb = $_ENV['MONGODB_DB'] ?? 'securehealth';
+                    
+                    $client = new \MongoDB\Client($mongoUrl, [
+                        'readPreference' => 'primary',
+                        'writeConcern' => ['w' => 'majority']
+                    ]);
+                    
+                    $database = $client->selectDatabase($mongoDb);
+                    $collection = $database->selectCollection($this->auditLogCollection);
+                    
+                    $result = $collection->insertOne($document);
+                    
+                    if ($result->getInsertedId()) {
+                        $auditLog->setId($result->getInsertedId());
+                    }
+                } catch (\Exception $retryException) {
+                    // If retry also fails, log the error but don't break the login flow
+                    error_log("Audit log retry failed: " . $retryException->getMessage());
+                    // Continue without throwing - login should still succeed
                 }
             } else {
                 throw $e;
