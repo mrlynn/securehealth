@@ -97,7 +97,69 @@
       // Event listeners
       logoutBtn.addEventListener('click', handleLogout);
       
-      // Check if user is authenticated and determine role
+      // Check authentication and load patients with session validation
+      async function checkAuthAndLoadPatients() {
+        const storedUser = localStorage.getItem('securehealth_user');
+        console.log("checkAuthAndLoadPatients - stored user:", storedUser);
+        
+        if (!storedUser) {
+          console.log("No user found in localStorage, redirecting to login");
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        try {
+          const user = JSON.parse(storedUser);
+          console.log("User data parsed successfully:", user);
+          console.log("User isAdmin flag:", user.isAdmin);
+          currentUser = user;
+          userName.textContent = user.username || user.email;
+          
+          // Set role display
+          const roleText = user.isAdmin ? 'ADMIN' : 
+                          user.roles?.includes('ROLE_DOCTOR') ? 'DOCTOR' :
+                          user.roles?.includes('ROLE_NURSE') ? 'NURSE' :
+                          user.roles?.includes('ROLE_RECEPTIONIST') ? 'RECEPTIONIST' : 'USER';
+          userRole.textContent = roleText;
+          
+          // Show role-specific information
+          const isAdmin = user.isAdmin || user.roles?.includes('ROLE_ADMIN');
+          const isDoctor = user.roles?.includes('ROLE_DOCTOR');
+          const isNurse = user.roles?.includes('ROLE_NURSE');
+          const isReceptionist = user.roles?.includes('ROLE_RECEPTIONIST');
+          
+          if (isAdmin) {
+            roleInfo.innerHTML = '<strong>Administrator Access:</strong> Full system access including user management and system configuration.';
+            userRole.className = 'badge bg-danger';
+          } else if (isDoctor) {
+            roleInfo.innerHTML = '<strong>Doctor Access:</strong> Full access to all patient data including SSN, medical history, and sensitive information.';
+            userRole.className = 'badge bg-primary';
+          } else if (isNurse) {
+            roleInfo.innerHTML = '<strong>Nurse Access:</strong> Access to patient data for care coordination. Some sensitive information may be restricted.';
+            userRole.className = 'badge bg-info';
+          } else if (isReceptionist) {
+            roleInfo.innerHTML = '<strong>Receptionist Access:</strong> Basic patient information for scheduling and administrative tasks.';
+            userRole.className = 'badge bg-secondary';
+          } else {
+            roleInfo.innerHTML = '<strong>User Access:</strong> Limited access to patient information.';
+            userRole.className = 'badge bg-light text-dark';
+          }
+          
+          // Show/hide add patient button based on role
+          const canAddPatients = isAdmin || isDoctor;
+          addPatientBtn.style.display = canAddPatients ? 'inline-block' : 'none';
+          
+          // Now load patients with session validation
+          await loadPatients();
+          
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          localStorage.removeItem('securehealth_user');
+          window.location.href = '/login.html';
+        }
+      }
+      
+      // Check if user is authenticated and determine role (legacy function)
       function checkAuth() {
         const storedUser = localStorage.getItem('securehealth_user');
         console.log("checkAuth - stored user:", storedUser);
