@@ -3,8 +3,9 @@
 // Router script for PHP built-in server
 // This ensures index.html is served by default instead of index.php
 
-// Load environment variables from .env file
-if (file_exists(__DIR__ . '/../.env')) {
+// Load environment variables from .env file only in development
+// In production (Railway), environment variables are already set
+if (($_SERVER['APP_ENV'] ?? 'dev') === 'dev' && file_exists(__DIR__ . '/../.env')) {
     $lines = file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
