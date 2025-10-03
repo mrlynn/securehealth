@@ -213,13 +213,10 @@ class AuditLogService
                 $mongoUrl = $_ENV['MONGODB_URI'] ?? 'mongodb://localhost:27017';
                 $mongoDb = $_ENV['MONGODB_DB'] ?? 'securehealth';
                 
-                // Ensure readPreference=primary is in the URI
-                if (strpos($mongoUrl, 'readPreference=') === false) {
-                    $separator = strpos($mongoUrl, '?') !== false ? '&' : '?';
-                    $mongoUrl .= $separator . 'readPreference=primary';
-                }
-                
-                $client = new \MongoDB\Client($mongoUrl);
+                $client = new \MongoDB\Client($mongoUrl, [
+                    'readPreference' => 'primary',
+                    'writeConcern' => ['w' => 'majority']
+                ]);
                 
                 $database = $client->selectDatabase($mongoDb);
                 $collection = $database->selectCollection($this->auditLogCollection);
