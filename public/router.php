@@ -21,6 +21,21 @@ if (($_SERVER['APP_ENV'] ?? 'dev') === 'dev' && file_exists(__DIR__ . '/../.env'
     }
 }
 
+// Ensure critical environment variables are set in production
+if (($_SERVER['APP_ENV'] ?? 'dev') === 'prod') {
+    // Set default values if not already set
+    if (!getenv('MONGODB_DB')) {
+        putenv('MONGODB_DB=securehealth');
+        $_ENV['MONGODB_DB'] = 'securehealth';
+        $_SERVER['MONGODB_DB'] = 'securehealth';
+    }
+    if (!getenv('APP_ENV')) {
+        putenv('APP_ENV=prod');
+        $_ENV['APP_ENV'] = 'prod';
+        $_SERVER['APP_ENV'] = 'prod';
+    }
+}
+
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // If the request is for the root path, serve index.html
