@@ -45,7 +45,7 @@ npm-debug.log*
 
 # Composer
 vendor/
-composer.lock
+# Note: composer.json and composer.lock are needed for the build
 
 # Temporary files
 *.tmp
