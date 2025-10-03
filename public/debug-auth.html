@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Authentication Debug Tool</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Login</h2>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test Patients API</h2>
+        <button onclick="testPatients()">Test Patients API</button>
+        <div id="patients-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Check Session</h2>
+        <button onclick="checkSession()">Check Session</button>
+        <div id="session-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Check localStorage</h2>
+        <button onclick="checkLocalStorage()">Check localStorage</button>
+        <div id="localStorage-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Full Flow Test</h2>
+        <button onclick="fullFlowTest()">Run Full Flow Test</button>
+        <div id="full-flow-result"></div>
+    </div>
+
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            element.innerHTML += `<div class="${className}">${new Date().toLocaleTimeString()}: ${message}</div>`;
+        }
+        
+        function clear(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+        
+        async function testLogin() {
+            clear('login-result');
+            log('login-result', 'Testing login...', 'info');
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        _username: 'receptionist@example.com',
+                        _password: 'receptionist'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log('login-result', `✅ Login successful: ${JSON.stringify(data)}`, 'success');
+                    
+                    // Store in localStorage like the real app
+                    localStorage.setItem('securehealth_user', JSON.stringify(data.user));
+                    log('login-result', '✅ User data stored in localStorage', 'success');
+                } else {
+                    log('login-result', `❌ Login failed: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                log('login-result', `❌ Login error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testPatients() {
+            clear('patients-result');
+            log('patients-result', 'Testing patients API...', 'info');
+            
+            try {
+                const response = await fetch('/api/patients', {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                log('patients-result', `Response status: ${response.status}`, 'info');
+                
+                if (response.status === 401) {
+                    log('patients-result', '❌ Unauthorized - session not working', 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (response.ok && Array.isArray(data)) {
+                    log('patients-result', `✅ Patients API working: Found ${data.length} patients`, 'success');
+                    log('patients-result', `<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+                } else {
+                    log('patients-result', `❌ Patients API failed: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                log('patients-result', `❌ Patients API error: ${error.message}`, 'error');
+            }
+        }
+        
+        function checkSession() {
+            clear('session-result');
+            log('session-result', 'Checking session cookies...', 'info');
+            
+            // Check if we can access document.cookie
+            const cookies = document.cookie;
+            log('session-result', `Cookies: ${cookies || 'No cookies found'}`, 'info');
+            
+            // Check for PHPSESSID specifically
+            const sessionId = cookies.match(/PHPSESSID=([^;]+)/);
+            if (sessionId) {
+                log('session-result', `✅ PHPSESSID found: ${sessionId[1]}`, 'success');
+            } else {
+                log('session-result', '❌ PHPSESSID not found', 'error');
+            }
+        }
+        
+        function checkLocalStorage() {
+            clear('localStorage-result');
+            log('localStorage-result', 'Checking localStorage...', 'info');
+            
+            const userData = localStorage.getItem('securehealth_user');
+            if (userData) {
+                log('localStorage-result', `✅ User data found: ${userData}`, 'success');
+            } else {
+                log('localStorage-result', '❌ No user data in localStorage', 'error');
+            }
+        }
+        
+        async function fullFlowTest() {
+            clear('full-flow-result');
+            log('full-flow-result', 'Running full flow test...', 'info');
+            
+            // Step 1: Login
+            log('full-flow-result', 'Step 1: Login', 'info');
+            await testLogin();
+            
+            // Step 2: Check session
+            log('full-flow-result', 'Step 2: Check session', 'info');
+            checkSession();
+            
+            // Step 3: Test patients
+            log('full-flow-result', 'Step 3: Test patients API', 'info');
+            await testPatients();
+            
+            log('full-flow-result', 'Full flow test completed', 'info');
+        }
+    </script>
+</body>
+</html>
