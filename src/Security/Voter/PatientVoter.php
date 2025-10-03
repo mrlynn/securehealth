@@ -51,8 +51,8 @@ class PatientVoter extends Voter
             return false;
         }
 
-        // For CREATE permission we don't need a subject
-        if ($attribute === self::CREATE) {
+        // For CREATE and VIEW permissions we don't need a subject (for listing)
+        if ($attribute === self::CREATE || $attribute === self::VIEW) {
             return true;
         }
 

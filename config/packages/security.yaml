@@ -23,8 +23,9 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
+            pattern: ^/
             lazy: false
-            provider: session_users
+            provider: users_in_memory
             custom_authenticators:
                 - App\Security\SessionAuthenticator
             logout:
