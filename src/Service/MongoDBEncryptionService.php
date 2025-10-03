@@ -53,8 +53,10 @@ class MongoDBEncryptionService
         $this->keyVaultNamespace = $params->get('mongodb_key_vault_namespace', 'encryption.__keyVault');
         
         try {
-            // Initialize MongoDB client
-            $this->client = new Client($mongoUrl);
+            // Initialize MongoDB client with readPreference: primary
+            $this->client = new Client($mongoUrl, [
+                'readPreference' => 'primary'
+            ]);
             
             // Set up key vault namespace
             list($keyVaultDb, $keyVaultColl) = explode('.', $this->keyVaultNamespace, 2);
