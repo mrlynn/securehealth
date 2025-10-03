@@ -26,27 +26,18 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy composer files first for better caching
-COPY composer.json ./
-COPY composer.lock* ./
+# Copy all files
+COPY . .
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Copy application code
-COPY . .
-
-# Remove development files and optimize for production
-RUN rm -rf tests/ .git/ docs/ lab/ scripts/ \
-    && rm -f .env .env.local .env.test \
-    && rm -f docker-compose.yml Dockerfile
 
 # Create necessary directories and set permissions
 RUN mkdir -p var/cache var/log \
     && chmod -R 755 var \
     && chmod -R 755 public
 
-# Expose port (Railway will set PORT environment variable)
+# Expose port
 EXPOSE 8080
 
 # Start PHP built-in server
