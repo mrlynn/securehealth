@@ -91,11 +91,8 @@
       
       let currentUser = null;
       
-      // Check authentication
-      checkAuth();
-      
-      // Load patients
-      loadPatients();
+      // Check authentication and load patients
+      checkAuthAndLoadPatients();
       
       // Event listeners
       logoutBtn.addEventListener('click', handleLogout);
