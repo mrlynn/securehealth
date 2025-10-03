@@ -3,6 +3,13 @@
 // Router script for PHP built-in server
 // This ensures index.html is served by default instead of index.php
 
+// Set session save path
+$sessionPath = __DIR__ . '/../var/cache/sessions';
+if (!is_dir($sessionPath)) {
+    mkdir($sessionPath, 0755, true);
+}
+session_save_path($sessionPath);
+
 // Load environment variables from .env file only in development
 // In production (Railway), environment variables are already set
 if (($_SERVER['APP_ENV'] ?? 'dev') === 'dev' && file_exists(__DIR__ . '/../.env')) {

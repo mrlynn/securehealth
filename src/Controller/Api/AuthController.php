@@ -65,7 +65,11 @@ class AuthController extends AbstractController
         }
         
         // Set user in session
-        $request->getSession()->set('user', [
+        $session = $request->getSession();
+        if (!$session->isStarted()) {
+            $session->start();
+        }
+        $session->set('user', [
             'email' => $user->getEmail(),
             'username' => $user->getUsername(),
             'roles' => $user->getRoles()

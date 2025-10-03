@@ -1,27 +1,35 @@
 <?php
-// Debug session information
-// This script is for debugging session data in local and deployed environments.
+// Debug script to check session data
+session_start();
 
-header('Content-Type: application/json');
+echo "=== Session Debug Information ===\n\n";
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+echo "Session ID: " . session_id() . "\n";
+echo "Session Name: " . session_name() . "\n";
+echo "Session Status: " . session_status() . "\n\n";
+
+echo "Session Data:\n";
+if (empty($_SESSION)) {
+    echo "No session data found\n";
+} else {
+    foreach ($_SESSION as $key => $value) {
+        echo "  $key: " . json_encode($value) . "\n";
+    }
 }
 
-$sessionData = [
-    'session_id' => session_id(),
-    'session_status' => session_status(),
-    'session_data' => $_SESSION,
-    'session_name' => session_name(),
-    'session_cookie_params' => session_get_cookie_params(),
-    'request_cookies' => $_COOKIE,
-    'server_vars' => [
-        'HTTP_HOST' => $_SERVER['HTTP_HOST'] ?? 'NOT SET',
-        'REQUEST_URI' => $_SERVER['REQUEST_URI'] ?? 'NOT SET',
-        'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'] ?? 'NOT SET',
-    ]
-];
+echo "\nCookies:\n";
+if (empty($_COOKIE)) {
+    echo "No cookies found\n";
+} else {
+    foreach ($_COOKIE as $key => $value) {
+        echo "  $key: $value\n";
+    }
+}
 
-echo json_encode($sessionData, JSON_PRETTY_PRINT);
+echo "\nRequest Headers:\n";
+foreach (getallheaders() as $name => $value) {
+    if (strtolower($name) === 'cookie') {
+        echo "  $name: $value\n";
+    }
+}
 ?>

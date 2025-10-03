@@ -15,13 +15,16 @@ security:
                     receptionist@example.com:
                         password: '$2y$13$BbbmXCjLGXj7NrYaQdxlO.nN5kiNXlxAtxWLJagftoDL3w15.YOUu'  # password is 'receptionist'
                         roles: ['ROLE_RECEPTIONIST']
+        session_users:
+            id: App\Security\SessionUserProvider
 
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
-            lazy: true
+            lazy: false
+            provider: session_users
             custom_authenticators:
                 - App\Security\SessionAuthenticator
             logout:

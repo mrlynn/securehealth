@@ -7,6 +7,7 @@ use MongoDB\Client;
 use MongoDB\BSON\UTCDateTime;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\AnonymousUser;
 
 class AuditLogService
 {

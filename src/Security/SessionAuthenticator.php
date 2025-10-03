@@ -39,6 +39,9 @@ class SessionAuthenticator extends AbstractAuthenticator implements Authenticati
     public function authenticate(Request $request): Passport
     {
         $session = $request->getSession();
+        if (!$session->isStarted()) {
+            $session->start();
+        }
         $userData = $session->get('user');
 
         error_log("SessionAuthenticator::authenticate - Session data: " . json_encode($userData));
