@@ -24,7 +24,8 @@ class MongoDBConnectionFactory
             'autoEncryption' => $this->encryptionService->getEncryptionOptions(),
             'driver' => [
                 'ssl' => true
-            ]
+            ],
+            'readPreference' => 'primary'
         ];
         
         // Use Atlas with proper encryption configuration
@@ -36,6 +37,8 @@ class MongoDBConnectionFactory
      */
     public function createClient(string $mongoUrl): Client
     {
-        return new Client($mongoUrl);
+        return new Client($mongoUrl, [
+            'readPreference' => 'primary'
+        ]);
     }
 }
