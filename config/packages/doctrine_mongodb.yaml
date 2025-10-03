@@ -8,8 +8,6 @@ doctrine_mongodb:
                 ssl: true
                 authSource: admin
                 retryWrites: true
-            driver_options:
-                readPreference: primary
     default_database: '%env(resolve:MONGODB_DB)%'
     document_managers:
         default:
