@@ -26,14 +26,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Debug: List files in build context
-RUN ls -la
-
-# Copy composer files first to verify they exist
+# Copy composer files first for better caching
 COPY composer.json composer.lock ./
-
-# Verify composer files are present
-RUN ls -la composer.*
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
