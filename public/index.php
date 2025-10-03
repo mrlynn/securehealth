@@ -15,7 +15,9 @@ if (in_array($_SERVER['REQUEST_URI'] ?? '/', ['/', '/index.php'], true) && ($_SE
     exit;
 }
 
-if (method_exists(Dotenv::class, 'bootEnv')) {
+// Only load .env file if it exists (for local development)
+// In production (Railway), environment variables are already set
+if (method_exists(Dotenv::class, 'bootEnv') && file_exists(dirname(__DIR__) . '/.env')) {
     (new Dotenv())->bootEnv(dirname(__DIR__) . '/.env');
 }
 

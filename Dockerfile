@@ -33,7 +33,7 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Create necessary directories and set permissions
-RUN mkdir -p var/cache var/log \
+RUN mkdir -p var/cache var/log var/cache/sessions \
     && chmod -R 755 var \
     && chmod -R 755 public
 
