@@ -1,8 +1,8 @@
 parameters:
-    mongodb_url: '%env(default:mongodb://localhost:27017:MONGODB_URI)%'
-    mongodb_db: '%env(default:securehealth:MONGODB_DB)%'
-    mongodb_key_vault_namespace: '%env(default:encryption.__keyVault:MONGODB_KEY_VAULT_NAMESPACE)%'
-    mongodb_encryption_key_path: '%env(default:/app/docker/encryption.key:MONGODB_ENCRYPTION_KEY_PATH)%'
+    mongodb_url: '%env(default:MONGODB_URI:mongodb://localhost:27017)%'
+    mongodb_db: '%env(default:MONGODB_DB:securehealth)%'
+    mongodb_key_vault_namespace: '%env(default:MONGODB_KEY_VAULT_NAMESPACE:encryption.__keyVault)%'
+    mongodb_encryption_key_path: '%env(default:MONGODB_ENCRYPTION_KEY_PATH:/app/docker/encryption.key)%'
 
 services:
     _defaults:

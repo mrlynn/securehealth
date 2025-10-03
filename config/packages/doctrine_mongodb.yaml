@@ -3,12 +3,12 @@ doctrine_mongodb:
     auto_generate_hydrator_classes: true
     connections:
         default:
-            server: '%env(default:mongodb://localhost:27017:MONGODB_URI)%'
+            server: '%env(default:MONGODB_URI:mongodb://localhost:27017)%'
             options: 
                 ssl: true
                 authSource: admin
                 retryWrites: true
-    default_database: '%env(default:securehealth:MONGODB_DB)%'
+    default_database: '%env(default:MONGODB_DB:securehealth)%'
     document_managers:
         default:
             auto_mapping: true
