@@ -199,11 +199,35 @@ class AuditLogService
             'metadata' => $auditLog->getMetadata(),
         ];
         
-        $result = $collection->insertOne($document);
-        
-        // If ID was assigned by MongoDB, set it in the object
-        if ($result->getInsertedId()) {
-            $auditLog->setId($result->getInsertedId());
+        try {
+            $result = $collection->insertOne($document);
+            
+            // If ID was assigned by MongoDB, set it in the object
+            if ($result->getInsertedId()) {
+                $auditLog->setId($result->getInsertedId());
+            }
+        } catch (\MongoDB\Driver\Exception\BulkWriteException $e) {
+            // Handle "not primary" error by retrying with primary read preference
+            if (strpos($e->getMessage(), 'not primary') !== false) {
+                // Create a new client with explicit primary read preference
+                $mongoUrl = $_ENV['MONGODB_URI'] ?? 'mongodb://localhost:27017';
+                $mongoDb = $_ENV['MONGODB_DB'] ?? 'securehealth';
+                
+                $client = new \MongoDB\Client($mongoUrl, [
+                    'readPreference' => 'primary'
+                ]);
+                
+                $database = $client->selectDatabase($mongoDb);
+                $collection = $database->selectCollection($this->auditLogCollection);
+                
+                $result = $collection->insertOne($document);
+                
+                if ($result->getInsertedId()) {
+                    $auditLog->setId($result->getInsertedId());
+                }
+            } else {
+                throw $e;
+            }
         }
     }
     
