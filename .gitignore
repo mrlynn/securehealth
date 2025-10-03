@@ -113,7 +113,7 @@ Thumbs.db
 ###> Composer ###
 composer.phar
 /vendor/
-composer.lock
+# Note: composer.lock should be committed for reproducible builds
 ###< Composer ###
 
 ###> Package managers ###
