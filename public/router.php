@@ -21,19 +21,25 @@ if (($_SERVER['APP_ENV'] ?? 'dev') === 'dev' && file_exists(__DIR__ . '/../.env'
     }
 }
 
-// Ensure critical environment variables are set in production
-if (($_SERVER['APP_ENV'] ?? 'dev') === 'prod') {
-    // Set default values if not already set
-    if (!getenv('MONGODB_DB')) {
-        putenv('MONGODB_DB=securehealth');
-        $_ENV['MONGODB_DB'] = 'securehealth';
-        $_SERVER['MONGODB_DB'] = 'securehealth';
+// Ensure critical environment variables are available in $_SERVER for Symfony
+// Railway sets them via getenv() but Symfony reads from $_SERVER
+$criticalVars = ['APP_ENV', 'APP_DEBUG', 'MONGODB_DB', 'MONGODB_URI', 'APP_SECRET'];
+foreach ($criticalVars as $var) {
+    $value = getenv($var);
+    if ($value !== false && !isset($_SERVER[$var])) {
+        $_SERVER[$var] = $value;
+        $_ENV[$var] = $value;
     }
-    if (!getenv('APP_ENV')) {
-        putenv('APP_ENV=prod');
-        $_ENV['APP_ENV'] = 'prod';
-        $_SERVER['APP_ENV'] = 'prod';
-    }
+}
+
+// Set defaults if still not set
+if (!isset($_SERVER['APP_ENV'])) {
+    $_SERVER['APP_ENV'] = 'prod';
+    $_ENV['APP_ENV'] = 'prod';
+}
+if (!isset($_SERVER['MONGODB_DB'])) {
+    $_SERVER['MONGODB_DB'] = 'securehealth';
+    $_ENV['MONGODB_DB'] = 'securehealth';
 }
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
