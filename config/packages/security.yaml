@@ -26,12 +26,11 @@ security:
         - { path: ^/docs, roles: PUBLIC_ACCESS }
         # API Access Control
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
-        - { path: ^/api/patients, roles: IS_AUTHENTICATED_FULLY }
         # Create, update, delete operations restricted to doctors
         - { path: ^/api/patients$, methods: [POST], roles: ROLE_DOCTOR }
         - { path: ^/api/patients/\d+$, methods: [PUT, DELETE], roles: ROLE_DOCTOR }
         # Read operations allowed for all authenticated healthcare staff
-        - { path: ^/api/patients, methods: [GET], roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
+        - { path: ^/api/patients, methods: [GET], roles: [IS_AUTHENTICATED_FULLY, ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST, ROLE_ADMIN] }
         # Admin API access control
         - { path: ^/api/admin, roles: ROLE_ADMIN }
 

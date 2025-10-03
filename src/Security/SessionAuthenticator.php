@@ -32,6 +32,8 @@ class SessionAuthenticator extends AbstractAuthenticator implements Authenticati
                         !str_starts_with($path, '/api/login');
         
         error_log("SessionAuthenticator::supports - Path: $path, Should support: " . ($shouldSupport ? 'YES' : 'NO'));
+        error_log("SessionAuthenticator::supports - Request URI: " . $request->getRequestUri());
+        error_log("SessionAuthenticator::supports - Method: " . $request->getMethod());
         
         return $shouldSupport;
     }

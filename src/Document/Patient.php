@@ -17,7 +17,7 @@ class Patient
      * @Assert\NotBlank(message="ID is required")
      */
     #[ODM\Id]
-    private ?ObjectId $id = null;
+    private $id = null;
     
     /**
      * Patient's last name - deterministically encrypted (searchable)
@@ -252,7 +252,11 @@ class Patient
 
         // Set ID if present
         if (isset($document['_id'])) {
-            $patient->id = $document['_id'];
+            if ($document['_id'] instanceof ObjectId) {
+                $patient->id = $document['_id'];
+            } elseif (is_string($document['_id'])) {
+                $patient->id = new ObjectId($document['_id']);
+            }
         }
 
         // Decrypt and set fields
@@ -381,9 +385,19 @@ class Patient
     
     // Getters and Setters
 
-    public function getId(): ?ObjectId
+    public function getId()
     {
         return $this->id;
+    }
+
+    public function setId($id): self
+    {
+        if (is_string($id)) {
+            $this->id = new ObjectId($id);
+        } else {
+            $this->id = $id;
+        }
+        return $this;
     }
 
     public function getFirstName(): string

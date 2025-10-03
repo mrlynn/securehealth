@@ -19,8 +19,8 @@ class PatientRepository
     public function __construct(
         Client $mongoClient, 
         MongoDBEncryptionService $encryptionService,
-        string $databaseName = 'secure_health',
-        string $collectionName = 'patient'
+        string $databaseName = 'securehealth',
+        string $collectionName = 'patients'
     ) {
         $this->mongoClient = $mongoClient;
         $this->encryptionService = $encryptionService;
