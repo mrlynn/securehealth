@@ -26,15 +26,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy composer files first for better caching
-COPY composer.json ./
-COPY composer.lock* ./
+# Copy all files
+COPY . .
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Copy application code
-COPY . .
 
 # Create necessary directories and set permissions
 RUN mkdir -p var/cache var/log \

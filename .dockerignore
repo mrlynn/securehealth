@@ -1,52 +1,11 @@
-# Git
+# Only exclude what's absolutely necessary
 .git
 .gitignore
-
-# Environment files
 .env
 .env.local
 .env.test
 .env.prod
-
-# Documentation
-docs/
-*.md
-!README.md
-
-# Development files
-tests/
-lab/
-scripts/
-docker-compose.yml
-Dockerfile
-.dockerignore
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
 .DS_Store
 Thumbs.db
-
-# Logs
-var/log/*
-!var/log/.gitkeep
-
-# Cache
-var/cache/*
-!var/cache/.gitkeep
-
-# Node modules (if any)
-node_modules/
-npm-debug.log*
-
-# Composer
-vendor/
-# Note: composer.json and composer.lock are needed for the build
-
-# Temporary files
 *.tmp
 *.temp
