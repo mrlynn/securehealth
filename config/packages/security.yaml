@@ -3,19 +3,7 @@ security:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
     providers:
-        users_in_memory:
-            memory:
-                users:
-                    doctor@example.com:
-                        password: '$2y$13$TkooOBqBQPtvya8qYqJL4.jI0rmgcuLTdXtz8bKzVF9KK8ouD1cuS'  # password is 'doctor'
-                        roles: ['ROLE_DOCTOR']
-                    nurse@example.com:
-                        password: '$2y$13$WlhL0xPY9mMA.wJwadXaF.NiWPb4U7WgzGa.sKr.nTDs1epN6e87W'  # password is 'nurse'
-                        roles: ['ROLE_NURSE']
-                    receptionist@example.com:
-                        password: '$2y$13$BbbmXCjLGXj7NrYaQdxlO.nN5kiNXlxAtxWLJagftoDL3w15.YOUu'  # password is 'receptionist'
-                        roles: ['ROLE_RECEPTIONIST']
-        session_users:
+        app_user_provider:
             id: App\Security\SessionUserProvider
 
     firewalls:
@@ -25,7 +13,7 @@ security:
         main:
             pattern: ^/
             lazy: false
-            provider: users_in_memory
+            provider: app_user_provider
             custom_authenticators:
                 - App\Security\SessionAuthenticator
             logout:

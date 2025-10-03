@@ -260,77 +260,84 @@
             }
           }
       
-      // Load patients data
-      async function loadPatients() {
-        try {
-          console.log("Attempting to fetch patients data");
-          
-          // Get user data for debugging
-          const userData = localStorage.getItem('securehealth_user');
-          console.log("User data from localStorage:", userData);
-          
-          // First try a simpler API endpoint to test authentication
-          console.log("Testing API connection...");
-          const testResponse = await fetch('/api/health', {
-            headers: {
-              'Content-Type': 'application/json',
-              // No auth header needed for health check
-            },
-            credentials: 'include'
-          });
-          
-          console.log("Health check response:", testResponse.status);
-          
-          // Now try patients API
-          const response = await fetch('/api/patients', {
-            headers: {
-              'Content-Type': 'application/json',
-              // Add any authentication headers if needed
-            },
-            credentials: 'include'
-          });
-          
-          console.log("Patients API response status:", response.status);
-          
-          if (response.status === 401) {
-            // Unauthorized - redirect to login
-            showStatus('Your session has expired. Please log in again.', 'info');
-            console.log("Received 401 Unauthorized, will redirect to login");
-            setTimeout(() => {
-              window.location.href = '/login.html'; // Use the main login page
-            }, 2000);
-            return;
-          }
-          
-          if (!response.ok) {
-            throw new Error(`Failed to load patients: ${response.status} ${response.statusText}`);
-          }
-          
-          const data = await response.json();
-          
-          console.log("API response data:", data);
-          console.log("Data type:", typeof data);
-          console.log("Is array:", Array.isArray(data));
-          console.log("Data length:", data?.length);
-          
-          if (Array.isArray(data)) {
-            console.log("✅ Data is array, rendering patients");
-            renderPatients(data);
-          } else if (data.error) {
-            console.log("❌ Data has error property");
-            throw new Error(data.message || 'API error');
-          } else {
-            console.log("❌ Data is not array and has no error property");
-            console.log("Data structure:", Object.keys(data || {}));
-            renderPatients([]);
-            showStatus('No patients found or invalid data format', 'info');
-          }
-        } catch (error) {
-          console.error("Failed to load data:", error);
-          showStatus('Error loading patients data', 'error');
-          renderEmptyTable();
+    // Load patients data with session validation
+    async function loadPatients() {
+      try {
+        console.log("Attempting to fetch patients data");
+
+        // Get user data for debugging
+        const userData = localStorage.getItem('securehealth_user');
+        console.log("User data from localStorage:", userData);
+
+        // First validate session with health check
+        console.log("Validating session...");
+        const testResponse = await fetch('/api/health', {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        console.log("Health check response:", testResponse.status);
+
+        if (!testResponse.ok) {
+          throw new Error(`Health check failed: ${testResponse.status}`);
         }
+
+        // Now try patients API
+        console.log("Fetching patients data...");
+        const response = await fetch('/api/patients', {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        console.log("Patients API response status:", response.status);
+
+        if (response.status === 401) {
+          // Session expired - clear localStorage and redirect
+          console.log("Session expired, clearing localStorage and redirecting");
+          localStorage.removeItem('securehealth_user');
+          showStatus('Your session has expired. Please log in again.', 'info');
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 2000);
+          return;
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("API error response:", errorText);
+          throw new Error(`Failed to load patients: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        console.log("API response data:", data);
+        console.log("Data type:", typeof data);
+        console.log("Is array:", Array.isArray(data));
+        console.log("Data length:", data?.length);
+
+        if (Array.isArray(data)) {
+          console.log("✅ Data is array, rendering patients");
+          renderPatients(data);
+          showStatus(`Loaded ${data.length} patients successfully`, 'success');
+        } else if (data && data.error) {
+          console.log("❌ Data has error property");
+          throw new Error(data.message || 'API error');
+        } else {
+          console.log("❌ Data is not array and has no error property");
+          console.log("Data structure:", Object.keys(data || {}));
+          renderPatients([]);
+          showStatus('No patients found or invalid data format', 'info');
+        }
+      } catch (error) {
+        console.error("Failed to load data:", error);
+        showStatus(`Error loading patients data: ${error.message}`, 'error');
+        renderEmptyTable();
       }
+    }
       
       // Render patients table with role-based access
       function renderPatients(patients) {
