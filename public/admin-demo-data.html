@@ -332,12 +332,33 @@
 
         // Authentication check
         function checkAuthentication() {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
+            const storedUser = localStorage.getItem('securehealth_user');
+            if (!storedUser) {
                 window.location.href = '/login.html';
                 return;
             }
-            authToken = token;
+            
+            try {
+                const user = JSON.parse(storedUser);
+                console.log("Admin page - user data:", user);
+                
+                // Check if user is admin
+                const isAdmin = user.isAdmin === true || 
+                               (user.roles && user.roles.includes('ROLE_ADMIN')) ||
+                               (user.email && user.email.includes('admin'));
+                
+                if (!isAdmin) {
+                    console.log("User is not admin, redirecting to login");
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                console.log("Admin access granted");
+                authToken = storedUser; // Use the stored user data as token
+            } catch (e) {
+                console.error("Error parsing user data:", e);
+                window.location.href = '/login.html';
+            }
         }
 
         // Load statistics
@@ -345,7 +366,6 @@
             try {
                 const response = await fetch('/api/admin/stats', {
                     headers: {
-                        'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include'
@@ -404,7 +424,6 @@
                 const response = await fetch('/api/admin/regenerate-data', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include',
@@ -442,7 +461,6 @@
                 const response = await fetch('/api/admin/clear-data', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include'

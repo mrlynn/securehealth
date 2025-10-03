@@ -44,6 +44,8 @@ security:
         - { path: ^/api/patients/\d+$, methods: [PUT, DELETE], roles: ROLE_DOCTOR }
         # Read operations allowed for all authenticated healthcare staff
         - { path: ^/api/patients, methods: [GET], roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
+        # Admin API access control
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
 
     role_hierarchy:
         # Doctor has all permissions

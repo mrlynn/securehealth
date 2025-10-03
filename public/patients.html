@@ -45,6 +45,9 @@
             <div class="d-flex align-items-center gap-2 ms-auto">
               <span class="text-white-50" id="userName">Loading...</span>
               <span id="userRole" class="role-badge"></span>
+              <a href="/scheduling.html" id="scheduleLink" class="btn btn-outline-light btn-sm" style="display: none;">
+                <i class="fas fa-calendar-alt me-1"></i>Scheduling
+              </a>
               <a href="/admin.html" id="adminLink" class="btn btn-outline-light btn-sm" style="display: none;">
                 <i class="fas fa-cog me-1"></i>Admin
               </a>
@@ -178,22 +181,23 @@
           // Check for admin privileges and show admin link
           function checkAdminStatus() {
             const adminLink = document.getElementById('adminLink');
+            const scheduleLink = document.getElementById('scheduleLink');
             console.log('checkAdminStatus - adminLink:', adminLink);
             console.log('checkAdminStatus - currentUser:', currentUser);
             console.log('checkAdminStatus - currentUser.isAdmin:', currentUser ? currentUser.isAdmin : 'no currentUser');
             console.log('checkAdminStatus - currentUser.roles:', currentUser ? currentUser.roles : 'no currentUser');
-            
-            // Check both isAdmin flag and ROLE_ADMIN in roles array
-            const isAdminUser = currentUser && (currentUser.isAdmin === true || (currentUser.roles && currentUser.roles.includes('ROLE_ADMIN')));
-            
-            if (adminLink && isAdminUser) {
-              console.log('Showing admin link - user is admin');
-              adminLink.style.display = 'inline-block';
-            } else {
-              console.log('Hiding admin link - user is not admin');
-              if (adminLink) {
-                adminLink.style.display = 'none';
-              }
+
+            const roles = currentUser && Array.isArray(currentUser.roles) ? currentUser.roles : [];
+            const hasRole = role => roles.includes(role);
+            const isAdminUser = currentUser && (currentUser.isAdmin === true || hasRole('ROLE_ADMIN'));
+            const isPureReceptionist = currentUser && hasRole('ROLE_RECEPTIONIST') && !hasRole('ROLE_NURSE') && !hasRole('ROLE_DOCTOR') && !hasRole('ROLE_ADMIN') && currentUser.isAdmin !== true;
+
+            if (adminLink) {
+              adminLink.style.display = isAdminUser ? 'inline-block' : 'none';
+            }
+
+            if (scheduleLink) {
+              scheduleLink.style.display = isPureReceptionist ? 'inline-block' : 'none';
             }
           }
       
@@ -246,12 +250,19 @@
           const data = await response.json();
           
           console.log("API response data:", data);
+          console.log("Data type:", typeof data);
+          console.log("Is array:", Array.isArray(data));
+          console.log("Data length:", data?.length);
           
           if (Array.isArray(data)) {
+            console.log("✅ Data is array, rendering patients");
             renderPatients(data);
           } else if (data.error) {
+            console.log("❌ Data has error property");
             throw new Error(data.message || 'API error');
           } else {
+            console.log("❌ Data is not array and has no error property");
+            console.log("Data structure:", Object.keys(data || {}));
             renderPatients([]);
             showStatus('No patients found or invalid data format', 'info');
           }

@@ -3,17 +3,20 @@
 namespace App\Document;
 
 use App\Service\MongoDBEncryptionService;
+use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ODM\Document(collection: 'patients')]
 class Patient
 {
     /**
      * Patient ID
      * @Assert\NotBlank(message="ID is required")
      */
+    #[ODM\Id]
     private ?ObjectId $id = null;
     
     /**
@@ -26,6 +29,7 @@ class Patient
      *     maxMessage="Last name cannot be longer than {{ limit }} characters"
      * )
      */
+    #[ODM\Field(type: 'string')]
     private string $lastName;
 
     /**
@@ -38,6 +42,7 @@ class Patient
      *     maxMessage="First name cannot be longer than {{ limit }} characters"
      * )
      */
+    #[ODM\Field(type: 'string')]
     private string $firstName;
 
     /**
@@ -47,6 +52,7 @@ class Patient
      * )
      * @Assert\NotBlank(message="Email is required")
      */
+    #[ODM\Field(type: 'string')]
     private string $email;
     
     /**
@@ -57,12 +63,14 @@ class Patient
      *     normalizer="trim"
      * )
      */
+    #[ODM\Field(type: 'string', nullable: true)]
     private ?string $phoneNumber = null;
 
     /**
      * Patient's birth date - range encrypted (supports range queries)
      * @Assert\NotBlank(message="Birth date is required")
      */
+    #[ODM\Field(type: 'date')]
     private UTCDateTime $birthDate;
 
     /**
@@ -72,41 +80,49 @@ class Patient
      *     message="SSN must be in format XXX-XX-XXXX"
      * )
      */
+    #[ODM\Field(type: 'string', nullable: true)]
     private ?string $ssn = null;
 
     /**
      * Medical diagnosis - strongly encrypted (no search)
      */
+    #[ODM\Field(type: 'collection')]
     private ?array $diagnosis = [];
 
     /**
      * Medications - strongly encrypted (no search)
      */
+    #[ODM\Field(type: 'collection')]
     private ?array $medications = [];
     
     /**
      * Insurance details - strongly encrypted (no search)
      */
+    #[ODM\Field(type: 'hash', nullable: true)]
     private ?array $insuranceDetails = null;
 
     /**
      * Medical notes - strongly encrypted (no search)
      */
+    #[ODM\Field(type: 'string', nullable: true)]
     private ?string $notes = null;
     
     /**
      * Record creation timestamp
      */
+    #[ODM\Field(type: 'date')]
     private UTCDateTime $createdAt;
     
     /**
      * Record update timestamp
      */
+    #[ODM\Field(type: 'date', nullable: true)]
     private ?UTCDateTime $updatedAt = null;
     
     /**
      * Primary doctor ID reference
      */
+    #[ODM\Field(type: 'object_id', nullable: true)]
     private ?ObjectId $primaryDoctorId = null;
 
     public function __construct()
@@ -228,148 +244,146 @@ class Patient
     }
 
     /**
-     * Convert BSON document to Patient
+     * Create a Patient from a MongoDB document (with decryption)
      */
     public static function fromDocument(array $document, MongoDBEncryptionService $encryptionService): self
     {
         $patient = new self();
 
+        // Set ID if present
         if (isset($document['_id'])) {
-            $patient->setId($document['_id']);
+            $patient->id = $document['_id'];
         }
 
-        // Process each field with potential decryption
+        // Decrypt and set fields
         if (isset($document['firstName'])) {
-            $firstName = $encryptionService->decrypt($document['firstName']);
-            $patient->setFirstName($firstName);
+            $patient->firstName = $encryptionService->decrypt($document['firstName']);
         }
 
         if (isset($document['lastName'])) {
-            $lastName = $encryptionService->decrypt($document['lastName']);
-            $patient->setLastName($lastName);
+            $patient->lastName = $encryptionService->decrypt($document['lastName']);
         }
 
         if (isset($document['email'])) {
-            $email = $encryptionService->decrypt($document['email']);
-            $patient->setEmail($email);
+            $patient->email = $encryptionService->decrypt($document['email']);
         }
 
         if (isset($document['phoneNumber'])) {
-            $phoneNumber = $encryptionService->decrypt($document['phoneNumber']);
-            $patient->setPhoneNumber($phoneNumber);
+            $patient->phoneNumber = $encryptionService->decrypt($document['phoneNumber']);
         }
 
         if (isset($document['birthDate'])) {
-            $birthDate = $encryptionService->decrypt($document['birthDate']);
-            if ($birthDate instanceof UTCDateTime) {
-                $patient->setBirthDate($birthDate);
+            $decryptedBirthDate = $encryptionService->decrypt($document['birthDate']);
+            if ($decryptedBirthDate instanceof UTCDateTime) {
+                $patient->birthDate = $decryptedBirthDate;
+            } elseif (is_string($decryptedBirthDate)) {
+                $patient->birthDate = new UTCDateTime(new \DateTime($decryptedBirthDate));
             } else {
-                $dateTime = new \DateTime($birthDate);
-                $patient->setBirthDate(new UTCDateTime($dateTime));
+                $patient->birthDate = $decryptedBirthDate;
             }
         }
 
         if (isset($document['ssn'])) {
-            $ssn = $encryptionService->decrypt($document['ssn']);
-            $patient->setSsn($ssn);
+            $patient->ssn = $encryptionService->decrypt($document['ssn']);
         }
 
         if (isset($document['diagnosis'])) {
-            $diagnosis = $encryptionService->decrypt($document['diagnosis']);
-            $patient->setDiagnosis($diagnosis);
+            $patient->diagnosis = $encryptionService->decrypt($document['diagnosis']);
         }
 
         if (isset($document['medications'])) {
-            $medications = $encryptionService->decrypt($document['medications']);
-            $patient->setMedications($medications);
+            $patient->medications = $encryptionService->decrypt($document['medications']);
         }
 
         if (isset($document['insuranceDetails'])) {
-            $insuranceDetails = $encryptionService->decrypt($document['insuranceDetails']);
-            $patient->setInsuranceDetails($insuranceDetails);
+            $decryptedInsurance = $encryptionService->decrypt($document['insuranceDetails']);
+            if ($decryptedInsurance instanceof \stdClass) {
+                $patient->insuranceDetails = (array) $decryptedInsurance;
+            } else {
+                $patient->insuranceDetails = $decryptedInsurance;
+            }
         }
 
         if (isset($document['notes'])) {
-            $notes = $encryptionService->decrypt($document['notes']);
-            $patient->setNotes($notes);
+            $patient->notes = $encryptionService->decrypt($document['notes']);
         }
 
         if (isset($document['createdAt'])) {
-            $patient->setCreatedAt($document['createdAt']);
+            $patient->createdAt = $document['createdAt'];
         }
 
         if (isset($document['updatedAt'])) {
-            $patient->setUpdatedAt($document['updatedAt']);
+            $patient->updatedAt = $document['updatedAt'];
         }
 
         if (isset($document['primaryDoctorId'])) {
-            $patient->setPrimaryDoctorId($document['primaryDoctorId']);
+            $patient->primaryDoctorId = $document['primaryDoctorId'];
         }
 
         return $patient;
     }
 
     /**
-     * Convert Patient to BSON document
+     * Convert Patient to MongoDB document (with encryption)
      */
     public function toDocument(MongoDBEncryptionService $encryptionService): array
     {
-        $document = [
-            'firstName' => $encryptionService->encrypt('patient', 'firstName', $this->firstName),
-            'lastName' => $encryptionService->encrypt('patient', 'lastName', $this->lastName),
-            'email' => $encryptionService->encrypt('patient', 'email', $this->email),
-            'birthDate' => $encryptionService->encrypt('patient', 'birthDate', $this->birthDate),
-            'createdAt' => $this->createdAt,
-            'updatedAt' => $this->updatedAt ?? new UTCDateTime()
-        ];
+        $document = [];
 
-        // Optional fields
-        if ($this->id !== null) {
+        if ($this->id) {
             $document['_id'] = $this->id;
         }
 
-        if ($this->phoneNumber !== null) {
+        // Encrypt sensitive fields
+        $document['firstName'] = $encryptionService->encrypt('patient', 'firstName', $this->firstName);
+        $document['lastName'] = $encryptionService->encrypt('patient', 'lastName', $this->lastName);
+        $document['email'] = $encryptionService->encrypt('patient', 'email', $this->email);
+        
+        if ($this->phoneNumber) {
             $document['phoneNumber'] = $encryptionService->encrypt('patient', 'phoneNumber', $this->phoneNumber);
         }
-
-        if ($this->ssn !== null) {
+        
+        $document['birthDate'] = $encryptionService->encrypt('patient', 'birthDate', $this->birthDate);
+        
+        if ($this->ssn) {
             $document['ssn'] = $encryptionService->encrypt('patient', 'ssn', $this->ssn);
         }
-
-        if ($this->diagnosis !== null && count($this->diagnosis) > 0) {
+        
+        if ($this->diagnosis) {
             $document['diagnosis'] = $encryptionService->encrypt('patient', 'diagnosis', $this->diagnosis);
         }
-
-        if ($this->medications !== null && count($this->medications) > 0) {
+        
+        if ($this->medications) {
             $document['medications'] = $encryptionService->encrypt('patient', 'medications', $this->medications);
         }
-
-        if ($this->insuranceDetails !== null) {
+        
+        if ($this->insuranceDetails) {
             $document['insuranceDetails'] = $encryptionService->encrypt('patient', 'insuranceDetails', $this->insuranceDetails);
         }
-
-        if ($this->notes !== null) {
+        
+        if ($this->notes) {
             $document['notes'] = $encryptionService->encrypt('patient', 'notes', $this->notes);
         }
-
-        if ($this->primaryDoctorId !== null) {
+        
+        $document['createdAt'] = $this->createdAt;
+        
+        if ($this->updatedAt) {
+            $document['updatedAt'] = $this->updatedAt;
+        }
+        
+        if ($this->primaryDoctorId) {
             $document['primaryDoctorId'] = $this->primaryDoctorId;
         }
 
         return $document;
     }
+
     
     // Getters and Setters
 
     public function getId(): ?ObjectId
     {
         return $this->id;
-    }
-
-    public function setId(ObjectId $id): self
-    {
-        $this->id = $id;
-        return $this;
     }
 
     public function getFirstName(): string

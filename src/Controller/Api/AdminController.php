@@ -4,6 +4,7 @@ namespace App\Controller\Api;
 
 use App\Command\GeneratePatientDataCommand;
 use App\Document\Patient;
+use App\Repository\PatientRepository;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -19,7 +20,8 @@ class AdminController extends AbstractController
 {
     public function __construct(
         private DocumentManager $documentManager,
-        private GeneratePatientDataCommand $generatePatientDataCommand
+        private GeneratePatientDataCommand $generatePatientDataCommand,
+        private PatientRepository $patientRepository
     ) {
     }
 
@@ -73,10 +75,10 @@ class AdminController extends AbstractController
     public function getStats(): JsonResponse
     {
         try {
-            $patientCount = $this->documentManager->getRepository(Patient::class)->count([]);
+            $patientCount = $this->patientRepository->countByCriteria([]);
             
             // Get some basic statistics
-            $patients = $this->documentManager->getRepository(Patient::class)->findBy([], null, 100);
+            $patients = $this->patientRepository->findByCriteria([], 100);
             
             $conditions = [];
             $medications = [];
@@ -84,25 +86,34 @@ class AdminController extends AbstractController
             
             foreach ($patients as $patient) {
                 // Count conditions
-                foreach ($patient->getMedicalConditions() as $condition) {
-                    $conditions[$condition] = ($conditions[$condition] ?? 0) + 1;
+                $diagnosis = $patient->getDiagnosis();
+                if ($diagnosis) {
+                    foreach ($diagnosis as $condition) {
+                        $conditions[$condition] = ($conditions[$condition] ?? 0) + 1;
+                    }
                 }
                 
                 // Count medications
-                foreach ($patient->getMedications() as $medication) {
-                    $medications[$medication] = ($medications[$medication] ?? 0) + 1;
+                $meds = $patient->getMedications();
+                if ($meds) {
+                    foreach ($meds as $medication) {
+                        $medications[$medication] = ($medications[$medication] ?? 0) + 1;
+                    }
                 }
                 
                 // Count age groups
-                $age = $patient->getDateOfBirth()->diff(new \DateTime())->y;
-                if ($age <= 30) {
-                    $ageGroups['18-30']++;
-                } elseif ($age <= 50) {
-                    $ageGroups['31-50']++;
-                } elseif ($age <= 70) {
-                    $ageGroups['51-70']++;
-                } else {
-                    $ageGroups['71+']++;
+                $birthDate = $patient->getBirthDate();
+                if ($birthDate) {
+                    $age = $birthDate->toDateTime()->diff(new \DateTime())->y;
+                    if ($age <= 30) {
+                        $ageGroups['18-30']++;
+                    } elseif ($age <= 50) {
+                        $ageGroups['31-50']++;
+                    } elseif ($age <= 70) {
+                        $ageGroups['51-70']++;
+                    } else {
+                        $ageGroups['71+']++;
+                    }
                 }
             }
             
@@ -131,12 +142,11 @@ class AdminController extends AbstractController
     public function clearData(): JsonResponse
     {
         try {
-            $collection = $this->documentManager->getDocumentCollection(Patient::class);
-            $result = $collection->deleteMany([]);
+            $result = $this->patientRepository->clearAll();
             
             return new JsonResponse([
                 'success' => true,
-                'message' => "Cleared {$result->getDeletedCount()} patient records"
+                'message' => "Cleared all patient records"
             ]);
         } catch (\Exception $e) {
             return new JsonResponse([

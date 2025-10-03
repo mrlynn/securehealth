@@ -49,6 +49,13 @@ class CreateUsersCommand extends Command
                 'username' => 'Receptionist Davis',
                 'password' => 'receptionist', // Plain password for demo purposes only
                 'roles' => ['ROLE_RECEPTIONIST']
+            ],
+            [
+                'email' => 'admin@securehealth.com',
+                'username' => 'System Administrator',
+                'password' => 'admin123', // Plain password for demo purposes only
+                'roles' => ['ROLE_ADMIN'],
+                'isAdmin' => true
             ]
         ];
 
@@ -71,6 +78,11 @@ class CreateUsersCommand extends Command
             $user->setUsername($userData['username']);
             $user->setPassword($userData['password']); // We're storing plain passwords for the demo
             $user->setRoles($userData['roles']);
+            
+            // Set admin flag if specified
+            if (isset($userData['isAdmin']) && $userData['isAdmin']) {
+                $user->setIsAdmin(true);
+            }
             
             $this->userRepository->save($user);
             $createdCount++;

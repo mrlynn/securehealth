@@ -17,7 +17,13 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/patients">Patients</a>
                     </li>
-                    
+
+                    {% if is_granted('ROLE_RECEPTIONIST') and not is_granted('ROLE_DOCTOR') and not is_granted('ROLE_NURSE') and not is_granted('ROLE_ADMIN') %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/scheduling.html">Scheduling</a>
+                        </li>
+                    {% endif %}
+
                     {% if is_granted('ROLE_DOCTOR') %}
                         <li class="nav-item">
                             <a class="nav-link" href="/audit-logs">Audit Logs</a>

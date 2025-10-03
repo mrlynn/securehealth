@@ -132,6 +132,7 @@ class GeneratePatientDataCommand extends Command
             $dob = new \DateTime();
             $dob->modify("-{$age} years");
             $dob->modify('-' . rand(0, 365) . ' days');
+            $dob = new \MongoDB\BSON\UTCDateTime($dob);
             
             // Generate random conditions and medications
             $patientConditions = array_rand(array_flip($conditions), rand(1, 3));
@@ -149,28 +150,17 @@ class GeneratePatientDataCommand extends Command
             $patient->setLastName($lastName);
             $patient->setEmail($email);
             $patient->setSsn($ssn);
-            $patient->setPhone($phone);
-            $patient->setDateOfBirth($dob);
-            $patient->setAddress([
-                'street' => rand(100, 9999) . ' ' . ['Main St', 'Oak Ave', 'Pine Rd', 'Elm St', 'Cedar Ln'][array_rand(['Main St', 'Oak Ave', 'Pine Rd', 'Elm St', 'Cedar Ln'])],
-                'city' => ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'][array_rand(['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'])],
-                'state' => ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA', 'TX', 'CA', 'TX', 'CA'][array_rand(['NY', 'CA', 'IL', 'TX', 'AZ', 'PA', 'TX', 'CA', 'TX', 'CA'])],
-                'zipCode' => sprintf('%05d', rand(10000, 99999))
-            ]);
-            $patient->setMedicalConditions($patientConditions);
+            $patient->setPhoneNumber($phone);
+            $patient->setBirthDate($dob);
+            $patient->setDiagnosis($patientConditions);
             $patient->setMedications($patientMedications);
-            $patient->setEmergencyContact([
-                'name' => $firstNames[array_rand($firstNames)] . ' ' . $lastNames[array_rand($lastNames)],
-                'relationship' => ['Spouse', 'Parent', 'Sibling', 'Child', 'Friend'][array_rand(['Spouse', 'Parent', 'Sibling', 'Child', 'Friend'])],
-                'phone' => sprintf('(%03d) %03d-%04d', rand(200, 999), rand(200, 999), rand(1000, 9999))
-            ]);
-            $patient->setInsuranceInfo([
+            $patient->setInsuranceDetails([
                 'provider' => ['Blue Cross', 'Aetna', 'Cigna', 'UnitedHealth', 'Humana'][array_rand(['Blue Cross', 'Aetna', 'Cigna', 'UnitedHealth', 'Humana'])],
                 'policyNumber' => 'POL' . sprintf('%08d', rand(10000000, 99999999)),
                 'groupNumber' => 'GRP' . sprintf('%06d', rand(100000, 999999))
             ]);
-            $patient->setCreatedAt(new \DateTime());
-            $patient->setUpdatedAt(new \DateTime());
+            $patient->setCreatedAt(new \MongoDB\BSON\UTCDateTime());
+            $patient->setUpdatedAt(new \MongoDB\BSON\UTCDateTime());
 
             $patients[] = $patient;
         }
@@ -195,9 +185,9 @@ class GeneratePatientDataCommand extends Command
                 "Patient " . ($index + 1) . ":",
                 "  Name: {$patient->getFirstName()} {$patient->getLastName()}",
                 "  Email: {$patient->getEmail()}",
-                "  Phone: {$patient->getPhone()}",
-                "  DOB: {$patient->getDateOfBirth()->format('Y-m-d')}",
-                "  Conditions: " . implode(', ', $patient->getMedicalConditions()),
+                "  Phone: {$patient->getPhoneNumber()}",
+                "  DOB: {$patient->getBirthDate()->toDateTime()->format('Y-m-d')}",
+                "  Conditions: " . implode(', ', $patient->getDiagnosis() ?? []),
                 "  Medications: " . implode(', ', $patient->getMedications()),
                 ""
             ]);

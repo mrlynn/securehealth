@@ -1,18 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Kernel;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\HttpFoundation\Request;
 
-require dirname(__DIR__).'/vendor/autoload.php';
+require dirname(__DIR__) . '/vendor/autoload.php';
 
-// Load environment variables from .env file
-if (method_exists(Dotenv::class, 'bootEnv')) {
-    (new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
+// Redirect the bare root request to the static landing page.
+if (in_array($_SERVER['REQUEST_URI'] ?? '/', ['/', '/index.php'], true) && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+    header('Location: /index.html');
+    exit;
 }
 
-// The check is to ensure we don't use .env in production
+if (method_exists(Dotenv::class, 'bootEnv')) {
+    (new Dotenv())->bootEnv(dirname(__DIR__) . '/.env');
+}
+
 $env = $_SERVER['APP_ENV'] ?? 'dev';
 $debug = (bool) ($_SERVER['APP_DEBUG'] ?? ($env !== 'prod'));
 

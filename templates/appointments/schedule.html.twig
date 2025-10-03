@@ -1,0 +1,87 @@
+{% extends 'main/layout.html.twig' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Reception Appointment Scheduling</h1>
+            <p class="text-muted mb-0">Book doctor appointments for patients. Only reception staff can access this tool.</p>
+        </div>
+        <span class="badge badge-primary badge-pill">Receptionist Only</span>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Create Appointment</h2>
+                </div>
+                <div class="card-body">
+                    <div id="appointmentAlert" class="alert d-none" role="alert"></div>
+                    <form id="appointmentForm" novalidate>
+                        <div class="form-group">
+                            <label for="patientSelect" class="font-weight-bold">Patient</label>
+                            <select id="patientSelect" class="form-control" required>
+                                <option value="" disabled selected>Select a patient</option>
+                                {% for patient in patients %}
+                                    <option value="{{ patient.id }}">{{ patient.lastName }}, {{ patient.firstName }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">Showing the 100 most recent patients.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="scheduledAt" class="font-weight-bold">Date &amp; Time</label>
+                            <input type="datetime-local" id="scheduledAt" class="form-control" required>
+                            <small class="form-text text-muted">Times are saved using the clinic timezone.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointmentNotes" class="font-weight-bold">Notes (optional)</label>
+                            <textarea id="appointmentNotes" class="form-control" rows="3" placeholder="Add any helpful context"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Schedule Appointment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Upcoming Appointments</h2>
+                    <button class="btn btn-sm btn-outline-secondary" id="refreshAppointments">
+                        <i class="fas fa-sync-alt mr-1"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="appointmentsEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="far fa-calendar-plus fa-2x mb-3"></i>
+                        <p class="mb-0">No appointments scheduled yet. Create one using the form.</p>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0" id="appointmentsTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Scheduled For</th>
+                                    <th>Notes</th>
+                                    <th>Created By</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        window.appointmentConfig = {
+            patients: {{ patients|json_encode|raw }}
+        };
+    </script>
+    <script src="{{ asset('assets/js/appointments.js') }}"></script>
+{% endblock %}

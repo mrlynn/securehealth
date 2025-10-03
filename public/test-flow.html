@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Flow</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    .success { background-color: #d4edda; border-color: #c3e6cb; }
+    .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>SecureHealth Test Flow</h1>
+  
+  <div id="step1" class="step info">
+    <h3>Step 1: Login</h3>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="loginResult"></div>
+  </div>
+  
+  <div id="step2" class="step info">
+    <h3>Step 2: Get Patients</h3>
+    <button onclick="testPatients()">Test Patients API</button>
+    <div id="patientsResult"></div>
+  </div>
+  
+  <div id="step3" class="step info">
+    <h3>Step 3: Check localStorage</h3>
+    <button onclick="checkLocalStorage()">Check localStorage</button>
+    <div id="localStorageResult"></div>
+  </div>
+
+  <script>
+    function debugLog(msg, data) {
+      console.log("🔍 " + msg, data);
+    }
+
+    async function testLogin() {
+      const resultDiv = document.getElementById('loginResult');
+      const stepDiv = document.getElementById('step1');
+      
+      try {
+        debugLog("Testing login...");
+        
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            _username: 'doctor@example.com',
+            _password: 'doctor'
+          })
+        });
+        
+        debugLog("Login response status:", response.status);
+        
+        const data = await response.json();
+        debugLog("Login response data:", data);
+        
+        if (data.success) {
+          // Store user data in localStorage (like the real login page does)
+          localStorage.setItem('securehealth_user', JSON.stringify(data.user));
+          
+          resultDiv.innerHTML = `
+            <div class="success">
+              <strong>Login successful!</strong><br>
+              <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+          `;
+          stepDiv.className = 'step success';
+        } else {
+          resultDiv.innerHTML = `
+            <div class="error">
+              <strong>Login failed!</strong><br>
+              <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+          `;
+          stepDiv.className = 'step error';
+        }
+      } catch (error) {
+        debugLog("Login error:", error);
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>Login error:</strong><br>
+            <pre>${error.message}</pre>
+          </div>
+        `;
+        stepDiv.className = 'step error';
+      }
+    }
+
+    async function testPatients() {
+      const resultDiv = document.getElementById('patientsResult');
+      const stepDiv = document.getElementById('step2');
+      
+      try {
+        debugLog("Testing patients API...");
+        
+        const response = await fetch('/api/patients', {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        debugLog("Patients response status:", response.status);
+        
+        if (response.status === 401) {
+          resultDiv.innerHTML = `
+            <div class="error">
+              <strong>Unauthorized (401)</strong><br>
+              Session not found or expired.
+            </div>
+          `;
+          stepDiv.className = 'step error';
+          return;
+        }
+        
+        const data = await response.json();
+        debugLog("Patients response data:", data);
+        
+        if (Array.isArray(data)) {
+          resultDiv.innerHTML = `
+            <div class="success">
+              <strong>Patients loaded successfully!</strong><br>
+              Found ${data.length} patients<br>
+              <pre>${JSON.stringify(data.slice(0, 2), null, 2)}${data.length > 2 ? '\n... (truncated)' : ''}</pre>
+            </div>
+          `;
+          stepDiv.className = 'step success';
+        } else {
+          resultDiv.innerHTML = `
+            <div class="error">
+              <strong>Invalid response format!</strong><br>
+              <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+          `;
+          stepDiv.className = 'step error';
+        }
+      } catch (error) {
+        debugLog("Patients error:", error);
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>Patients API error:</strong><br>
+            <pre>${error.message}</pre>
+          </div>
+        `;
+        stepDiv.className = 'step error';
+      }
+    }
+
+    function checkLocalStorage() {
+      const resultDiv = document.getElementById('localStorageResult');
+      const stepDiv = document.getElementById('step3');
+      
+      const userData = localStorage.getItem('securehealth_user');
+      debugLog("localStorage user data:", userData);
+      
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          resultDiv.innerHTML = `
+            <div class="success">
+              <strong>localStorage contains user data:</strong><br>
+              <pre>${JSON.stringify(user, null, 2)}</pre>
+            </div>
+          `;
+          stepDiv.className = 'step success';
+        } catch (e) {
+          resultDiv.innerHTML = `
+            <div class="error">
+              <strong>localStorage data is invalid JSON:</strong><br>
+              <pre>${userData}</pre>
+            </div>
+          `;
+          stepDiv.className = 'step error';
+        }
+      } else {
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>No user data in localStorage</strong>
+          </div>
+        `;
+        stepDiv.className = 'step error';
+      }
+    }
+
+    // Auto-run tests on page load
+    window.addEventListener('load', function() {
+      debugLog("Test page loaded");
+      setTimeout(() => {
+        testLogin();
+        setTimeout(() => {
+          testPatients();
+          checkLocalStorage();
+        }, 1000);
+      }, 500);
+    });
+  </script>
+</body>
+</html>

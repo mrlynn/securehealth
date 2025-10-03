@@ -221,6 +221,11 @@
                         <a class="nav-link" href="/documentation.html">Documentation</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/scheduling.html" id="scheduleLink" style="display: none;">
+                            <i class="fas fa-calendar-alt me-1"></i>Scheduling
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/admin.html" id="adminLink" style="display: none;">
                             <i class="fas fa-cog me-1"></i>Admin
                         </a>
@@ -569,8 +574,8 @@
     <!-- Smooth scrolling and admin check -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is admin and show admin link
-            checkAdminStatus();
+            // Adjust navigation visibility based on stored roles
+            applyRoleVisibility();
             
             // Smooth scrolling
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -587,18 +592,41 @@
             });
         });
         
-        function checkAdminStatus() {
+        function applyRoleVisibility() {
             const storedUser = localStorage.getItem('securehealth_user');
             const adminLink = document.getElementById('adminLink');
+            const scheduleLink = document.getElementById('scheduleLink');
             
-            if (storedUser && adminLink) {
-                try {
-                    const user = JSON.parse(storedUser);
-                    if (user.isAdmin) {
-                        adminLink.style.display = 'block';
-                    }
-                } catch (e) {
-                    console.error('Error parsing user data:', e);
+            if (!storedUser) {
+                if (adminLink) {
+                    adminLink.style.display = 'none';
+                }
+                if (scheduleLink) {
+                    scheduleLink.style.display = 'none';
+                }
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(storedUser);
+                const roles = Array.isArray(user.roles) ? user.roles : [];
+                const hasRole = role => roles.includes(role);
+                const isAdmin = user.isAdmin === true || hasRole('ROLE_ADMIN');
+                const isPureReceptionist = hasRole('ROLE_RECEPTIONIST') && !hasRole('ROLE_DOCTOR') && !hasRole('ROLE_NURSE') && !isAdmin;
+
+                if (adminLink) {
+                    adminLink.style.display = isAdmin ? 'block' : 'none';
+                }
+                if (scheduleLink) {
+                    scheduleLink.style.display = isPureReceptionist ? 'block' : 'none';
+                }
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+                if (adminLink) {
+                    adminLink.style.display = 'none';
+                }
+                if (scheduleLink) {
+                    scheduleLink.style.display = 'none';
                 }
             }
         }

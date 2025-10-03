@@ -74,6 +74,14 @@ class PatientRepository
     }
 
     /**
+     * Clear all patients from the collection
+     */
+    public function clearAll(): void
+    {
+        $this->collection->deleteMany([]);
+    }
+
+    /**
      * Save a patient
      */
     public function save(Patient $patient): void

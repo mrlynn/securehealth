@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Patients API</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .result { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    .success { background-color: #d4edda; border-color: #c3e6cb; }
+    .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Debug Patients API</h1>
+  
+  <div>
+    <button onclick="testLogin()">1. Test Login</button>
+    <button onclick="testPatients()">2. Test Patients API</button>
+    <button onclick="clearData()">3. Clear All Data</button>
+  </div>
+  
+  <div id="results"></div>
+
+  <script>
+    function addResult(message, type = 'info', data = null) {
+      const resultsDiv = document.getElementById('results');
+      const resultDiv = document.createElement('div');
+      resultDiv.className = `result ${type}`;
+      
+      let content = `<strong>${message}</strong>`;
+      if (data) {
+        content += `<br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+      }
+      
+      resultDiv.innerHTML = content;
+      resultsDiv.appendChild(resultDiv);
+    }
+
+    async function testLogin() {
+      try {
+        addResult('Testing login...', 'info');
+        
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            _username: 'doctor@example.com',
+            _password: 'doctor'
+          })
+        });
+        
+        addResult(`Login response status: ${response.status}`, 'info');
+        
+        const data = await response.json();
+        addResult('Login response data:', 'success', data);
+        
+        if (data.success) {
+          localStorage.setItem('securehealth_user', JSON.stringify(data.user));
+          addResult('User data stored in localStorage', 'success');
+        }
+        
+      } catch (error) {
+        addResult(`Login error: ${error.message}`, 'error');
+      }
+    }
+
+    async function testPatients() {
+      try {
+        addResult('Testing patients API...', 'info');
+        
+        // Check localStorage first
+        const userData = localStorage.getItem('securehealth_user');
+        addResult('localStorage user data:', 'info', userData ? JSON.parse(userData) : null);
+        
+        const response = await fetch('/api/patients', {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        addResult(`Patients API response status: ${response.status}`, 'info');
+        addResult(`Response headers:`, 'info', Object.fromEntries(response.headers.entries()));
+        
+        if (response.status === 401) {
+          addResult('401 Unauthorized - No session found', 'error');
+          return;
+        }
+        
+        const responseText = await response.text();
+        addResult('Raw response text:', 'info', responseText.substring(0, 200) + '...');
+        
+        let data;
+        try {
+          data = JSON.parse(responseText);
+          addResult('Parsed JSON data:', 'success', data);
+          
+          if (Array.isArray(data)) {
+            addResult(`✅ SUCCESS: Found ${data.length} patients`, 'success');
+          } else {
+            addResult('❌ ERROR: Response is not an array', 'error', data);
+          }
+        } catch (parseError) {
+          addResult(`❌ ERROR: Failed to parse JSON: ${parseError.message}`, 'error');
+        }
+        
+      } catch (error) {
+        addResult(`Patients API error: ${error.message}`, 'error');
+      }
+    }
+
+    function clearData() {
+      localStorage.removeItem('securehealth_user');
+      document.getElementById('results').innerHTML = '';
+      addResult('Cleared localStorage and results', 'info');
+    }
+
+    // Auto-run on page load
+    window.addEventListener('load', function() {
+      addResult('Page loaded. Click buttons to test.', 'info');
+    });
+  </script>
+</body>
+</html>
