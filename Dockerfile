@@ -38,7 +38,7 @@ RUN mkdir -p var/cache var/log \
     && chmod -R 755 public
 
 # Expose port
-EXPOSE 8080
+EXPOSE 9000
 
 # Start PHP built-in server
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
+CMD ["php", "-S", "0.0.0.0:9000", "-t", "public"]
