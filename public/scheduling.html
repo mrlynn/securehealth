@@ -6,39 +6,79 @@
   <title>SecureHealth Scheduling</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Shared navbar styles -->
+  <link href="/assets/css/navbar.css" rel="stylesheet">
+  <!-- Role-aware navbar script -->
+  <script src="/assets/js/navbar.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <style>
-    body { background-color: #f8f9fa; }
+    :root {
+      --primary-color: #2c5aa0;
+      --secondary-color: #1e3a5f;
+      --accent-color: #4a90e2;
+      --success-color: #28a745;
+      --warning-color: #ffc107;
+      --danger-color: #dc3545;
+      --light-bg: #f8f9fa;
+      --dark-text: #2c3e50;
+    }
+    
+    body { 
+      background-color: #f8f9fa; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding-top: 80px;
+    }
+    
+    .navbar-custom {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-custom {
+      padding: 12px 30px;
+      border-radius: 25px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary-custom {
+      background: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      color: white;
+    }
+    
+    .btn-primary-custom:hover {
+      background: transparent;
+      color: var(--accent-color);
+      transform: translateY(-2px);
+    }
+    
     .badge-pill { border-radius: 10rem; }
     .navbar-nav .nav-link.active { text-decoration: underline; }
+    
+    .role-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .role-doctor { background-color: #dc3545; color: white; }
+    .role-nurse { background-color: #0d6efd; color: white; }
+    .role-receptionist { background-color: #6c757d; color: white; }
+    .role-admin { background-color: #6f42c1; color: white; }
+    .role-user { background-color: #6c757d; color: white; }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-      <a class="navbar-brand" href="/index.html">SecureHealth</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link" href="/patients.html">Patients</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/scheduling.html" id="scheduleLink" style="display: none;">Scheduling</a>
-          </li>
-        </ul>
-        <div class="d-flex align-items-center gap-2">
-          <span class="text-white-50" id="userName">Loading...</span>
-          <span id="userRole" class="badge bg-light text-dark text-uppercase"></span>
-          <a href="/admin.html" id="adminLink" class="btn btn-outline-light btn-sm" style="display: none;">
-            <i class="fas fa-cog me-1"></i>Admin
-          </a>
-          <button id="logoutBtn" class="btn btn-outline-light btn-sm">Log out</button>
-        </div>
-      </div>
-    </div>
-  </nav>
+  <!-- Role-aware navbar will be inserted here -->
+  <div id="navbar-container"></div>
 
   <main class="container my-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -113,64 +153,31 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const userName = document.getElementById('userName');
-      const userRoleBadge = document.getElementById('userRole');
-      const adminLink = document.getElementById('adminLink');
-      const scheduleLink = document.getElementById('scheduleLink');
-      const logoutBtn = document.getElementById('logoutBtn');
+      // Wait for navbar to initialize, then check authentication
+      setTimeout(() => {
+        checkAuthentication();
+      }, 100);
+      
+      function checkAuthentication() {
+        // Get user from navbar
+        const user = window.secureHealthNavbar.getCurrentUser();
+        
+        if (!user) {
+          window.location.href = '/login.html';
+          return;
+        }
 
-      const storedUser = localStorage.getItem('securehealth_user');
-      if (!storedUser) {
-        window.location.href = '/login.html';
-        return;
-      }
+        // Check if user is receptionist
+        const isReceptionist = window.secureHealthNavbar.hasRole('receptionist');
+        const isAdmin = window.secureHealthNavbar.hasRole('admin');
+        
+        // Allow both receptionists and admins to access scheduling
+        if (!isReceptionist && !isAdmin) {
+          window.location.href = '/login.html';
+          return;
+        }
 
-      let user;
-      try {
-        user = JSON.parse(storedUser);
-      } catch (error) {
-        console.error('Unable to parse stored user data', error);
-        localStorage.removeItem('securehealth_user');
-        window.location.href = '/login.html';
-        return;
-      }
-
-      const roles = Array.isArray(user.roles) ? user.roles : [];
-      const hasRole = role => roles.includes(role);
-      const isAdmin = user.isAdmin === true || hasRole('ROLE_ADMIN');
-      const isPureReceptionist = hasRole('ROLE_RECEPTIONIST') && !hasRole('ROLE_DOCTOR') && !hasRole('ROLE_NURSE') && !hasRole('ROLE_ADMIN') && user.isAdmin !== true;
-
-      if (!isPureReceptionist) {
-        // Only receptionists should be here
-        window.location.href = '/login.html';
-        return;
-      }
-
-      userName.textContent = user.username || user.email || 'Receptionist';
-      userRoleBadge.textContent = 'Receptionist';
-      if (userRoleBadge.classList.contains('badge')) {
-        userRoleBadge.classList.add('bg-secondary');
-      }
-
-      if (adminLink) {
-        adminLink.style.display = isAdmin ? 'inline-block' : 'none';
-      }
-
-      if (scheduleLink) {
-        scheduleLink.style.display = 'inline-block';
-        scheduleLink.classList.add('active');
-      }
-
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-          fetch('/api/logout', {
-            method: 'POST',
-            credentials: 'include'
-          }).finally(function() {
-            localStorage.removeItem('securehealth_user');
-            window.location.href = '/login.html';
-          });
-        });
+        console.log('Scheduling access granted for:', user.username || user.email);
       }
     });
   </script>

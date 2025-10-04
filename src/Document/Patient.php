@@ -292,19 +292,37 @@ class Patient
         }
 
         if (isset($document['diagnosis'])) {
-            $patient->diagnosis = $encryptionService->decrypt($document['diagnosis']);
+            $decryptedDiagnosis = $encryptionService->decrypt($document['diagnosis']);
+            if ($decryptedDiagnosis instanceof \MongoDB\Model\BSONArray) {
+                $patient->diagnosis = iterator_to_array($decryptedDiagnosis);
+            } elseif (is_array($decryptedDiagnosis)) {
+                $patient->diagnosis = $decryptedDiagnosis;
+            } else {
+                $patient->diagnosis = [];
+            }
         }
 
         if (isset($document['medications'])) {
-            $patient->medications = $encryptionService->decrypt($document['medications']);
+            $decryptedMedications = $encryptionService->decrypt($document['medications']);
+            if ($decryptedMedications instanceof \MongoDB\Model\BSONArray) {
+                $patient->medications = iterator_to_array($decryptedMedications);
+            } elseif (is_array($decryptedMedications)) {
+                $patient->medications = $decryptedMedications;
+            } else {
+                $patient->medications = [];
+            }
         }
 
         if (isset($document['insuranceDetails'])) {
             $decryptedInsurance = $encryptionService->decrypt($document['insuranceDetails']);
-            if ($decryptedInsurance instanceof \stdClass) {
+            if ($decryptedInsurance instanceof \MongoDB\Model\BSONDocument) {
+                $patient->insuranceDetails = iterator_to_array($decryptedInsurance);
+            } elseif ($decryptedInsurance instanceof \stdClass) {
                 $patient->insuranceDetails = (array) $decryptedInsurance;
-            } else {
+            } elseif (is_array($decryptedInsurance)) {
                 $patient->insuranceDetails = $decryptedInsurance;
+            } else {
+                $patient->insuranceDetails = null;
             }
         }
 

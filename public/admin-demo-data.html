@@ -6,10 +6,16 @@
     <title>Admin - Demo Data Management | SecureHealth</title>
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Shared navbar styles -->
+    <link href="/assets/css/navbar.css" rel="stylesheet">
+    <!-- Role-aware navbar script -->
+    <script src="/assets/js/navbar.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     
     <style>
         :root {
@@ -26,6 +32,7 @@
         body {
             background-color: var(--light-bg);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 80px;
         }
 
         .navbar {
@@ -156,22 +163,8 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-shield-alt me-2"></i>SecureHealth Admin
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/admin.html">
-                    <i class="fas fa-cog me-1"></i>Admin Panel
-                </a>
-                <a class="nav-link" href="/login.html">
-                    <i class="fas fa-sign-out-alt me-1"></i>Logout
-                </a>
-            </div>
-        </div>
-    </nav>
+    <!-- Role-aware navbar will be inserted here -->
+    <div id="navbar-container"></div>
 
     <div class="container mt-4">
         <!-- Header -->
@@ -326,39 +319,36 @@
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuthentication();
-            loadStats();
+            // Wait for navbar to initialize, then check authentication
+            setTimeout(() => {
+                checkAuthentication();
+                loadStats();
+            }, 100);
         });
 
         // Authentication check
         function checkAuthentication() {
-            const storedUser = localStorage.getItem('securehealth_user');
-            if (!storedUser) {
+            // Get user from navbar
+            const user = window.secureHealthNavbar.getCurrentUser();
+            
+            if (!user) {
                 window.location.href = '/login.html';
                 return;
             }
             
-            try {
-                const user = JSON.parse(storedUser);
-                console.log("Admin page - user data:", user);
-                
-                // Check if user is admin
-                const isAdmin = user.isAdmin === true || 
-                               (user.roles && user.roles.includes('ROLE_ADMIN')) ||
-                               (user.email && user.email.includes('admin'));
-                
-                if (!isAdmin) {
-                    console.log("User is not admin, redirecting to login");
-                    window.location.href = '/login.html';
-                    return;
-                }
-                
-                console.log("Admin access granted");
-                authToken = storedUser; // Use the stored user data as token
-            } catch (e) {
-                console.error("Error parsing user data:", e);
+            console.log("Admin page - user data:", user);
+            
+            // Check if user is admin
+            const isAdmin = window.secureHealthNavbar.hasRole('admin');
+            
+            if (!isAdmin) {
+                console.log("User is not admin, redirecting to login");
                 window.location.href = '/login.html';
+                return;
             }
+            
+            console.log("Admin access granted");
+            authToken = JSON.stringify(user); // Use the stored user data as token
         }
 
         // Load statistics

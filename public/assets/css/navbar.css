@@ -1,0 +1,118 @@
+/**
+ * Shared navbar styles for SecureHealth application
+ * Ensures consistent styling across all pages
+ */
+
+:root {
+  --primary-color: #2c5aa0;
+  --secondary-color: #1e3a5f;
+  --accent-color: #4a90e2;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-bg: #f8f9fa;
+  --dark-text: #2c3e50;
+  --navbar-bg: #2c3e50;
+  --navbar-text: #ecf0f1;
+  --navbar-hover: #34495e;
+  --navbar-active: #1abc9c;
+}
+
+/* Navbar base styles */
+.navbar-custom {
+  background-color: var(--navbar-bg) !important;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.navbar-custom .navbar-brand,
+.navbar-custom .nav-link {
+  color: var(--navbar-text) !important;
+}
+
+.navbar-custom .nav-link:hover,
+.navbar-custom .nav-link:focus {
+  color: var(--navbar-active) !important;
+}
+
+.navbar-custom .navbar-toggler {
+  border-color: rgba(255,255,255,0.1);
+}
+
+.navbar-custom .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(255, 255, 255, 0.5)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+/* Button styles */
+.btn-primary-custom {
+  background-color: var(--navbar-active);
+  border-color: var(--navbar-active);
+  color: white;
+}
+
+.btn-primary-custom:hover {
+  background-color: #16a085;
+  border-color: #16a085;
+  color: white;
+}
+
+.btn-custom {
+  color: var(--navbar-text);
+  border-color: var(--navbar-text);
+}
+
+.btn-custom:hover {
+  color: var(--navbar-active);
+  border-color: var(--navbar-active);
+}
+
+/* Role badge styles */
+.role-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-doctor { 
+  background-color: #dc3545; 
+  color: white; 
+}
+
+.role-nurse { 
+  background-color: #0d6efd; 
+  color: white; 
+}
+
+.role-receptionist { 
+  background-color: #6c757d; 
+  color: white; 
+}
+
+.role-admin { 
+  background-color: #6f42c1; 
+  color: white; 
+}
+
+.role-user { 
+  background-color: #6c757d; 
+  color: white; 
+}
+
+/* Active link styling */
+.navbar-nav .nav-link.active { 
+  text-decoration: underline; 
+}
+
+/* Badge pill styling */
+.badge-pill { 
+  border-radius: 10rem; 
+}
+
+/* Body padding for fixed navbar */
+body {
+  padding-top: 80px;
+}

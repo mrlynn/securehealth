@@ -8,20 +8,31 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Shared navbar styles -->
+  <link href="/assets/css/navbar.css" rel="stylesheet">
+  <!-- Role-aware navbar script -->
+  <script src="/assets/js/navbar.js"></script>
   <style>
-    body { background-color: #f8f9fa; }
-    .role-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
+    :root {
+      --primary-color: #2c5aa0;
+      --secondary-color: #1e3a5f;
+      --accent-color: #4a90e2;
+      --success-color: #28a745;
+      --warning-color: #ffc107;
+      --danger-color: #dc3545;
+      --light-bg: #f8f9fa;
+      --dark-text: #2c3e50;
     }
-    .role-doctor { background-color: #dc3545; color: white; }
-    .role-nurse { background-color: #0d6efd; color: white; }
-    .role-receptionist { background-color: #6c757d; color: white; }
-    .role-admin { background-color: #6f42c1; color: white; }
+    
+    body { 
+      background-color: #f8f9fa; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding-top: 80px;
+    }
+    
+    /* Page-specific styles - navbar styles moved to shared CSS */
+    
+    /* Role badge styles moved to shared navbar.css */
     .encryption-badge {
       display: inline-block;
       font-size: 10px;
@@ -39,22 +50,8 @@
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-      <a class="navbar-brand" href="/index.html">SecureHealth</a>
-            <div class="d-flex align-items-center gap-2 ms-auto">
-              <span class="text-white-50" id="userName">Loading...</span>
-              <span id="userRole" class="role-badge"></span>
-              <a href="/scheduling.html" id="scheduleLink" class="btn btn-outline-light btn-sm" style="display: none;">
-                <i class="fas fa-calendar-alt me-1"></i>Scheduling
-              </a>
-              <a href="/admin.html" id="adminLink" class="btn btn-outline-light btn-sm" style="display: none;">
-                <i class="fas fa-cog me-1"></i>Admin
-              </a>
-              <button id="logoutBtn" class="btn btn-outline-light btn-sm">Log out</button>
-            </div>
-    </div>
-  </nav>
+  <!-- Role-aware navbar will be inserted here -->
+  <div id="navbar-container"></div>
 
   <div class="container my-4">
     <div id="status" class="alert" style="display: none;"></div>
@@ -81,115 +78,70 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const userName = document.getElementById('userName');
-      const userRole = document.getElementById('userRole');
       const roleInfo = document.getElementById('roleInfo');
       const addPatientBtn = document.getElementById('addPatientBtn');
-      const logoutBtn = document.getElementById('logoutBtn');
       const patientsList = document.getElementById('patientsList');
       const statusDiv = document.getElementById('status');
       
       let currentUser = null;
       
-      // Check authentication and load patients
-      checkAuthAndLoadPatients();
-      
-      // Event listeners
-      logoutBtn.addEventListener('click', handleLogout);
+      // Wait for navbar to initialize, then check authentication and load patients
+      setTimeout(() => {
+        checkAuthAndLoadPatients();
+      }, 100);
       
       // Check authentication and load patients with session validation
       async function checkAuthAndLoadPatients() {
-        const storedUser = localStorage.getItem('securehealth_user');
-        console.log("checkAuthAndLoadPatients - stored user:", storedUser);
+        // Get user from navbar
+        currentUser = window.secureHealthNavbar.getCurrentUser();
         
-        if (!storedUser) {
-          console.log("No user found in localStorage, redirecting to login");
+        if (!currentUser) {
+          console.log("No user found, redirecting to login");
           window.location.href = '/login.html';
           return;
         }
         
-        try {
-          const user = JSON.parse(storedUser);
-          console.log("User data parsed successfully:", user);
-          console.log("User isAdmin flag:", user.isAdmin);
-          currentUser = user;
-          userName.textContent = user.username || user.email;
-          
-          // Set role display
-          const roleText = user.isAdmin ? 'ADMIN' : 
-                          user.roles?.includes('ROLE_DOCTOR') ? 'DOCTOR' :
-                          user.roles?.includes('ROLE_NURSE') ? 'NURSE' :
-                          user.roles?.includes('ROLE_RECEPTIONIST') ? 'RECEPTIONIST' : 'USER';
-          userRole.textContent = roleText;
-          
-          // Show role-specific information
-          const isAdmin = user.isAdmin || user.roles?.includes('ROLE_ADMIN');
-          const isDoctor = user.roles?.includes('ROLE_DOCTOR');
-          const isNurse = user.roles?.includes('ROLE_NURSE');
-          const isReceptionist = user.roles?.includes('ROLE_RECEPTIONIST');
-          
-          if (isAdmin) {
-            roleInfo.innerHTML = '<strong>Administrator Access:</strong> Full system access including user management and system configuration.';
-            userRole.className = 'badge bg-danger';
-          } else if (isDoctor) {
-            roleInfo.innerHTML = '<strong>Doctor Access:</strong> Full access to all patient data including SSN, medical history, and sensitive information.';
-            userRole.className = 'badge bg-primary';
-          } else if (isNurse) {
-            roleInfo.innerHTML = '<strong>Nurse Access:</strong> Access to patient data for care coordination. Some sensitive information may be restricted.';
-            userRole.className = 'badge bg-info';
-          } else if (isReceptionist) {
-            roleInfo.innerHTML = '<strong>Receptionist Access:</strong> Basic patient information for scheduling and administrative tasks.';
-            userRole.className = 'badge bg-secondary';
-          } else {
-            roleInfo.innerHTML = '<strong>User Access:</strong> Limited access to patient information.';
-            userRole.className = 'badge bg-light text-dark';
-          }
-          
-          // Show/hide add patient button based on role
-          const canAddPatients = isAdmin || isDoctor;
-          addPatientBtn.style.display = canAddPatients ? 'inline-block' : 'none';
-          
-          // Now load patients with session validation
-          await loadPatients();
-          
-        } catch (error) {
-          console.error("Error parsing user data:", error);
-          localStorage.removeItem('securehealth_user');
-          window.location.href = '/login.html';
-        }
+        console.log("User data from navbar:", currentUser);
+        
+        // Update role info
+        updateRoleInfo();
+        
+        // Check for admin privileges
+        checkAdminStatus();
+        
+        // Load patients data
+        await loadPatients();
       }
       
-      // Check if user is authenticated and determine role (legacy function)
-      function checkAuth() {
-        const storedUser = localStorage.getItem('securehealth_user');
-        console.log("checkAuth - stored user:", storedUser);
+      // Update role information display
+      function updateRoleInfo() {
+        const userRole = window.secureHealthNavbar.getCurrentUserRole();
+        const isAdmin = window.secureHealthNavbar.hasRole('admin');
+        const isDoctor = window.secureHealthNavbar.hasRole('doctor');
+        const isNurse = window.secureHealthNavbar.hasRole('nurse');
+        const isReceptionist = window.secureHealthNavbar.hasRole('receptionist');
         
-        if (!storedUser) {
-          console.log("No user found in localStorage, redirecting to login");
-          window.location.href = '/login.html';
-          return;
+        if (isAdmin) {
+          roleInfo.innerHTML = '<strong>Administrator Access:</strong> Full system access including user management and system configuration.';
+        } else if (isDoctor) {
+          roleInfo.innerHTML = '<strong>Doctor Access:</strong> Full access to all patient data including SSN, medical history, and sensitive information.';
+        } else if (isNurse) {
+          roleInfo.innerHTML = '<strong>Nurse Access:</strong> Access to patient data for care coordination. Some sensitive information may be restricted.';
+        } else if (isReceptionist) {
+          roleInfo.innerHTML = '<strong>Receptionist Access:</strong> Basic patient information for scheduling and administrative tasks.';
+        } else {
+          roleInfo.innerHTML = '<strong>User Access:</strong> Limited access to patient information.';
         }
         
-        try {
-          const user = JSON.parse(storedUser);
-          console.log("User data parsed successfully:", user);
-          console.log("User isAdmin flag:", user.isAdmin);
-          currentUser = user;
-          userName.textContent = user.username || user.email;
-          
-          // Determine user role based on email or username
-          const userRoleType = determineUserRole(user);
-          console.log("Determined user role:", userRoleType);
-          userRole.textContent = userRoleType;
-          userRole.className = `role-badge role-${userRoleType.toLowerCase()}`;
-          
-          // Set role-specific info and permissions
-          setRoleInfo(userRoleType);
-          
-        } catch (e) {
-          console.error("Error parsing user data:", e);
-          window.location.href = '/login.html';
-        }
+        // Show/hide add patient button based on role
+        const canAddPatients = isAdmin || isDoctor;
+        addPatientBtn.style.display = canAddPatients ? 'inline-block' : 'none';
+      }
+      
+      // Check admin status (legacy function - now handled by navbar)
+      function checkAdminStatus() {
+        // Admin status is now handled by the navbar
+        // This function is kept for compatibility
       }
       
       // Determine user role based on email/username patterns
@@ -635,22 +587,10 @@
         }
       }
       
-      // Logout function
+      // Logout function (legacy - now handled by navbar)
       async function handleLogout() {
-        console.log("Logging out, removing user from localStorage");
-        
-        // Call logout API to clear server session
-        try {
-          await fetch('/api/logout', {
-            method: 'POST',
-            credentials: 'include'
-          });
-        } catch (e) {
-          console.log("Logout API call failed, continuing with client-side logout");
-        }
-        
-        localStorage.removeItem('securehealth_user');
-        window.location.href = '/login.html';
+        // Logout is now handled by the navbar
+        // This function is kept for compatibility
       }
       
       // Display status message

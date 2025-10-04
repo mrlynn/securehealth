@@ -36,12 +36,13 @@ class AppointmentController extends AbstractController
 
         $patientId = null;
         if ($patientIdParam) {
-            if (!ObjectId::isValid($patientIdParam)) {
+            try {
+                $patientId = new ObjectId($patientIdParam);
+            } catch (\Exception $e) {
                 return $this->json([
                     'message' => 'Invalid patientId provided'
                 ], Response::HTTP_BAD_REQUEST);
             }
-            $patientId = new ObjectId($patientIdParam);
         }
 
         $fromDate = null;
@@ -85,7 +86,9 @@ class AppointmentController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!ObjectId::isValid($patientIdValue)) {
+        try {
+            $patientId = new ObjectId($patientIdValue);
+        } catch (\Exception $e) {
             return $this->json([
                 'message' => 'Invalid patientId provided'
             ], Response::HTTP_BAD_REQUEST);
@@ -99,7 +102,7 @@ class AppointmentController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $patient = $this->patientRepository->findById(new ObjectId($patientIdValue));
+        $patient = $this->patientRepository->findById($patientId);
         if (!$patient) {
             return $this->json([
                 'message' => 'Patient not found'
@@ -107,7 +110,7 @@ class AppointmentController extends AbstractController
         }
 
         $appointment = new Appointment();
-        $appointment->setPatientId(new ObjectId($patientIdValue));
+        $appointment->setPatientId($patientId);
         $appointment->setPatientFullName(sprintf('%s %s', $patient->getFirstName(), $patient->getLastName()));
         $appointment->setScheduledAt(new UTCDateTime($scheduledDateTime));
         $appointment->setNotes($notes);

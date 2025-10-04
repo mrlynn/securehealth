@@ -5,49 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit Patient - SecureHealth</title>
   <style>
+    /* Page-specific styles - navbar styles moved to shared CSS */
     body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f8f9fa;
-      color: #212529;
-    }
-    .header {
-      background-color: #0d6efd;
-      color: white;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 24px;
+      background-color: #f8f9fa; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding-top: 80px;
     }
     .container {
       max-width: 1000px;
       margin: 20px auto;
       padding: 20px;
     }
-    .user-info {
-      display: flex;
-      align-items: center;
-    }
-    .user-name {
-      margin-right: 20px;
-    }
-    .logout-btn, .action-btn {
-      background-color: transparent;
-      border: 1px solid white;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-left: 10px;
-    }
-    .logout-btn:hover, .action-btn:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
+    /* Role badge and navbar styles moved to shared navbar.css */
     .card {
       background-color: white;
       border-radius: 8px;
@@ -234,17 +203,20 @@
       text-decoration: underline;
     }
   </style>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Shared navbar styles -->
+  <link href="/assets/css/navbar.css" rel="stylesheet">
+  <!-- Role-aware navbar script -->
+  <script src="/assets/js/navbar.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </head>
 <body>
-  <div class="header">
-    <h1>SecureHealth</h1>
-    <a href="/login.html" class="home-link">Home</a>
-    <div class="user-info">
-      <span class="user-name" id="userName">Loading...</span>
-      <a href="/patients.html" class="action-btn">Patients</a>
-      <button id="logoutBtn" class="logout-btn">Log out</button>
-    </div>
-  </div>
+  <!-- Role-aware navbar will be inserted here -->
+  <div id="navbar-container"></div>
 
   <div class="container">
     <a href="javascript:history.back()" class="back-link">
@@ -260,16 +232,16 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const userName = document.getElementById('userName');
-      const logoutBtn = document.getElementById('logoutBtn');
       const patientForm = document.getElementById('patientForm');
       const statusDiv = document.getElementById('status');
       
       // Patient data to edit
       let patientData = {};
       
-      // Check authentication
-      checkAuth();
+      // Wait for navbar to initialize, then check authentication
+      setTimeout(() => {
+        checkAuth();
+      }, 100);
       
       // Get patient ID from URL
       const params = new URLSearchParams(window.location.search);
@@ -284,91 +256,47 @@
       // Load patient data
       loadPatientData(patientId);
       
-      // Event listeners
-      logoutBtn.addEventListener('click', handleLogout);
-      
       // Check if user is authenticated
       function checkAuth() {
-        const storedUser = localStorage.getItem('securehealth_user');
-        console.log("checkAuth - stored user:", storedUser);
+        // Get user from navbar
+        const user = window.secureHealthNavbar.getCurrentUser();
         
-        if (!storedUser) {
-          console.log("No user found in localStorage, redirecting to login");
+        if (!user) {
+          console.log("No user found, redirecting to login");
           window.location.href = '/login.html';
           return;
         }
         
-        try {
-          const user = JSON.parse(storedUser);
-          console.log("User data parsed successfully:", user);
-          userName.textContent = user.username || user.email;
-        } catch (e) {
-          console.error("Error parsing user data:", e);
-          window.location.href = '/login.html';
-        }
+        console.log("User data from navbar:", user);
       }
       
       // Load patient data
       async function loadPatientData(id) {
         console.log("Loading patient data for ID:", id);
         
-        // Normally this would be a fetch to your API
-        // For this demo, we'll use mock data
-        const mockPatients = {
-          "1": {
-            id: "1",
-            firstName: "John",
-            lastName: "Doe",
-            birthDate: "1980-05-15",
-            email: "john.doe@example.com",
-            phone: "555-123-4567",
-            address: "123 Main St, Anytown, USA",
-            insuranceProvider: "Blue Cross",
-            insuranceNumber: "BC98765432",
-            allergies: ["Penicillin", "Peanuts"],
-            conditions: ["Hypertension", "Type 2 Diabetes"],
-            medications: ["Metformin 500mg", "Lisinopril 10mg"]
-          },
-          "2": {
-            id: "2",
-            firstName: "Jane",
-            lastName: "Smith",
-            birthDate: "1985-10-22",
-            email: "jane.smith@example.com",
-            phone: "555-987-6543",
-            address: "456 Oak Ave, Somewhere, USA",
-            insuranceProvider: "Aetna",
-            insuranceNumber: "AE12345678",
-            allergies: ["Sulfa drugs"],
-            conditions: ["Asthma"],
-            medications: ["Albuterol inhaler"]
-          },
-          "3": {
-            id: "3",
-            firstName: "Robert",
-            lastName: "Johnson",
-            birthDate: "1975-03-08",
-            email: "robert.j@example.com",
-            phone: "555-567-8901",
-            address: "789 Pine St, Elsewhere, USA",
-            insuranceProvider: "Medicare",
-            insuranceNumber: "MC55566777",
-            allergies: ["None"],
-            conditions: ["Arthritis", "GERD"],
-            medications: ["Omeprazole 20mg", "Ibuprofen 400mg"]
-          }
-        };
-
         try {
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 500));
+          const response = await fetch(`/api/patients/${id}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+          });
           
-          // Get patient data
-          const patient = mockPatients[id];
-          
-          if (!patient) {
-            throw new Error("Patient not found");
+          if (!response.ok) {
+            if (response.status === 404) {
+              throw new Error("Patient not found");
+            } else if (response.status === 401) {
+              throw new Error("Authentication required");
+            } else if (response.status === 403) {
+              throw new Error("Access denied");
+            } else {
+              throw new Error(`Server error: ${response.status}`);
+            }
           }
+          
+          const patient = await response.json();
+          console.log("Patient data loaded:", patient);
           
           // Set global patient data
           patientData = patient;
@@ -422,11 +350,11 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label for="phone">Phone</label>
-                    <input type="tel" id="phone" class="form-control" value="${patient.phone}" required>
+                    <input type="tel" id="phone" class="form-control" value="${patient.phoneNumber || ''}" required>
                   </div>
                   <div class="form-group">
                     <label for="address">Address <span class="encryption-badge encryption-standard">S</span></label>
-                    <input type="text" id="address" class="form-control" value="${patient.address}" required>
+                    <input type="text" id="address" class="form-control" value="${patient.address || ''}" required>
                   </div>
                 </div>
               </div>
@@ -435,18 +363,18 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label for="insuranceProvider">Insurance Provider</label>
-                    <input type="text" id="insuranceProvider" class="form-control" value="${patient.insuranceProvider}">
+                    <input type="text" id="insuranceProvider" class="form-control" value="${patient.insuranceDetails?.provider || ''}">
                   </div>
                   <div class="form-group">
                     <label for="insuranceNumber">Insurance Number <span class="encryption-badge encryption-standard">S</span></label>
-                    <input type="text" id="insuranceNumber" class="form-control" value="${patient.insuranceNumber}">
+                    <input type="text" id="insuranceNumber" class="form-control" value="${patient.insuranceDetails?.policyNumber || ''}">
                   </div>
                 </div>
                 
                 <div class="form-group">
                   <label>Allergies</label>
                   <div id="allergiesList" class="tag-list">
-                    ${patient.allergies.map(allergy => 
+                    ${(patient.allergies || []).map(allergy => 
                       `<div class="tag">${allergy} <span class="tag-remove" onclick="removeItem('allergies', '${allergy}')">✕</span></div>`
                     ).join('')}
                   </div>
@@ -459,20 +387,20 @@
                 <div class="form-group">
                   <label>Conditions <span class="encryption-badge encryption-standard">S</span></label>
                   <div id="conditionsList" class="tag-list">
-                    ${patient.conditions.map(condition => 
-                      `<div class="tag">${condition} <span class="tag-remove" onclick="removeItem('conditions', '${condition}')">✕</span></div>`
+                    ${(patient.diagnosis || []).map(condition => 
+                      `<div class="tag">${condition} <span class="tag-remove" onclick="removeItem('diagnosis', '${condition}')">✕</span></div>`
                     ).join('')}
                   </div>
                   <div class="tag-input">
                     <input type="text" id="conditionInput" class="form-control" placeholder="Add condition...">
-                    <button type="button" onclick="addItem('conditions')">Add</button>
+                    <button type="button" onclick="addItem('diagnosis')">Add</button>
                   </div>
                 </div>
                 
                 <div class="form-group">
                   <label>Medications <span class="encryption-badge encryption-standard">S</span></label>
                   <div id="medicationsList" class="tag-list">
-                    ${patient.medications.map(medication => 
+                    ${(patient.medications || []).map(medication => 
                       `<div class="tag">${medication} <span class="tag-remove" onclick="removeItem('medications', '${medication}')">✕</span></div>`
                     ).join('')}
                   </div>
@@ -522,11 +450,10 @@
         }
       }
       
-      // Logout function
+      // Logout function (legacy - now handled by navbar)
       function handleLogout() {
-        console.log("Logging out, removing user from localStorage");
-        localStorage.removeItem('securehealth_user');
-        window.location.href = '/login.html';
+        // Logout is now handled by the navbar
+        // This function is kept for compatibility
       }
       
       // Display status message
@@ -561,9 +488,13 @@
         tag.innerHTML = `${value} <span class="tag-remove" onclick="removeItem('${listType}', '${value}')">✕</span>`;
         listElement.appendChild(tag);
         
-        // Add to patient data
-        if (!window.patientData[listType].includes(value)) {
-          window.patientData[listType].push(value);
+        // Add to patient data - handle diagnosis field mapping
+        const dataField = listType === 'conditionInput' ? 'diagnosis' : listType.replace('Input', '');
+        if (!window.patientData[dataField]) {
+          window.patientData[dataField] = [];
+        }
+        if (!window.patientData[dataField].includes(value)) {
+          window.patientData[dataField].push(value);
         }
         
         // Clear input
@@ -573,41 +504,86 @@
     
     // Remove item from a list
     function removeItem(listType, value) {
+      // Handle diagnosis field mapping
+      const dataField = listType === 'diagnosis' ? 'diagnosis' : listType;
+      
       // Remove from patient data
-      window.patientData[listType] = window.patientData[listType].filter(item => item !== value);
+      if (window.patientData[dataField]) {
+        window.patientData[dataField] = window.patientData[dataField].filter(item => item !== value);
+      }
       
       // Redraw list
       const listElement = document.getElementById(`${listType}List`);
-      listElement.innerHTML = window.patientData[listType].map(item => 
-        `<div class="tag">${item} <span class="tag-remove" onclick="removeItem('${listType}', '${item}')">✕</span></div>`
-      ).join('');
+      if (listElement && window.patientData[dataField]) {
+        listElement.innerHTML = window.patientData[dataField].map(item => 
+          `<div class="tag">${item} <span class="tag-remove" onclick="removeItem('${listType}', '${item}')">✕</span></div>`
+        ).join('');
+      }
     }
     
     // Save patient data
-    function savePatient() {
-      // Get form values
-      const form = document.getElementById('editPatientForm');
-      
-      // Update patient data
-      window.patientData.firstName = document.getElementById('firstName').value;
-      window.patientData.lastName = document.getElementById('lastName').value;
-      window.patientData.birthDate = document.getElementById('birthDate').value;
-      window.patientData.email = document.getElementById('email').value;
-      window.patientData.phone = document.getElementById('phone').value;
-      window.patientData.address = document.getElementById('address').value;
-      window.patientData.insuranceProvider = document.getElementById('insuranceProvider').value;
-      window.patientData.insuranceNumber = document.getElementById('insuranceNumber').value;
-      
-      // In a real app, you would send this data to the server
-      console.log("Updated patient data:", window.patientData);
-      
-      // Show success message
-      window.showStatus('Patient information updated successfully!', 'success');
-      
-      // After a short delay, redirect back to the patient detail page
-      setTimeout(() => {
-        window.location.href = `/patient-detail.html?id=${window.patientData.id}`;
-      }, 1500);
+    async function savePatient() {
+      try {
+        // Get form values
+        const form = document.getElementById('editPatientForm');
+        
+        // Update patient data
+        const updatedData = {
+          firstName: document.getElementById('firstName').value,
+          lastName: document.getElementById('lastName').value,
+          birthDate: document.getElementById('birthDate').value,
+          email: document.getElementById('email').value,
+          phoneNumber: document.getElementById('phone').value,
+          address: document.getElementById('address').value,
+          insuranceDetails: {
+            provider: document.getElementById('insuranceProvider').value,
+            policyNumber: document.getElementById('insuranceNumber').value,
+            groupNumber: window.patientData.insuranceDetails?.groupNumber || ''
+          },
+          allergies: window.patientData.allergies || [],
+          diagnosis: window.patientData.diagnosis || [],
+          medications: window.patientData.medications || []
+        };
+        
+        console.log("Saving patient data:", updatedData);
+        
+        const response = await fetch(`/api/patients/${window.patientData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(updatedData)
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Authentication required");
+          } else if (response.status === 403) {
+            throw new Error("Access denied");
+          } else if (response.status === 404) {
+            throw new Error("Patient not found");
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Server error: ${response.status}`);
+          }
+        }
+        
+        const result = await response.json();
+        console.log("Patient updated successfully:", result);
+        
+        // Show success message
+        window.showStatus('Patient information updated successfully!', 'success');
+        
+        // After a short delay, redirect back to the patient detail page
+        setTimeout(() => {
+          window.location.href = `/patient-detail.html?id=${window.patientData.id}`;
+        }, 1500);
+        
+      } catch (error) {
+        console.error("Error saving patient:", error);
+        window.showStatus(`Error saving patient: ${error.message}`, 'error');
+      }
     }
   </script>
 </body>

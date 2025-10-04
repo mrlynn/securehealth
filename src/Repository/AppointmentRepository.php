@@ -40,11 +40,12 @@ class AppointmentRepository
 
     public function findById(string $id): ?Appointment
     {
-        if (!ObjectId::isValid($id)) {
+        try {
+            $objectId = new ObjectId($id);
+            return $this->repository->find($objectId);
+        } catch (\Exception $e) {
             return null;
         }
-
-        return $this->repository->find((string) $id);
     }
 
     /**
