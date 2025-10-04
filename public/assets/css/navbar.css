@@ -112,6 +112,37 @@
   border-radius: 10rem; 
 }
 
+/* Dropdown styling */
+.navbar-custom .dropdown-menu {
+  background-color: var(--light-bg);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  border: none;
+  margin-top: 0.5rem;
+}
+
+.navbar-custom .dropdown-item {
+  color: var(--dark-text);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.navbar-custom .dropdown-item:hover,
+.navbar-custom .dropdown-item:focus {
+  background-color: rgba(44, 90, 160, 0.1);
+  color: var(--primary-color);
+}
+
+.navbar-custom .dropdown-item.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.navbar-custom .dropdown-divider {
+  margin: 0.5rem 0;
+  opacity: 0.2;
+}
+
 /* Body padding for fixed navbar */
 body {
   padding-top: 80px;

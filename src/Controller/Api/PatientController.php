@@ -5,6 +5,7 @@ namespace App\Controller\Api;
 use App\Document\Patient;
 use App\Repository\PatientRepository;
 use App\Service\AuditLogService;
+use App\Service\PatientVerificationService;
 use App\Security\Voter\PatientVoter;
 use App\Service\MongoDBEncryptionService;
 use MongoDB\BSON\ObjectId;
@@ -14,6 +15,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/patients')]
@@ -23,17 +25,20 @@ class PatientController extends AbstractController
     private AuditLogService $auditLogService;
     private MongoDBEncryptionService $encryptionService;
     private ValidatorInterface $validator;
+    private PatientVerificationService $verificationService;
 
     public function __construct(
         PatientRepository $patientRepository,
         AuditLogService $auditLogService,
         MongoDBEncryptionService $encryptionService,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        PatientVerificationService $verificationService
     ) {
         $this->patientRepository = $patientRepository;
         $this->auditLogService = $auditLogService;
         $this->encryptionService = $encryptionService;
         $this->validator = $validator;
+        $this->verificationService = $verificationService;
     }
 
     #[Route('', name: 'patient_list', methods: ['GET'])]
@@ -85,7 +90,7 @@ class PatientController extends AbstractController
     }
 
     #[Route('/{id}', name: 'patient_show', methods: ['GET'])]
-    public function show(string $id): JsonResponse
+    public function show(string $id, Request $request): JsonResponse
     {
         $patient = $this->getPatientById($id);
 
@@ -95,17 +100,31 @@ class PatientController extends AbstractController
 
         $this->denyAccessUnlessGranted(PatientVoter::VIEW, $patient);
 
+        // Check if verification is required
+        $user = $this->getUser();
+        if ($this->verificationService->isVerificationRequired($user)) {
+            $verificationResult = $this->checkVerification($request, $user, $id);
+            if (!$verificationResult['success']) {
+                return $this->json([
+                    'message' => 'Patient identity verification required',
+                    'verificationRequired' => true,
+                    'requirements' => $this->verificationService->getVerificationRequirements()
+                ], Response::HTTP_FORBIDDEN);
+            }
+        }
+
         // Log the access
         $this->auditLogService->logPatientAccess(
-            $this->getUser(),
+            $user,
             'VIEW',
             (string)$patient->getId(),
             [
-                'description' => 'Viewed patient details'
+                'description' => 'Viewed patient details',
+                'verificationRequired' => $this->verificationService->isVerificationRequired($user)
             ]
         );
 
-        return $this->json($patient->toArray($this->getUser()));
+        return $this->json($patient->toArray($user));
     }
 
     #[Route('', name: 'patient_create', methods: ['POST'])]
@@ -160,6 +179,19 @@ class PatientController extends AbstractController
         }
 
         $this->denyAccessUnlessGranted(PatientVoter::EDIT, $patient);
+
+        // Check if verification is required for updates
+        $user = $this->getUser();
+        if ($this->verificationService->isVerificationRequired($user)) {
+            $verificationResult = $this->checkVerification($request, $user, $id);
+            if (!$verificationResult['success']) {
+                return $this->json([
+                    'message' => 'Patient identity verification required for updates',
+                    'verificationRequired' => true,
+                    'requirements' => $this->verificationService->getVerificationRequirements()
+                ], Response::HTTP_FORBIDDEN);
+            }
+        }
 
         $data = json_decode($request->getContent(), true);
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -220,6 +252,11 @@ class PatientController extends AbstractController
         if (isset($data['notes']) && $this->isGranted(PatientVoter::EDIT_DIAGNOSIS, $patient)) {
             $patient->setNotes($data['notes']);
             $updatedFields[] = 'notes';
+        }
+
+        if (isset($data['notesHistory']) && $this->isGranted(PatientVoter::EDIT_NOTES, $patient)) {
+            $patient->setNotesHistory($data['notesHistory']);
+            $updatedFields[] = 'notesHistory';
         }
 
         if (isset($data['primaryDoctorId']) && $this->isGranted(PatientVoter::EDIT, $patient)) {
@@ -368,5 +405,43 @@ class PatientController extends AbstractController
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Check patient verification from request headers or body
+     */
+    private function checkVerification(Request $request, UserInterface $user, string $patientId): array
+    {
+        // Check for verification data in request body first
+        $data = json_decode($request->getContent(), true);
+        if (isset($data['verification'])) {
+            $verification = $data['verification'];
+            if (isset($verification['birthDate']) && isset($verification['lastFourSSN'])) {
+                return $this->verificationService->verifyPatientIdentity(
+                    $patientId,
+                    $verification['birthDate'],
+                    $verification['lastFourSSN'],
+                    $user
+                );
+            }
+        }
+
+        // Check for verification data in headers
+        $birthDate = $request->headers->get('X-Patient-Birth-Date');
+        $lastFourSSN = $request->headers->get('X-Patient-Last-Four-SSN');
+
+        if ($birthDate && $lastFourSSN) {
+            return $this->verificationService->verifyPatientIdentity(
+                $patientId,
+                $birthDate,
+                $lastFourSSN,
+                $user
+            );
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Verification data not provided'
+        ];
     }
 }

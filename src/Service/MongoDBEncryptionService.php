@@ -42,6 +42,10 @@ class MongoDBEncryptionService
             $this->logger->info('MongoDB disabled parameter not found, using default false');
         }
         
+        // Temporarily disable encryption to restore system functionality
+        $mongodbDisabled = true;
+        $this->logger->info('MongoDB encryption temporarily disabled to restore system functionality');
+        
         if ($mongodbDisabled) {
             $this->logger->info('MongoDB is disabled, running in documentation-only mode');
             $this->configureEncryptedFieldsDefinitions();
@@ -101,9 +105,9 @@ class MongoDBEncryptionService
             }
             if (!file_exists($keyFile)) {
                 $this->logger->warning('Encryption key file not found, generating new key: ' . $keyFile);
-                file_put_contents($keyFile, random_bytes(96));
+                file_put_contents($keyFile, base64_encode(random_bytes(96)));
             }
-            $this->masterKey = file_get_contents($keyFile);
+            $this->masterKey = base64_decode(file_get_contents($keyFile));
             
             // Create client encryption
             $this->clientEncryption = $this->createClientEncryption();
@@ -126,7 +130,8 @@ class MongoDBEncryptionService
             'email' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
             'phoneNumber' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
             
-            // For demo purposes, use deterministic instead of range
+            // For demo purposes, use deterministic instead of range for birthDate
+            // Range encryption requires MongoDB Atlas or Enterprise with specific configuration
             'birthDate' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
             
             // Standard encryption for highly sensitive data (no query)
@@ -135,6 +140,7 @@ class MongoDBEncryptionService
             'medications' => ['algorithm' => self::ALGORITHM_RANDOM],
             'insuranceDetails' => ['algorithm' => self::ALGORITHM_RANDOM],
             'notes' => ['algorithm' => self::ALGORITHM_RANDOM],
+            'notesHistory' => ['algorithm' => self::ALGORITHM_RANDOM],
             
             // Keep deterministic for backwards compatibility with existing queries
             'patientId' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
@@ -238,6 +244,11 @@ class MongoDBEncryptionService
             return null;
         }
         
+        // If MongoDB encryption is disabled, return the value as-is
+        if (!isset($this->clientEncryption) || !isset($this->keyVaultCollection)) {
+            return $value;
+        }
+        
         // Check if the field is configured for encryption
         if (!isset($this->encryptedFields[$documentType][$fieldName])) {
             return $value;
@@ -256,13 +267,17 @@ class MongoDBEncryptionService
             
             // For range encryption, add additional options
             if ($algorithm === self::ALGORITHM_RANGE) {
-                // For MongoDB Atlas, contentionFactor is required
-                $encryptOptions['rangeOptions'] = [
-                    'min' => null,           // Optional min bound, or null for automatic
-                    'max' => null,           // Optional max bound, or null for automatic
-                    'contentionFactor' => 10 // Required for range algorithm
-                    // Sparsity and precision are not used in this version
-                ];
+                // Use range options from field configuration if available
+                if (isset($this->encryptedFields[$documentType][$fieldName]['rangeOptions'])) {
+                    $encryptOptions['rangeOptions'] = $this->encryptedFields[$documentType][$fieldName]['rangeOptions'];
+                } else {
+                    // Default range options for MongoDB Atlas
+                    $encryptOptions['rangeOptions'] = [
+                        'min' => null,           // Optional min bound, or null for automatic
+                        'max' => null,           // Optional max bound, or null for automatic
+                        'contentionFactor' => 10 // Required for range algorithm
+                    ];
+                }
             }
             
             return $this->clientEncryption->encrypt($value, $encryptOptions);
@@ -285,6 +300,11 @@ class MongoDBEncryptionService
      */
     public function decrypt($value)
     {
+        // If MongoDB encryption is disabled, return the value as-is
+        if (!isset($this->clientEncryption)) {
+            return $value;
+        }
+        
         if ($value instanceof Binary && $value->getType() === 6) { // Binary subtype 6 is for encrypted data
             return $this->clientEncryption->decrypt($value);
         }

@@ -103,9 +103,17 @@ class Patient
 
     /**
      * Medical notes - strongly encrypted (no search)
+     * @deprecated Use notesHistory instead for better tracking
      */
     #[ODM\Field(type: 'string', nullable: true)]
     private ?string $notes = null;
+
+    /**
+     * Medical notes history - array of note entries with timestamps and doctor attribution
+     * Each entry contains: content, doctorId, doctorName, createdAt, updatedAt
+     */
+    #[ODM\Field(type: 'collection')]
+    private array $notesHistory = [];
     
     /**
      * Record creation timestamp
@@ -130,6 +138,7 @@ class Patient
         $this->createdAt = new UTCDateTime();
         $this->diagnosis = [];
         $this->medications = [];
+        $this->notesHistory = [];
     }
 
     /**
@@ -164,6 +173,7 @@ class Patient
             $data['medications'] = $this->getMedications();
             $data['insuranceDetails'] = $this->getInsuranceDetails();
             $data['notes'] = $this->getNotes();
+            $data['notesHistory'] = $this->getNotesHistory();
             $data['primaryDoctorId'] = $this->getPrimaryDoctorId() ? (string)$this->getPrimaryDoctorId() : null;
         }
         // Nurses can see diagnosis and medications but not SSN
@@ -171,10 +181,17 @@ class Patient
             $data['diagnosis'] = $this->getDiagnosis();
             $data['medications'] = $this->getMedications();
             $data['notes'] = $this->getNotes();
+            $data['notesHistory'] = $this->getNotesHistory();
         }
         // Receptionists can see insurance details but no medical data
         elseif (in_array('ROLE_RECEPTIONIST', $roles)) {
             $data['insuranceDetails'] = $this->getInsuranceDetails();
+        }
+        // Patients can see their own basic info, medications, and appointments but not SSN or provider notes
+        elseif (in_array('ROLE_PATIENT', $roles)) {
+            $data['medications'] = $this->getMedications();
+            $data['insuranceDetails'] = $this->getInsuranceDetails();
+            // Patients don't see diagnosis details, SSN, or provider notes for privacy
         }
 
         return $data;
@@ -330,6 +347,17 @@ class Patient
             $patient->notes = $encryptionService->decrypt($document['notes']);
         }
 
+        if (isset($document['notesHistory'])) {
+            $decryptedNotesHistory = $encryptionService->decrypt($document['notesHistory']);
+            if ($decryptedNotesHistory instanceof \MongoDB\Model\BSONArray) {
+                $patient->notesHistory = iterator_to_array($decryptedNotesHistory);
+            } elseif (is_array($decryptedNotesHistory)) {
+                $patient->notesHistory = $decryptedNotesHistory;
+            } else {
+                $patient->notesHistory = [];
+            }
+        }
+
         if (isset($document['createdAt'])) {
             $patient->createdAt = $document['createdAt'];
         }
@@ -385,6 +413,10 @@ class Patient
         
         if ($this->notes) {
             $document['notes'] = $encryptionService->encrypt('patient', 'notes', $this->notes);
+        }
+        
+        if (!empty($this->notesHistory)) {
+            $document['notesHistory'] = $encryptionService->encrypt('patient', 'notesHistory', $this->notesHistory);
         }
         
         $document['createdAt'] = $this->createdAt;
@@ -612,5 +644,99 @@ class Patient
     {
         $this->primaryDoctorId = $primaryDoctorId;
         return $this;
+    }
+
+    public function getNotesHistory(): array
+    {
+        return $this->notesHistory;
+    }
+
+    public function setNotesHistory(array $notesHistory): self
+    {
+        $this->notesHistory = $notesHistory;
+        return $this;
+    }
+
+    /**
+     * Add a new note to the patient's notes history
+     * 
+     * @param string $content The note content
+     * @param ObjectId $doctorId The ID of the doctor adding the note
+     * @param string $doctorName The name of the doctor adding the note
+     * @return self
+     */
+    public function addNote(string $content, ObjectId $doctorId, string $doctorName): self
+    {
+        $note = [
+            'id' => (string) new ObjectId(),
+            'content' => $content,
+            'doctorId' => (string) $doctorId,
+            'doctorName' => $doctorName,
+            'createdAt' => new UTCDateTime(),
+            'updatedAt' => new UTCDateTime()
+        ];
+        
+        $this->notesHistory[] = $note;
+        return $this;
+    }
+
+    /**
+     * Update an existing note in the patient's notes history
+     * 
+     * @param string $noteId The ID of the note to update
+     * @param string $content The updated note content
+     * @param ObjectId $doctorId The ID of the doctor updating the note
+     * @param string $doctorName The name of the doctor updating the note
+     * @return bool True if note was found and updated, false otherwise
+     */
+    public function updateNote(string $noteId, string $content, ObjectId $doctorId, string $doctorName): bool
+    {
+        foreach ($this->notesHistory as &$note) {
+            if ($note['id'] === $noteId) {
+                $note['content'] = $content;
+                $note['doctorId'] = (string) $doctorId;
+                $note['doctorName'] = $doctorName;
+                $note['updatedAt'] = new UTCDateTime();
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Remove a note from the patient's notes history
+     * 
+     * @param string $noteId The ID of the note to remove
+     * @return bool True if note was found and removed, false otherwise
+     */
+    public function removeNote(string $noteId): bool
+    {
+        foreach ($this->notesHistory as $index => $note) {
+            if ($note['id'] === $noteId) {
+                unset($this->notesHistory[$index]);
+                $this->notesHistory = array_values($this->notesHistory); // Re-index array
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get a specific note by ID
+     * 
+     * @param string $noteId The ID of the note to retrieve
+     * @return array|null The note if found, null otherwise
+     */
+    public function getNoteById(string $noteId): ?array
+    {
+        foreach ($this->notesHistory as $note) {
+            if ($note['id'] === $noteId) {
+                return $note;
+            }
+        }
+        
+        return null;
     }
 }

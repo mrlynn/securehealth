@@ -8,17 +8,18 @@ use Doctrine\ODM\MongoDB\Event\LifecycleEventArgs;
 use Doctrine\ODM\MongoDB\Event\PreUpdateEventArgs;
 use Doctrine\ODM\MongoDB\Events;
 use Doctrine\Common\EventSubscriber;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\TokenStorage\TokenStorageInterface;
 
 class DoctrineAuditLogSubscriber implements EventSubscriber
 {
     private AuditLogService $auditLogService;
-    private Security $security;
+    private TokenStorageInterface $tokenStorage;
     
-    public function __construct(AuditLogService $auditLogService, Security $security)
+    public function __construct(AuditLogService $auditLogService, TokenStorageInterface $tokenStorage)
     {
         $this->auditLogService = $auditLogService;
-        $this->security = $security;
+        $this->tokenStorage = $tokenStorage;
     }
     
     /**
@@ -69,7 +70,8 @@ class DoctrineAuditLogSubscriber implements EventSubscriber
      */
     private function logDocumentEvent(object $document, string $action): void
     {
-        $user = $this->security->getUser();
+        $token = $this->tokenStorage->getToken();
+        $user = $token ? $token->getUser() : null;
         if (!$user) {
             return;
         }
@@ -97,7 +99,8 @@ class DoctrineAuditLogSubscriber implements EventSubscriber
      */
     private function logPatientChanges(Patient $patient, array $changeSet): void
     {
-        $user = $this->security->getUser();
+        $token = $this->tokenStorage->getToken();
+        $user = $token ? $token->getUser() : null;
         if (!$user) {
             return;
         }

@@ -12,6 +12,8 @@
   <link href="/assets/css/navbar.css" rel="stylesheet">
   <!-- Role-aware navbar script -->
   <script src="/assets/js/navbar.js"></script>
+  <!-- Patient verification script -->
+  <script src="/assets/js/patient-verification.js"></script>
   <style>
     :root {
       --primary-color: #2c5aa0;
@@ -61,6 +63,9 @@
         <h4 class="mb-0">Patient Records</h4>
         <div>
           <span id="roleInfo" class="text-muted small"></span>
+          <button class="btn btn-outline-secondary btn-sm ms-2" id="toggleMaskingBtn" onclick="toggleDataMasking()" title="Toggle data masking">
+            <i class="fas fa-eye-slash" id="maskingIcon"></i> Hide Sensitive Data
+          </button>
           <a href="/patient-add.html" class="btn btn-primary btn-sm ms-2" id="addPatientBtn" style="display: none;">Add New Patient</a>
         </div>
       </div>
@@ -84,6 +89,7 @@
       const statusDiv = document.getElementById('status');
       
       let currentUser = null;
+      let maskingEnabled = true; // Default to masked for security
       
       // Wait for navbar to initialize, then check authentication and load patients
       setTimeout(() => {
@@ -284,6 +290,7 @@
 
         if (patientsArray) {
           console.log("✅ Found patients array, rendering patients");
+          window.currentPatientsData = patientsArray; // Store for re-rendering
           renderPatients(patientsArray);
           showStatus(`Loaded ${patientsArray.length} patients successfully`, 'success');
         } else {
@@ -372,21 +379,21 @@
           <tr>
             <td><strong>${patient.firstName || ''} ${patient.lastName || ''}</strong></td>
             <td>${formatDate(patient.birthDate)}</td>
-            <td>${patient.email || ''}</td>
-            <td>${patient.phoneNumber || patient.phone || ''}</td>
+            <td>${maskEmail(patient.email)}</td>
+            <td>${maskPhone(patient.phoneNumber || patient.phone)}</td>
         `;
         
         switch(role) {
           case 'DOCTOR':
-            // Doctors see everything
-            row += `<td class="sensitive-field">${patient.ssn || 'Not provided'}</td>`;
+            // Doctors see everything but with masking for security
+            row += `<td class="sensitive-field">${maskSSN(patient.ssn)}</td>`;
             row += `<td class="medical-field">
               <div><strong>Diagnosis:</strong> ${formatArray(patient.diagnosis)}</div>
               <div><strong>Medications:</strong> ${formatArray(patient.medications)}</div>
             </td>`;
             row += `<td class="insurance-field">
               <div><strong>Provider:</strong> ${patient.insuranceDetails?.provider || 'Not provided'}</div>
-              <div><strong>Policy:</strong> ${patient.insuranceDetails?.policyNumber || 'Not provided'}</div>
+              <div><strong>Policy:</strong> ${maskPolicyNumber(patient.insuranceDetails?.policyNumber)}</div>
             </td>`;
             break;
           case 'NURSE':
@@ -400,14 +407,14 @@
             // Receptionists see insurance but no medical data
             row += `<td class="insurance-field">
               <div><strong>Provider:</strong> ${patient.insuranceDetails?.provider || 'Not provided'}</div>
-              <div><strong>Policy:</strong> ${patient.insuranceDetails?.policyNumber || 'Not provided'}</div>
+              <div><strong>Policy:</strong> ${maskPolicyNumber(patient.insuranceDetails?.policyNumber)}</div>
             </td>`;
             break;
           case 'ADMIN':
             // Admins see insurance but no medical data or SSN
             row += `<td class="insurance-field">
               <div><strong>Provider:</strong> ${patient.insuranceDetails?.provider || 'Not provided'}</div>
-              <div><strong>Policy:</strong> ${patient.insuranceDetails?.policyNumber || 'Not provided'}</div>
+              <div><strong>Policy:</strong> ${maskPolicyNumber(patient.insuranceDetails?.policyNumber)}</div>
             </td>`;
             break;
         }
@@ -438,6 +445,83 @@
         return buttons;
       }
       
+      // Toggle data masking
+      function toggleDataMasking() {
+        maskingEnabled = !maskingEnabled;
+        const icon = document.getElementById('maskingIcon');
+        const button = document.getElementById('toggleMaskingBtn');
+        
+        if (maskingEnabled) {
+          icon.className = 'fas fa-eye-slash';
+          button.innerHTML = '<i class="fas fa-eye-slash" id="maskingIcon"></i> Hide Sensitive Data';
+          button.className = 'btn btn-outline-secondary btn-sm ms-2';
+        } else {
+          icon.className = 'fas fa-eye';
+          button.innerHTML = '<i class="fas fa-eye" id="maskingIcon"></i> Show Sensitive Data';
+          button.className = 'btn btn-outline-warning btn-sm ms-2';
+        }
+        
+        // Re-render the patients table with new masking setting
+        if (window.currentPatientsData) {
+          renderPatients(window.currentPatientsData);
+        }
+      }
+
+      // Mask sensitive data for display
+      function maskEmail(email) {
+        if (!email) return '';
+        if (!maskingEnabled) return email;
+        
+        const [localPart, domain] = email.split('@');
+        if (!localPart || !domain) return email;
+        
+        if (localPart.length <= 2) {
+          return `${localPart[0]}*@${domain}`;
+        }
+        return `${localPart[0]}${'*'.repeat(localPart.length - 2)}${localPart[localPart.length - 1]}@${domain}`;
+      }
+      
+      function maskPhone(phone) {
+        if (!phone) return '';
+        if (!maskingEnabled) return phone;
+        
+        // Remove all non-digits
+        const digits = phone.replace(/\D/g, '');
+        if (digits.length < 4) return phone;
+        
+        // Show last 4 digits, mask the rest
+        const masked = '*'.repeat(digits.length - 4) + digits.slice(-4);
+        
+        // Format back to phone number format if it was formatted
+        if (phone.includes('-')) {
+          return masked.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+        } else if (phone.includes('(')) {
+          return masked.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+        }
+        return masked;
+      }
+      
+      function maskSSN(ssn) {
+        if (!ssn) return 'Not provided';
+        if (!maskingEnabled) return ssn;
+        
+        // Remove all non-digits
+        const digits = ssn.replace(/\D/g, '');
+        if (digits.length !== 9) return ssn;
+        
+        // Show last 4 digits, mask the rest
+        return `***-**-${digits.slice(-4)}`;
+      }
+      
+      function maskPolicyNumber(policyNumber) {
+        if (!policyNumber) return 'Not provided';
+        if (!maskingEnabled) return policyNumber;
+        if (policyNumber.length <= 4) return policyNumber;
+        
+        // Show last 4 characters, mask the rest
+        return '*'.repeat(policyNumber.length - 4) + policyNumber.slice(-4);
+      }
+
       // Format array data for display
       function formatArray(arr) {
         if (!arr || !Array.isArray(arr) || arr.length === 0) {
@@ -452,8 +536,8 @@
           <div class="mt-4">
             <div class="card border-0 bg-light">
               <div class="card-body">
-                <h6 class="card-title">Role-Based Access Control (RBAC) Demonstration</h6>
-                <p class="card-text small mb-2">This system demonstrates HIPAA-compliant role-based access control using MongoDB Queryable Encryption:</p>
+                <h6 class="card-title">Role-Based Access Control (RBAC) & Data Masking</h6>
+                <p class="card-text small mb-2">This system demonstrates HIPAA-compliant role-based access control using MongoDB Queryable Encryption with data masking for enhanced security:</p>
         `;
         
         switch(role) {
@@ -469,11 +553,12 @@
                     </ul>
                   </div>
                   <div class="col-md-6">
-                    <h6 class="text-info">Encryption types shown:</h6>
+                    <h6 class="text-info">Security features:</h6>
                     <ul class="small">
                       <li><span class="encryption-badge encryption-deterministic">D</span> Deterministic - Searchable fields</li>
                       <li><span class="encryption-badge encryption-range">R</span> Range - Date queries</li>
                       <li><span class="encryption-badge encryption-standard">S</span> Standard - Maximum security</li>
+                      <li><strong>Data Masking:</strong> Sensitive fields partially hidden</li>
                     </ul>
                   </div>
                 </div>
@@ -551,8 +636,9 @@
         explanation += `
                 <div class="mt-3">
                   <p class="small text-muted mb-0">
-                    <strong>Note:</strong> This demonstrates the "minimum necessary" rule of HIPAA - users only see the data they need for their job function. 
-                    All sensitive data is encrypted using MongoDB Queryable Encryption, ensuring even database administrators cannot access patient information.
+                    <strong>Security Note:</strong> This demonstrates the "minimum necessary" rule of HIPAA - users only see the data they need for their job function. 
+                    All sensitive data is encrypted using MongoDB Queryable Encryption, and sensitive fields are masked in the listing view for additional protection. 
+                    Full details are available in the patient detail view when needed.
                   </p>
                 </div>
               </div>
@@ -609,14 +695,46 @@
     });
     
     // Patient action functions (declared in global scope for onclick handlers)
-    function viewPatient(id) {
-      console.log('Navigating to patient detail page for ID:', id);
-      window.location.href = `/patient-detail.html?id=${id}`;
+    async function viewPatient(id) {
+      console.log('Attempting to view patient detail page for ID:', id);
+      
+      // Check if verification is required
+      const verificationRequired = await window.patientVerification.checkVerificationRequired(id);
+      if (verificationRequired && !window.patientVerification.isPatientVerified(id)) {
+        // Show verification modal
+        window.patientVerification.showVerificationModal(id, (success, patientData) => {
+          if (success) {
+            console.log('Patient verified, navigating to detail page');
+            window.location.href = `/patient-detail.html?id=${id}`;
+          } else {
+            console.log('Patient verification failed');
+          }
+        });
+      } else {
+        // No verification required or already verified
+        window.location.href = `/patient-detail.html?id=${id}`;
+      }
     }
     
-    function editPatient(id) {
-      console.log('Navigating to patient edit page for ID:', id);
-      window.location.href = `/patient-edit.html?id=${id}`;
+    async function editPatient(id) {
+      console.log('Attempting to edit patient for ID:', id);
+      
+      // Check if verification is required
+      const verificationRequired = await window.patientVerification.checkVerificationRequired(id);
+      if (verificationRequired && !window.patientVerification.isPatientVerified(id)) {
+        // Show verification modal
+        window.patientVerification.showVerificationModal(id, (success, patientData) => {
+          if (success) {
+            console.log('Patient verified, navigating to edit page');
+            window.location.href = `/patient-edit.html?id=${id}`;
+          } else {
+            console.log('Patient verification failed');
+          }
+        });
+      } else {
+        // No verification required or already verified
+        window.location.href = `/patient-edit.html?id=${id}`;
+      }
     }
     
     function deletePatient(id) {

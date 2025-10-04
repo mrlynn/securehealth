@@ -12,6 +12,8 @@
   <link href="/assets/css/navbar.css" rel="stylesheet">
   <!-- Role-aware navbar script -->
   <script src="/assets/js/navbar.js"></script>
+  <!-- Patient verification script -->
+  <script src="/assets/js/patient-verification.js"></script>
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <style>
@@ -127,8 +129,12 @@
         console.log("Loading patient detail for ID:", id);
         
         try {
-          // Fetch patient data from API
-          const response = await fetch(`/api/patient/${id}`, {
+          // Fetch patient data from API using verification system
+          const response = await window.patientVerification.fetchWithVerification(`/api/patients/${id}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
             credentials: 'include'
           });
           
@@ -186,6 +192,9 @@
         
         // Render patient detail
         renderPatientDetail(patient);
+        
+        // Load patient's appointments
+        loadPatientAppointments(patient.id);
       }
       
       // Render patient detail with role-based access control
@@ -309,6 +318,27 @@
                       <div class="medical-field">${medsHtml}</div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-12">
+              <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                  <strong>Appointments</strong>
+                  ${userRole === 'RECEPTIONIST' ? `
+                    <button class="btn btn-sm btn-primary" onclick="scheduleAppointment('${patient.id}')">Schedule New</button>
+                  ` : ''}
+                </div>
+                <div class="card-body">
+                  <div id="appointmentsLoading" class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading appointments...</p>
+                  </div>
+                  <div id="appointmentsList" class="d-none"></div>
+                  <div id="appointmentsError" class="d-none alert alert-danger"></div>
                 </div>
               </div>
             </div>
@@ -509,6 +539,94 @@
         statusDiv.style.display = 'block';
       }
     });
+    
+    // Load patient appointments
+    async function loadPatientAppointments(patientId) {
+      const appointmentsLoading = document.getElementById('appointmentsLoading');
+      const appointmentsList = document.getElementById('appointmentsList');
+      const appointmentsError = document.getElementById('appointmentsError');
+      
+      try {
+        // Fetch appointments for this patient using verification system
+        const response = await window.patientVerification.fetchWithVerification(`/api/appointments/patient/${patientId}`, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to load appointments: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Patient appointments:', data);
+        
+        // Hide loading indicator
+        appointmentsLoading.classList.add('d-none');
+        
+        // Display appointments
+        if (data.appointments && data.appointments.length > 0) {
+          appointmentsList.classList.remove('d-none');
+          
+          // Sort appointments by date (most recent first)
+          const sortedAppointments = [...data.appointments].sort((a, b) => {
+            return new Date(b.scheduledAt) - new Date(a.scheduledAt);
+          });
+          
+          // Format appointments as table
+          let html = `
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Notes</th>
+                    <th>Created By</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+          
+          sortedAppointments.forEach(appointment => {
+            const appointmentDate = new Date(appointment.scheduledAt);
+            const formattedDate = appointmentDate.toLocaleDateString();
+            const formattedTime = appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            html += `
+              <tr>
+                <td>${formattedDate} at ${formattedTime}</td>
+                <td>${appointment.notes || '<em>No notes</em>'}</td>
+                <td>${appointment.createdBy}</td>
+              </tr>
+            `;
+          });
+          
+          html += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          
+          appointmentsList.innerHTML = html;
+        } else {
+          // No appointments
+          appointmentsList.classList.remove('d-none');
+          appointmentsList.innerHTML = `
+            <div class="text-center py-3">
+              <p class="text-muted">No appointments found for this patient.</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading appointments:', error);
+        appointmentsLoading.classList.add('d-none');
+        appointmentsError.classList.remove('d-none');
+        appointmentsError.textContent = error.message || 'Failed to load appointments';
+      }
+    }
+    
+    // Schedule new appointment (placeholder function)
+    function scheduleAppointment(patientId) {
+      alert(`This would open a modal to schedule an appointment for patient ${patientId}. Feature to be implemented.`);
+    }
     
     // Delete patient function (in global scope for button handler)
     function deletePatient(id) {

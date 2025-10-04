@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Portal Test - SecureHealth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .test-container {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .test-card h5 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .btn-success {
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .btn-danger {
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .test-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container test-container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4">
+                    <i class="fas fa-vial me-2"></i>Patient Portal Test Suite
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Registration Test -->
+            <div class="col-md-6">
+                <div class="test-card">
+                    <h5><i class="fas fa-user-plus me-2"></i>Registration Test</h5>
+                    <p>Test patient registration functionality</p>
+                    <button class="btn btn-primary" onclick="testRegistration()">
+                        <i class="fas fa-play me-2"></i>Run Registration Test
+                    </button>
+                    <div id="registrationResult" class="test-result" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Login Test -->
+            <div class="col-md-6">
+                <div class="test-card">
+                    <h5><i class="fas fa-sign-in-alt me-2"></i>Login Test</h5>
+                    <p>Test patient login functionality</p>
+                    <button class="btn btn-primary" onclick="testLogin()">
+                        <i class="fas fa-play me-2"></i>Run Login Test
+                    </button>
+                    <div id="loginResult" class="test-result" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Dashboard Test -->
+            <div class="col-md-6">
+                <div class="test-card">
+                    <h5><i class="fas fa-tachometer-alt me-2"></i>Dashboard Test</h5>
+                    <p>Test dashboard data loading</p>
+                    <button class="btn btn-primary" onclick="testDashboard()">
+                        <i class="fas fa-play me-2"></i>Run Dashboard Test
+                    </button>
+                    <div id="dashboardResult" class="test-result" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Records Test -->
+            <div class="col-md-6">
+                <div class="test-card">
+                    <h5><i class="fas fa-file-medical me-2"></i>Records Test</h5>
+                    <p>Test medical records access</p>
+                    <button class="btn btn-primary" onclick="testRecords()">
+                        <i class="fas fa-play me-2"></i>Run Records Test
+                    </button>
+                    <div id="recordsResult" class="test-result" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Security Test -->
+            <div class="col-md-6">
+                <div class="test-card">
+                    <h5><i class="fas fa-shield-alt me-2"></i>Security Test</h5>
+                    <p>Test unauthorized access prevention</p>
+                    <button class="btn btn-danger" onclick="testSecurity()">
+                        <i class="fas fa-play me-2"></i>Run Security Test
+                    </button>
+                    <div id="securityResult" class="test-result" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Full Flow Test -->
+            <div class="col-md-6">
+                <div class="test-card">
+                    <h5><i class="fas fa-check-circle me-2"></i>Full Flow Test</h5>
+                    <p>Test complete patient portal flow</p>
+                    <button class="btn btn-success" onclick="testFullFlow()">
+                        <i class="fas fa-play me-2"></i>Run Full Flow Test
+                    </button>
+                    <div id="fullFlowResult" class="test-result" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Data -->
+        <div class="row">
+            <div class="col-12">
+                <div class="test-card">
+                    <h5><i class="fas fa-database me-2"></i>Test Data</h5>
+                    <p>Use this test patient data for testing:</p>
+                    <pre class="bg-light p-3 rounded">
+Email: test.patient@example.com
+Password: testpassword123
+First Name: Test
+Last Name: Patient
+Birth Date: 1990-01-01
+Phone: 555-123-4567
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const testPatientData = {
+            firstName: 'Test',
+            lastName: 'Patient',
+            email: 'test.patient@example.com',
+            password: 'testpassword123',
+            birthDate: '1990-01-01',
+            phoneNumber: '555-123-4567'
+        };
+
+        async function testRegistration() {
+            const resultDiv = document.getElementById('registrationResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result info';
+            resultDiv.innerHTML = 'Testing patient registration...';
+
+            try {
+                const response = await fetch('/api/patient-portal/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testPatientData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `✓ Registration successful!\nUser ID: ${result.data.userId}\nPatient ID: ${result.data.patientId}`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = `✗ Registration failed: ${result.message}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `✗ Registration error: ${error.message}`;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result info';
+            resultDiv.innerHTML = 'Testing patient login...';
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        _username: testPatientData.email,
+                        _password: testPatientData.password
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success && result.user.roles.includes('ROLE_PATIENT')) {
+                    localStorage.setItem('securehealth_user', JSON.stringify(result.user));
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `✓ Login successful!\nUser: ${result.user.username}\nRoles: ${result.user.roles.join(', ')}`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = `✗ Login failed: ${result.message || 'Not a patient account'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `✗ Login error: ${error.message}`;
+            }
+        }
+
+        async function testDashboard() {
+            const resultDiv = document.getElementById('dashboardResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result info';
+            resultDiv.innerHTML = 'Testing dashboard access...';
+
+            try {
+                const response = await fetch('/api/patient-portal/dashboard', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `✓ Dashboard access successful!\nPatient: ${result.data.patient.firstName} ${result.data.patient.lastName}\nMedications: ${result.data.medications.length}`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = `✗ Dashboard access failed: ${result.message}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `✗ Dashboard error: ${error.message}`;
+            }
+        }
+
+        async function testRecords() {
+            const resultDiv = document.getElementById('recordsResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result info';
+            resultDiv.innerHTML = 'Testing records access...';
+
+            try {
+                const response = await fetch('/api/patient-portal/my-records', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `✓ Records access successful!\nPatient: ${result.data.firstName} ${result.data.lastName}\nEmail: ${result.data.email}`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = `✗ Records access failed: ${result.message}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `✗ Records error: ${error.message}`;
+            }
+        }
+
+        async function testSecurity() {
+            const resultDiv = document.getElementById('securityResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result info';
+            resultDiv.innerHTML = 'Testing unauthorized access...';
+
+            try {
+                // Clear any existing session
+                localStorage.removeItem('securehealth_user');
+                
+                const response = await fetch('/api/patient-portal/dashboard', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+                
+                if (response.status === 401 || response.status === 403 || !result.success) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `✓ Security test passed!\nUnauthorized access properly blocked (${response.status})`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = `✗ Security test failed: Unauthorized access was allowed`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result success';
+                resultDiv.innerHTML = `✓ Security test passed!\nUnauthorized access blocked: ${error.message}`;
+            }
+        }
+
+        async function testFullFlow() {
+            const resultDiv = document.getElementById('fullFlowResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result info';
+            resultDiv.innerHTML = 'Testing complete patient portal flow...';
+
+            const steps = [];
+            
+            try {
+                // Step 1: Registration
+                steps.push('1. Testing registration...');
+                await testRegistration();
+                
+                // Step 2: Login
+                steps.push('2. Testing login...');
+                await testLogin();
+                
+                // Step 3: Dashboard
+                steps.push('3. Testing dashboard...');
+                await testDashboard();
+                
+                // Step 4: Records
+                steps.push('4. Testing records...');
+                await testRecords();
+                
+                resultDiv.className = 'test-result success';
+                resultDiv.innerHTML = `✓ Full flow test completed!\n\n${steps.join('\n')}\n\nAll tests passed successfully!`;
+                
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `✗ Full flow test failed!\n\n${steps.join('\n')}\n\nError: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

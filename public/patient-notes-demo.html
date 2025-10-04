@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Notes Management - SecureHealth</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Shared navbar styles -->
+    <link href="/assets/css/navbar.css" rel="stylesheet">
+    
+    <!-- Role-aware navbar script -->
+    <script src="/assets/js/navbar.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2c5aa0;
+            --secondary-color: #1e3a5f;
+            --accent-color: #4a90e2;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-text);
+            padding-top: 80px;
+            background-color: var(--light-bg);
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 2rem;
+        }
+        
+        .note-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .note-meta {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        
+        .note-content {
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+        }
+        
+        .note-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .form-control:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Role-aware navbar will be inserted here -->
+    <div id="navbar-container"></div>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="fas fa-sticky-note me-3"></i>Patient Notes Management
+                    </h1>
+                    <p class="lead mb-4">
+                        HIPAA-compliant medical notes with MongoDB Queryable Encryption. 
+                        Only doctors can add, edit, and delete notes. All actions are encrypted and audited.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <div class="feature-icon" style="font-size: 4rem; color: rgba(255,255,255,0.8);">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <!-- Patient Selection -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Select Patient</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="patientSelect" class="form-label">Choose Patient:</label>
+                                <select class="form-select" id="patientSelect">
+                                    <option value="">Select a patient...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="patientIdInput" class="form-label">Or enter Patient ID:</label>
+                                <input type="text" class="form-control" id="patientIdInput" placeholder="Enter patient ID">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-primary" id="loadPatientBtn">
+                                <i class="fas fa-search me-2"></i>Load Patient Notes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="error" id="errorMessage"></div>
+        <div class="success" id="successMessage"></div>
+
+        <!-- Loading -->
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading patient notes...</p>
+        </div>
+
+        <!-- Notes Section -->
+        <div id="notesSection" style="display: none;">
+            <!-- Add Note Form -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-plus me-2"></i>Add New Note</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="addNoteForm">
+                                <div class="mb-3">
+                                    <label for="noteContent" class="form-label">Note Content:</label>
+                                    <textarea class="form-control" id="noteContent" rows="4" 
+                                              placeholder="Enter your medical note here..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Add Note
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes List -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Patient Notes</h5>
+                            <span class="badge bg-primary" id="notesCount">0 notes</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="notesList">
+                                <!-- Notes will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Note Modal -->
+    <div class="modal fade" id="editNoteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editNoteForm">
+                        <input type="hidden" id="editNoteId">
+                        <div class="mb-3">
+                            <label for="editNoteContent" class="form-label">Note Content:</label>
+                            <textarea class="form-control" id="editNoteContent" rows="4" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveEditBtn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <script>
+        class PatientNotesManager {
+            constructor() {
+                this.currentPatientId = null;
+                this.currentNotes = [];
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadPatients();
+                this.checkAuthentication();
+            }
+
+            setupEventListeners() {
+                document.getElementById('loadPatientBtn').addEventListener('click', () => this.loadPatientNotes());
+                document.getElementById('addNoteForm').addEventListener('submit', (e) => this.handleAddNote(e));
+                document.getElementById('saveEditBtn').addEventListener('click', () => this.handleEditNote());
+                document.getElementById('patientIdInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.loadPatientNotes();
+                    }
+                });
+            }
+
+            async checkAuthentication() {
+                try {
+                    const response = await fetch('/api/patients', {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            this.showError('Please log in to access patient notes.');
+                            window.location.href = '/login.html';
+                            return;
+                        }
+                        throw new Error('Authentication failed');
+                    }
+                } catch (error) {
+                    this.showError('Authentication failed. Please log in.');
+                    window.location.href = '/login.html';
+                }
+            }
+
+            async loadPatients() {
+                try {
+                    const response = await fetch('/api/patients', {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to load patients');
+                    }
+
+                    const data = await response.json();
+                    const select = document.getElementById('patientSelect');
+                    
+                    data.patients.forEach(patient => {
+                        const option = document.createElement('option');
+                        option.value = patient.id;
+                        option.textContent = `${patient.firstName} ${patient.lastName} (${patient.email})`;
+                        select.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading patients:', error);
+                }
+            }
+
+            async loadPatientNotes() {
+                const patientSelect = document.getElementById('patientSelect');
+                const patientIdInput = document.getElementById('patientIdInput');
+                
+                let patientId = patientSelect.value || patientIdInput.value.trim();
+                
+                if (!patientId) {
+                    this.showError('Please select a patient or enter a patient ID.');
+                    return;
+                }
+
+                this.currentPatientId = patientId;
+                this.showLoading(true);
+                this.hideMessages();
+
+                try {
+                    const response = await fetch(`/api/patients/${patientId}/notes`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            throw new Error('You do not have permission to view notes for this patient.');
+                        } else if (response.status === 404) {
+                            throw new Error('Patient not found.');
+                        }
+                        throw new Error('Failed to load notes');
+                    }
+
+                    const data = await response.json();
+                    this.currentNotes = data.notes || [];
+                    this.displayNotes();
+                    document.getElementById('notesSection').style.display = 'block';
+                    this.showSuccess(`Loaded ${this.currentNotes.length} notes for patient.`);
+
+                } catch (error) {
+                    this.showError(error.message);
+                    document.getElementById('notesSection').style.display = 'none';
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            displayNotes() {
+                const notesList = document.getElementById('notesList');
+                const notesCount = document.getElementById('notesCount');
+                
+                notesCount.textContent = `${this.currentNotes.length} note${this.currentNotes.length !== 1 ? 's' : ''}`;
+
+                if (this.currentNotes.length === 0) {
+                    notesList.innerHTML = `
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-sticky-note fa-3x mb-3"></i>
+                            <p>No notes found for this patient.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                notesList.innerHTML = this.currentNotes.map(note => `
+                    <div class="note-card">
+                        <div class="note-meta">
+                            <i class="fas fa-user-md me-1"></i>
+                            <strong>${note.doctorName}</strong>
+                            <span class="ms-3">
+                                <i class="fas fa-clock me-1"></i>
+                                Created: ${new Date(note.createdAt).toLocaleString()}
+                            </span>
+                            ${note.updatedAt !== note.createdAt ? `
+                                <span class="ms-3">
+                                    <i class="fas fa-edit me-1"></i>
+                                    Updated: ${new Date(note.updatedAt).toLocaleString()}
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="note-content">${this.escapeHtml(note.content)}</div>
+                        <div class="note-actions">
+                            <button class="btn btn-sm btn-outline-primary" onclick="notesManager.editNote('${note.id}')">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="notesManager.deleteNote('${note.id}')">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            async handleAddNote(e) {
+                e.preventDefault();
+                
+                const content = document.getElementById('noteContent').value.trim();
+                if (!content) {
+                    this.showError('Please enter note content.');
+                    return;
+                }
+
+                this.showLoading(true);
+                this.hideMessages();
+
+                try {
+                    const response = await fetch(`/api/patients/${this.currentPatientId}/notes`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                        },
+                        body: JSON.stringify({ content })
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            throw new Error('You do not have permission to add notes.');
+                        }
+                        throw new Error('Failed to add note');
+                    }
+
+                    const data = await response.json();
+                    this.showSuccess('Note added successfully!');
+                    document.getElementById('noteContent').value = '';
+                    await this.loadPatientNotes(); // Reload notes
+
+                } catch (error) {
+                    this.showError(error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            editNote(noteId) {
+                const note = this.currentNotes.find(n => n.id === noteId);
+                if (!note) return;
+
+                document.getElementById('editNoteId').value = noteId;
+                document.getElementById('editNoteContent').value = note.content;
+                
+                const modal = new bootstrap.Modal(document.getElementById('editNoteModal'));
+                modal.show();
+            }
+
+            async handleEditNote() {
+                const noteId = document.getElementById('editNoteId').value;
+                const content = document.getElementById('editNoteContent').value.trim();
+                
+                if (!content) {
+                    this.showError('Please enter note content.');
+                    return;
+                }
+
+                this.showLoading(true);
+                this.hideMessages();
+
+                try {
+                    const response = await fetch(`/api/patients/${this.currentPatientId}/notes/${noteId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                        },
+                        body: JSON.stringify({ content })
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            throw new Error('You do not have permission to edit notes.');
+                        }
+                        throw new Error('Failed to update note');
+                    }
+
+                    this.showSuccess('Note updated successfully!');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editNoteModal'));
+                    modal.hide();
+                    await this.loadPatientNotes(); // Reload notes
+
+                } catch (error) {
+                    this.showError(error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async deleteNote(noteId) {
+                if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+                    return;
+                }
+
+                this.showLoading(true);
+                this.hideMessages();
+
+                try {
+                    const response = await fetch(`/api/patients/${this.currentPatientId}/notes/${noteId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            throw new Error('You do not have permission to delete notes.');
+                        }
+                        throw new Error('Failed to delete note');
+                    }
+
+                    this.showSuccess('Note deleted successfully!');
+                    await this.loadPatientNotes(); // Reload notes
+
+                } catch (error) {
+                    this.showError(error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            showLoading(show) {
+                document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+            }
+
+            showError(message) {
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            }
+
+            showSuccess(message) {
+                const successDiv = document.getElementById('successMessage');
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 3000);
+            }
+
+            hideMessages() {
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'none';
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // Initialize the notes manager when the page loads
+        let notesManager;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for navbar to initialize
+            setTimeout(() => {
+                notesManager = new PatientNotesManager();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

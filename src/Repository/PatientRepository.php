@@ -44,6 +44,48 @@ class PatientRepository
     }
 
     /**
+     * Find a patient by email
+     */
+    public function findOneByEmail(string $email): ?Patient
+    {
+        // Encrypt the email for searching
+        $encryptedEmail = $this->encryptionService->encrypt('patient', 'email', $email);
+        
+        $document = $this->collection->findOne(['email' => $encryptedEmail]);
+        
+        if (!$document) {
+            return null;
+        }
+        
+        return Patient::fromDocument((array) $document, $this->encryptionService);
+    }
+
+    /**
+     * Find a patient by ID (generic find method)
+     */
+    public function find($id): ?Patient
+    {
+        if (is_string($id)) {
+            $id = new ObjectId($id);
+        }
+        
+        return $this->findById($id);
+    }
+
+    /**
+     * Find a patient by ID (string version)
+     */
+    public function findByIdString(string $id): ?Patient
+    {
+        try {
+            $objectId = new ObjectId($id);
+            return $this->findById($objectId);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
      * Find patients by criteria with pagination
      */
     public function findByCriteria(array $criteria, int $page = 1, int $limit = 20): array
@@ -342,10 +384,10 @@ class PatientRepository
                 'range' => ['birthDate'],
                 'random' => ['ssn', 'diagnosis', 'medications', 'insuranceDetails', 'notes']
             ],
-            'indexes' => $this->collection->listIndexes()->toArray(),
-            'collectionStats' => $this->collection->aggregate([
-                ['$collStats' => ['storageStats' => true]]
-            ])->toArray()
+            'indexes' => iterator_to_array($this->collection->listIndexes()),
+            'collectionStats' => iterator_to_array($this->collection->aggregate([
+                ['$collStats' => ['storageStats' => []]]
+            ]))
         ];
     }
 }

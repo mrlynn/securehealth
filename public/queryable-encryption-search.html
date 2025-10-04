@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MongoDB Queryable Encryption Search Demo</title>
+    <title>MongoDB Queryable Encryption Search Demo - SecureHealth</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Shared navbar styles -->
+    <link href="/assets/css/navbar.css" rel="stylesheet">
+    <!-- Role-aware navbar script -->
+    <script src="/assets/js/navbar.js"></script>
     <style>
         body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-        
-        .navbar-brand i {
-            margin-right: 0.5rem;
         }
         
         .card {
@@ -30,21 +30,21 @@
         }
         
         .btn-primary {
-            background-color: #2c3e50;
-            border-color: #2c3e50;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
         
         .btn-primary:hover {
-            background-color: #1a252f;
-            border-color: #1a252f;
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
         }
         
         .text-primary {
-            color: #2c3e50 !important;
+            color: var(--primary-color) !important;
         }
         
         .bg-primary {
-            background-color: #2c3e50 !important;
+            background-color: var(--navbar-bg) !important;
         }
         
         .encryption-badge {
@@ -88,6 +88,8 @@
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
             border-left: 4px solid #2c3e50;
             transition: all 0.3s ease;
+            overflow: hidden;
+            height: 100%;
         }
         
         .patient-card:hover {
@@ -104,6 +106,7 @@
             font-size: 0.75rem;
             font-weight: 600;
             margin-left: 8px;
+            white-space: nowrap;
         }
         
         .loading-spinner {
@@ -185,37 +188,8 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-shield-alt"></i>
-                SecureHealth
-            </a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/patients.html">
-                            <i class="fas fa-users"></i> Patients
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin.html">
-                            <i class="fas fa-cog"></i> Admin
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/docs.html">
-                            <i class="fas fa-book"></i> Docs
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Role-aware navbar will be inserted here -->
+    <div id="navbar-container"></div>
 
     <div class="container mt-4">
         <div class="row justify-content-center">
@@ -265,18 +239,18 @@
                 <div class="search-tabs">
                     <ul class="nav nav-pills justify-content-center" id="searchTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="equality-tab" data-toggle="pill" data-target="#equality" type="button" role="tab">
-                                <i class="fas fa-equals mr-2"></i>Equality Search
+                            <button class="nav-link active" id="equality-tab" data-bs-toggle="pill" data-bs-target="#equality" type="button" role="tab">
+                                <i class="fas fa-equals me-2"></i>Equality Search
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="range-tab" data-toggle="pill" data-target="#range" type="button" role="tab">
-                                <i class="fas fa-sort-numeric-up mr-2"></i>Range Search
+                            <button class="nav-link" id="range-tab" data-bs-toggle="pill" data-bs-target="#range" type="button" role="tab">
+                                <i class="fas fa-sort-numeric-up me-2"></i>Range Search
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="complex-tab" data-toggle="pill" data-target="#complex" type="button" role="tab">
-                                <i class="fas fa-search-plus mr-2"></i>Complex Search
+                            <button class="nav-link" id="complex-tab" data-bs-toggle="pill" data-bs-target="#complex" type="button" role="tab">
+                                <i class="fas fa-search-plus me-2"></i>Complex Search
                             </button>
                         </li>
                     </ul>
@@ -473,8 +447,7 @@
     </footer>
 
     <!-- Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
         // Global variables
         let currentSearchType = 'equality';
@@ -489,10 +462,10 @@
             }
 
             // Set up tab change handlers
-            const tabs = document.querySelectorAll('#searchTabs button[data-toggle="pill"]');
+            const tabs = document.querySelectorAll('#searchTabs button[data-bs-toggle="pill"]');
             tabs.forEach(tab => {
                 tab.addEventListener('shown.bs.tab', function(event) {
-                    const target = event.target.getAttribute('data-target');
+                    const target = event.target.getAttribute('data-bs-target');
                     currentSearchType = target.replace('#', '');
                     clearResults();
                 });
@@ -514,13 +487,34 @@
         // Load search capabilities from API
         async function loadSearchCapabilities() {
             try {
-                const response = await fetch('http://localhost:8082/api_encrypted_search_capabilities.php');
-                const capabilities = await response.json();
+                // Try the primary API endpoint
+                try {
+                    const response = await fetch('/api/encrypted-search/capabilities', {
+                        credentials: 'include' // Include auth credentials
+                    });
+                    
+                    if (response.ok) {
+                        const capabilities = await response.json();
+                        console.log('Capabilities loaded from primary API:', capabilities);
+                        updateEncryptionInfo(capabilities);
+                        return;
+                    } else {
+                        console.warn('Primary capabilities API returned:', response.status, response.statusText);
+                    }
+                } catch (primaryError) {
+                    console.warn('Primary capabilities API error:', primaryError);
+                }
                 
-                // Update the encryption info section with real data
-                updateEncryptionInfo(capabilities);
+                // Fallback to static demo data
+                console.info('Falling back to static demo data');
+                const demoResponse = await fetch('/demo_patients.json');
+                const demoData = await demoResponse.json();
+                console.log('Demo data loaded:', demoData);
+                
+                // Update UI with demo capabilities
+                updateEncryptionInfo(demoData.capabilities);
             } catch (error) {
-                console.warn('Could not load search capabilities:', error);
+                console.error('Could not load search capabilities:', error);
             }
         }
 
@@ -609,13 +603,21 @@
                 return;
             }
 
+            // Log the search parameters for debugging
+            console.log('Range search parameters:', { birthDateFrom, birthDateTo, minAge, maxAge });
+            
+            // Format dates as ISO strings for better compatibility with backend encryption
+            const formattedBirthDateFrom = birthDateFrom ? new Date(birthDateFrom + 'T00:00:00').toISOString().split('T')[0] : '';
+            const formattedBirthDateTo = birthDateTo ? new Date(birthDateTo + 'T00:00:00').toISOString().split('T')[0] : '';
+            
             const searchCriteria = {
-                birthDateFrom: birthDateFrom,
-                birthDateTo: birthDateTo,
-                minAge: minAge,
-                maxAge: maxAge
+                birthDateFrom: formattedBirthDateFrom,
+                birthDateTo: formattedBirthDateTo,
+                minAge: minAge ? parseInt(minAge) : null,
+                maxAge: maxAge ? parseInt(maxAge) : null
             };
-
+            
+            console.log('Formatted search criteria:', searchCriteria);
             performSearch('range', searchCriteria);
         }
 
@@ -653,7 +655,7 @@
                 const response = await callSearchAPI(searchType, criteria);
                 
                 const searchTime = Date.now() - searchStartTime;
-                displayResults(response.results, searchType, searchTime);
+                displayResults(response.results, searchType, searchTime, response);
                 updateSearchStats(response.totalResults, searchTime, searchType);
                 
             } catch (error) {
@@ -661,25 +663,164 @@
             }
         }
 
-        // Call the actual PHP API
+        // Call the API for encrypted search
         async function callSearchAPI(searchType, criteria) {
-            const endpoint = `http://localhost:8082/api_encrypted_search_${searchType}.php`;
+            const primaryEndpoint = `/api/encrypted-search/${searchType}`;
             
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(criteria)
-            });
+            // Add a debug query parameter to help identify potential backend issues
+            const queryParams = new URLSearchParams({ debug: true }).toString();
+            const primaryUrl = `${primaryEndpoint}?${queryParams}`;
+            
+            // Log the API call for debugging
+            console.log(`API Call to ${primaryUrl}:`, criteria);
+            
+            try {
+                // First try the primary API endpoint
+                const primaryResponse = await fetch(primaryUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include', // Include credentials for authentication
+                    body: JSON.stringify(criteria)
+                });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Search request failed');
+                // If primary API succeeds, return the data
+                if (primaryResponse.ok) {
+                    const data = await primaryResponse.json();
+                    console.log('Primary API response:', data);
+                    return data;
+                }
+                
+                console.warn(`Primary API returned ${primaryResponse.status}: ${primaryResponse.statusText}`);
+                console.info('Falling back to static demo data');
+                
+                // If primary API fails, use static demo data
+                const demoData = await fetch('/demo_patients.json');
+                const demoPatients = await demoData.json();
+                
+                // Filter the demo patients based on criteria
+                let results = [];
+                
+                if (searchType === 'equality') {
+                    results = filterPatientsForEquality(demoPatients.patients, criteria);
+                } else if (searchType === 'range') {
+                    results = filterPatientsForRange(demoPatients.patients, criteria);
+                } else if (searchType === 'complex') {
+                    results = filterPatientsForComplex(demoPatients.patients, criteria);
+                }
+                
+                const fallbackData = {
+                    success: true,
+                    message: "Search completed successfully with demo data",
+                    totalResults: results.length,
+                    results: results,
+                    usingFallback: true
+                };
+                
+                console.log('Demo data response:', fallbackData);
+                return fallbackData;
+                
+            } catch (error) {
+                console.error('API calls failed:', error);
+                throw error;
             }
-
-            return await response.json();
+        }
+        
+        // Filter demo patients for equality search
+        function filterPatientsForEquality(patients, criteria) {
+            return patients.filter(patient => {
+                if (criteria.firstName && patient.firstName !== criteria.firstName) {
+                    return false;
+                }
+                if (criteria.lastName && patient.lastName !== criteria.lastName) {
+                    return false;
+                }
+                if (criteria.email && patient.email !== criteria.email) {
+                    return false;
+                }
+                if (criteria.phone && patient.phoneNumber.indexOf(criteria.phone) === -1) {
+                    return false;
+                }
+                return true;
+            });
+        }
+        
+        // Filter demo patients for range search
+        function filterPatientsForRange(patients, criteria) {
+            return patients.filter(patient => {
+                const birthDate = new Date(patient.birthDate);
+                
+                // Birth date range filter
+                if (criteria.birthDateFrom) {
+                    const fromDate = new Date(criteria.birthDateFrom);
+                    if (birthDate < fromDate) {
+                        return false;
+                    }
+                }
+                
+                if (criteria.birthDateTo) {
+                    const toDate = new Date(criteria.birthDateTo);
+                    if (birthDate > toDate) {
+                        return false;
+                    }
+                }
+                
+                // Age range filter
+                const age = calculateAge(birthDate);
+                
+                if (criteria.minAge && age < criteria.minAge) {
+                    return false;
+                }
+                
+                if (criteria.maxAge && age > criteria.maxAge) {
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+        
+        // Filter demo patients for complex search
+        function filterPatientsForComplex(patients, criteria) {
+            return patients.filter(patient => {
+                // Last name filter
+                if (criteria.lastName && !patient.lastName.toLowerCase().includes(criteria.lastName.toLowerCase())) {
+                    return false;
+                }
+                
+                // Email domain filter
+                if (criteria.email) {
+                    const domain = patient.email.split('@')[1];
+                    if (!domain.includes(criteria.email)) {
+                        return false;
+                    }
+                }
+                
+                // Minimum age filter
+                if (criteria.minAge) {
+                    const age = calculateAge(new Date(patient.birthDate));
+                    if (age < criteria.minAge) {
+                        return false;
+                    }
+                }
+                
+                // Phone prefix filter
+                if (criteria.phonePrefix && !patient.phoneNumber.includes(criteria.phonePrefix)) {
+                    return false;
+                }
+                
+                // Birth year filter
+                if (criteria.birthYear) {
+                    const birthYear = new Date(patient.birthDate).getFullYear();
+                    if (birthYear != criteria.birthYear) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
         }
 
         // Check authentication status
@@ -719,7 +860,7 @@
         }
 
         // Display search results
-        function displayResults(patients, searchType, searchTime) {
+        function displayResults(patients, searchType, searchTime, response = {}) {
             const container = document.getElementById('resultsContainer');
             
             if (patients.length === 0) {
@@ -732,12 +873,43 @@
                 `;
                 return;
             }
+            
+            // For range searches, verify date filtering in the UI as a fallback
+            if (searchType === 'range') {
+                const birthDateFrom = document.getElementById('rangeBirthDateFrom').value;
+                const birthDateTo = document.getElementById('rangeBirthDateTo').value;
+                
+                if (birthDateFrom || birthDateTo) {
+                    console.log('Additional date filtering in UI:', { birthDateFrom, birthDateTo });
+                    // Apply client-side filtering as a safeguard
+                    const fromDate = birthDateFrom ? new Date(birthDateFrom) : null;
+                    const toDate = birthDateTo ? new Date(birthDateTo) : null;
+                    
+                    patients = patients.filter(patient => {
+                        const patientBirthDate = new Date(patient.birthDate);
+                        let matches = true;
+                        
+                        if (fromDate && patientBirthDate < fromDate) {
+                            matches = false;
+                        }
+                        
+                        if (toDate && patientBirthDate > toDate) {
+                            matches = false;
+                        }
+                        
+                        return matches;
+                    });
+                    
+                    console.log('Filtered results count:', patients.length);
+                }
+            }
 
             let html = `
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="fas fa-users me-2"></i>Search Results (${patients.length} found)</h3>
                     <small class="text-muted">Search completed in ${searchTime}ms</small>
                 </div>
+                ${response.usingFallback ? `<div class="alert alert-info mb-4">Using local demo data for search demonstration.</div>` : ''}
                 <div class="row">
             `;
 
@@ -745,35 +917,35 @@
                 const age = calculateAge(new Date(patient.birthDate));
                 html += `
                     <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="patient-card">
+                        <div class="patient-card h-100">
                             <div class="d-flex justify-content-between align-items-start mb-3">
-                                <h5 class="mb-0">${patient.firstName} ${patient.lastName}</h5>
+                                <h5 class="mb-0 text-truncate" style="max-width: 70%;" title="${patient.firstName} ${patient.lastName}">${patient.firstName} ${patient.lastName}</h5>
                                 <span class="encryption-indicator">Encrypted</span>
                             </div>
                             
                             <div class="row mb-2">
-                                <div class="col-6"><strong>Email:</strong></div>
-                                <div class="col-6">${patient.email}</div>
+                                <div class="col-5"><strong>Email:</strong></div>
+                                <div class="col-7 text-truncate" title="${patient.email}">${patient.email}</div>
                             </div>
                             
                             <div class="row mb-2">
-                                <div class="col-6"><strong>Phone:</strong></div>
-                                <div class="col-6">${patient.phoneNumber}</div>
+                                <div class="col-5"><strong>Phone:</strong></div>
+                                <div class="col-7">${patient.phoneNumber}</div>
                             </div>
                             
                             <div class="row mb-2">
-                                <div class="col-6"><strong>Age:</strong></div>
-                                <div class="col-6">${age} years old</div>
+                                <div class="col-5"><strong>Age:</strong></div>
+                                <div class="col-7">${age} years old</div>
                             </div>
                             
                             <div class="row mb-2">
-                                <div class="col-6"><strong>Birth Date:</strong></div>
-                                <div class="col-6">${patient.birthDate}</div>
+                                <div class="col-5"><strong>Birth Date:</strong></div>
+                                <div class="col-7">${patient.birthDate}</div>
                             </div>
                             
                             <div class="row mb-2">
-                                <div class="col-6"><strong>SSN:</strong></div>
-                                <div class="col-6">${patient.ssn}</div>
+                                <div class="col-5"><strong>SSN:</strong></div>
+                                <div class="col-7">${patient.ssn}</div>
                             </div>
                             
                             <div class="mt-3">
@@ -783,9 +955,9 @@
                                 </small>
                             </div>
                             
-                            <div class="mt-2">
-                                <span class="badge bg-primary me-1">${patient.diagnosis[0] || 'No diagnosis'}</span>
-                                <span class="badge bg-secondary">${patient.medications[0] || 'No medications'}</span>
+                            <div class="mt-2 d-flex flex-wrap gap-1">
+                                <span class="badge bg-primary text-truncate" style="max-width: 45%;" title="${patient.diagnosis[0] || 'No diagnosis'}">${patient.diagnosis[0] || 'No diagnosis'}</span>
+                                <span class="badge bg-secondary text-truncate" style="max-width: 45%;" title="${patient.medications[0] || 'No medications'}">${patient.medications[0] || 'No medications'}</span>
                             </div>
                         </div>
                     </div>

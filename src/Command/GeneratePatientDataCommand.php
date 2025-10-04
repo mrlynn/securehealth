@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Document\Patient;
+use App\Repository\PatientRepository;
 use App\Service\MongoDBEncryptionService;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -20,6 +21,7 @@ class GeneratePatientDataCommand extends Command
 {
     public function __construct(
         private DocumentManager $documentManager,
+        private PatientRepository $patientRepository,
         private MongoDBEncryptionService $encryptionService
     ) {
         parent::__construct();
@@ -77,8 +79,7 @@ class GeneratePatientDataCommand extends Command
 
     private function clearPatientData(): void
     {
-        $collection = $this->documentManager->getDocumentCollection(Patient::class);
-        $collection->deleteMany([]);
+        $this->patientRepository->clearAll();
     }
 
     private function generatePatientData(int $count): array
@@ -171,9 +172,8 @@ class GeneratePatientDataCommand extends Command
     private function savePatients(array $patients): void
     {
         foreach ($patients as $patient) {
-            $this->documentManager->persist($patient);
+            $this->patientRepository->save($patient);
         }
-        $this->documentManager->flush();
     }
 
     private function displaySampleData(array $patients, SymfonyStyle $io): void

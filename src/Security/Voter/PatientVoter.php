@@ -22,6 +22,13 @@ class PatientVoter extends Voter
     public const VIEW_SSN = 'PATIENT_VIEW_SSN';
     public const VIEW_INSURANCE = 'PATIENT_VIEW_INSURANCE';
     public const EDIT_INSURANCE = 'PATIENT_EDIT_INSURANCE';
+    public const VIEW_NOTES = 'PATIENT_VIEW_NOTES';
+    public const EDIT_NOTES = 'PATIENT_EDIT_NOTES';
+    public const ADD_NOTE = 'PATIENT_ADD_NOTE';
+    public const UPDATE_NOTE = 'PATIENT_UPDATE_NOTE';
+    public const DELETE_NOTE = 'PATIENT_DELETE_NOTE';
+    public const PATIENT_VIEW_OWN = 'PATIENT_VIEW_OWN';
+    public const PATIENT_EDIT_OWN = 'PATIENT_EDIT_OWN';
 
     private AuditLogService $auditLogService;
 
@@ -45,6 +52,13 @@ class PatientVoter extends Voter
             self::VIEW_SSN,
             self::VIEW_INSURANCE,
             self::EDIT_INSURANCE,
+            self::VIEW_NOTES,
+            self::EDIT_NOTES,
+            self::ADD_NOTE,
+            self::UPDATE_NOTE,
+            self::DELETE_NOTE,
+            self::PATIENT_VIEW_OWN,
+            self::PATIENT_EDIT_OWN,
         ];
 
         if (!in_array($attribute, $supportedAttributes)) {
@@ -152,6 +166,40 @@ class PatientVoter extends Voter
                 // Only receptionists and doctors can edit insurance
                 return in_array('ROLE_DOCTOR', $roles) || 
                        in_array('ROLE_RECEPTIONIST', $roles);
+
+            case self::VIEW_NOTES:
+                // Doctors and nurses can view notes
+                return in_array('ROLE_DOCTOR', $roles) || 
+                       in_array('ROLE_NURSE', $roles);
+
+            case self::EDIT_NOTES:
+            case self::ADD_NOTE:
+            case self::UPDATE_NOTE:
+            case self::DELETE_NOTE:
+                // Only doctors can add, edit, update, or delete notes
+                return in_array('ROLE_DOCTOR', $roles);
+
+            case self::PATIENT_VIEW_OWN:
+                // Patients can only view their own records
+                if (!in_array('ROLE_PATIENT', $roles)) {
+                    return false;
+                }
+                // Check if the patient is trying to access their own record
+                if ($subject instanceof Patient && $user instanceof \App\Document\User) {
+                    return $user->getPatientId() && (string)$user->getPatientId() === (string)$subject->getId();
+                }
+                return false;
+
+            case self::PATIENT_EDIT_OWN:
+                // Patients can only edit limited fields of their own records
+                if (!in_array('ROLE_PATIENT', $roles)) {
+                    return false;
+                }
+                // Check if the patient is trying to edit their own record
+                if ($subject instanceof Patient && $user instanceof \App\Document\User) {
+                    return $user->getPatientId() && (string)$user->getPatientId() === (string)$subject->getId();
+                }
+                return false;
         }
 
         // Default deny
@@ -187,6 +235,17 @@ class PatientVoter extends Voter
             case self::EDIT_INSURANCE:
                 // Admins can view insurance for administrative purposes
                 return true;
+
+            case self::VIEW_NOTES:
+                // Admins cannot view medical notes
+                return false;
+
+            case self::EDIT_NOTES:
+            case self::ADD_NOTE:
+            case self::UPDATE_NOTE:
+            case self::DELETE_NOTE:
+                // Admins cannot edit medical notes
+                return false;
         }
         
         return false;

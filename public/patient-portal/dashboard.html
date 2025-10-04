@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Portal Dashboard - SecureHealth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+        }
+        
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            color: white !important;
+        }
+        
+        .dashboard-container {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .welcome-card h2 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .welcome-card p {
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .info-card .card-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-card .card-title i {
+            margin-right: 0.5rem;
+            color: #667eea;
+        }
+        
+        .medication-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #28a745;
+        }
+        
+        .medication-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .insurance-info {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-outline-primary {
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .appointment-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #007bff;
+        }
+        
+        .appointment-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .appointment-date {
+            font-weight: 600;
+            color: #007bff;
+            font-size: 1.1rem;
+        }
+        
+        .appointment-time {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .appointment-notes {
+            margin-top: 0.5rem;
+            color: #495057;
+            font-style: italic;
+        }
+        
+        .appointment-item.upcoming {
+            border-left-color: #28a745;
+            background: #f8fff9;
+        }
+        
+        .appointment-item.past {
+            border-left-color: #6c757d;
+            background: #f8f9fa;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-heartbeat me-2"></i>SecureHealth Patient Portal
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="loadDashboard()">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="loadMyRecords()">
+                            <i class="fas fa-file-medical me-1"></i>My Records
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="loadAppointments()">
+                            <i class="fas fa-calendar-alt me-1"></i>Appointments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="loadMessages()">
+                            <i class="fas fa-envelope me-1"></i>Messages
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="logout()">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container dashboard-container">
+        <div id="alertContainer"></div>
+        
+        <!-- Dashboard Content -->
+        <div id="dashboardContent">
+            <!-- Welcome Section -->
+            <div class="welcome-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 id="welcomeMessage">Welcome to Your Patient Portal</h2>
+                        <p id="welcomeSubtext">Access your medical records, view medications, and communicate with your healthcare team securely.</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <i class="fas fa-user-circle" style="font-size: 4rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Cards -->
+            <div class="row">
+                <!-- Personal Information -->
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-user"></i>Personal Information
+                        </h5>
+                        <div id="personalInfo">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading your information...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Medications -->
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-pills"></i>Current Medications
+                        </h5>
+                        <div id="medicationsInfo">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading medications...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Upcoming Appointments -->
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-calendar-alt"></i>Upcoming Appointments
+                        </h5>
+                        <div id="appointmentsInfo">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading appointments...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insurance Information -->
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-shield-alt"></i>Insurance Information
+                        </h5>
+                        <div id="insuranceInfo">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading insurance information...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Quick Actions -->
+                <div class="col-md-12">
+                    <div class="info-card">
+                        <h5 class="card-title">
+                            <i class="fas fa-bolt"></i>Quick Actions
+                        </h5>
+                        <div class="d-grid gap-2 d-md-flex">
+                            <button class="btn btn-primary" onclick="loadMyRecords()">
+                                <i class="fas fa-file-medical me-2"></i>View My Records
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="loadAppointments()">
+                                <i class="fas fa-calendar-alt me-2"></i>View All Appointments
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="loadMessages()">
+                                <i class="fas fa-envelope me-2"></i>Send Message
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="updateProfile()">
+                                <i class="fas fa-edit me-2"></i>Update Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Records Content -->
+        <div id="myRecordsContent" style="display: none;">
+            <div class="info-card">
+                <h5 class="card-title">
+                    <i class="fas fa-file-medical"></i>My Medical Records
+                </h5>
+                <div id="recordsContent">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p>Loading your records...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointments Content -->
+        <div id="appointmentsContent" style="display: none;">
+            <div class="info-card">
+                <h5 class="card-title">
+                    <i class="fas fa-calendar-alt"></i>My Appointments
+                </h5>
+                <div id="appointmentsList">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p>Loading appointments...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Content -->
+        <div id="messagesContent" style="display: none;">
+            <div class="info-card">
+                <h5 class="card-title">
+                    <i class="fas fa-envelope"></i>Messages
+                </h5>
+                <div id="messagesList">
+                    <div class="empty-state">
+                        <i class="fas fa-envelope-open"></i>
+                        <h5>No Messages Yet</h5>
+                        <p>You don't have any messages at this time.</p>
+                        <button class="btn btn-primary" onclick="composeMessage()">
+                            <i class="fas fa-plus me-2"></i>Compose Message
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentUser = null;
+
+        // Initialize the dashboard
+        window.addEventListener('load', function() {
+            // Check if user is logged in
+            const storedUser = localStorage.getItem('securehealth_user');
+            if (!storedUser) {
+                window.location.href = '/patient-portal/login.html';
+                return;
+            }
+
+            try {
+                currentUser = JSON.parse(storedUser);
+                
+                // Verify user is a patient
+                if (!currentUser.roles || !currentUser.roles.includes('ROLE_PATIENT')) {
+                    localStorage.removeItem('securehealth_user');
+                    window.location.href = '/patient-portal/login.html';
+                    return;
+                }
+
+                // Update welcome message
+                document.getElementById('welcomeMessage').textContent = `Welcome, ${currentUser.username}!`;
+                
+                // Load dashboard data
+                loadDashboardData();
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                localStorage.removeItem('securehealth_user');
+                window.location.href = '/patient-portal/login.html';
+            }
+        });
+
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/patient-portal/dashboard', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayDashboardData(result.data);
+                } else {
+                    showAlert('Failed to load dashboard data: ' + result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showAlert('Failed to load dashboard data. Please try again.', 'danger');
+            }
+        }
+
+        function displayDashboardData(data) {
+            // Personal Information
+            const personalInfoHtml = `
+                <div class="row">
+                    <div class="col-sm-4"><strong>Name:</strong></div>
+                    <div class="col-sm-8">${data.patient.firstName} ${data.patient.lastName}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>Email:</strong></div>
+                    <div class="col-sm-8">${data.patient.email}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4"><strong>Phone:</strong></div>
+                    <div class="col-sm-8">${data.patient.phoneNumber || 'Not provided'}</div>
+                </div>
+            `;
+            document.getElementById('personalInfo').innerHTML = personalInfoHtml;
+
+            // Medications
+            if (data.medications && data.medications.length > 0) {
+                const medicationsHtml = data.medications.map(med => 
+                    `<div class="medication-item">
+                        <strong>${med}</strong>
+                    </div>`
+                ).join('');
+                document.getElementById('medicationsInfo').innerHTML = medicationsHtml;
+            } else {
+                document.getElementById('medicationsInfo').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-pills"></i>
+                        <p>No current medications on file</p>
+                    </div>
+                `;
+            }
+
+            // Upcoming Appointments
+            if (data.upcomingAppointments && data.upcomingAppointments.length > 0) {
+                const appointmentsHtml = data.upcomingAppointments.map(appt => {
+                    const appointmentDate = new Date(appt.scheduledAt);
+                    const dateStr = appointmentDate.toLocaleDateString();
+                    const timeStr = appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    return `
+                        <div class="appointment-item">
+                            <div class="appointment-date">${dateStr}</div>
+                            <div class="appointment-time">${timeStr}</div>
+                            ${appt.notes ? `<div class="appointment-notes">${appt.notes}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('appointmentsInfo').innerHTML = appointmentsHtml;
+            } else {
+                document.getElementById('appointmentsInfo').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-alt"></i>
+                        <p>No upcoming appointments scheduled</p>
+                    </div>
+                `;
+            }
+
+            // Insurance Information
+            if (data.insurance) {
+                const insuranceHtml = `
+                    <div class="insurance-info">
+                        <p><strong>Provider:</strong> ${data.insurance.provider || 'Not specified'}</p>
+                        <p><strong>Policy Number:</strong> ${data.insurance.policyNumber || 'Not specified'}</p>
+                        <p><strong>Group Number:</strong> ${data.insurance.groupNumber || 'Not specified'}</p>
+                    </div>
+                `;
+                document.getElementById('insuranceInfo').innerHTML = insuranceHtml;
+            } else {
+                document.getElementById('insuranceInfo').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-shield-alt"></i>
+                        <p>No insurance information on file</p>
+                    </div>
+                `;
+            }
+        }
+
+        function loadDashboard() {
+            document.getElementById('dashboardContent').style.display = 'block';
+            document.getElementById('myRecordsContent').style.display = 'none';
+            document.getElementById('appointmentsContent').style.display = 'none';
+            document.getElementById('messagesContent').style.display = 'none';
+        }
+
+        async function loadMyRecords() {
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('myRecordsContent').style.display = 'block';
+            document.getElementById('appointmentsContent').style.display = 'none';
+            document.getElementById('messagesContent').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/patient-portal/my-records', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayMyRecords(result.data);
+                } else {
+                    showAlert('Failed to load records: ' + result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading records:', error);
+                showAlert('Failed to load records. Please try again.', 'danger');
+            }
+        }
+
+        function displayMyRecords(data) {
+            const recordsHtml = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user me-2"></i>Personal Information</h6>
+                        <div class="mb-3">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="editFirstName" value="${data.firstName}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="editLastName" value="${data.lastName}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" value="${data.email}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="editPhoneNumber" value="${data.phoneNumber || ''}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" value="${data.birthDate}" readonly>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveProfileChanges()">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-pills me-2"></i>Current Medications</h6>
+                        ${data.medications && data.medications.length > 0 ? 
+                            data.medications.map(med => `<div class="medication-item">${med}</div>`).join('') :
+                            '<div class="empty-state"><i class="fas fa-pills"></i><p>No medications on file</p></div>'
+                        }
+                        
+                        <h6 class="mt-4"><i class="fas fa-shield-alt me-2"></i>Insurance Information</h6>
+                        ${data.insuranceDetails ? 
+                            `<div class="insurance-info">
+                                <p><strong>Provider:</strong> ${data.insuranceDetails.provider || 'Not specified'}</p>
+                                <p><strong>Policy Number:</strong> ${data.insuranceDetails.policyNumber || 'Not specified'}</p>
+                            </div>` :
+                            '<div class="empty-state"><i class="fas fa-shield-alt"></i><p>No insurance information on file</p></div>'
+                        }
+                    </div>
+                </div>
+            `;
+            document.getElementById('recordsContent').innerHTML = recordsHtml;
+        }
+
+        async function loadAppointments() {
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('myRecordsContent').style.display = 'none';
+            document.getElementById('appointmentsContent').style.display = 'block';
+            document.getElementById('messagesContent').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/patient-portal/appointments', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    displayAppointments(result.data);
+                } else {
+                    document.getElementById('appointmentsList').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h5>Error Loading Appointments</h5>
+                            <p>${result.message || 'Unable to load appointments at this time.'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                document.getElementById('appointmentsList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h5>Connection Error</h5>
+                        <p>Unable to connect to the server. Please check your connection and try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayAppointments(appointments) {
+            if (!appointments || appointments.length === 0) {
+                document.getElementById('appointmentsList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h5>No Appointments Scheduled</h5>
+                        <p>You don't have any appointments scheduled at this time.</p>
+                        <p class="text-muted">Contact the clinic to schedule an appointment.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const appointmentsHtml = appointments.map(appt => {
+                const appointmentDate = new Date(appt.scheduledAt);
+                const dateStr = appointmentDate.toLocaleDateString();
+                const timeStr = appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const isUpcoming = appointmentDate > new Date();
+                
+                return `
+                    <div class="appointment-item ${isUpcoming ? 'upcoming' : 'past'}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="appointment-date">${dateStr}</div>
+                                <div class="appointment-time">${timeStr}</div>
+                                ${appt.notes ? `<div class="appointment-notes">${appt.notes}</div>` : ''}
+                            </div>
+                            <span class="badge ${isUpcoming ? 'bg-primary' : 'bg-secondary'}">
+                                ${isUpcoming ? 'Upcoming' : 'Past'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('appointmentsList').innerHTML = appointmentsHtml;
+        }
+
+        function loadMessages() {
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('myRecordsContent').style.display = 'none';
+            document.getElementById('appointmentsContent').style.display = 'none';
+            document.getElementById('messagesContent').style.display = 'block';
+        }
+
+        function composeMessage() {
+            showAlert('Message composition feature coming soon!', 'info');
+        }
+
+        async function saveProfileChanges() {
+            const firstName = document.getElementById('editFirstName').value;
+            const email = document.getElementById('editEmail').value;
+            const phoneNumber = document.getElementById('editPhoneNumber').value;
+
+            try {
+                const response = await fetch('/api/patient-portal/my-records', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        firstName: firstName,
+                        email: email,
+                        phoneNumber: phoneNumber
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Profile updated successfully!', 'success');
+                    // Refresh dashboard data
+                    loadDashboardData();
+                } else {
+                    showAlert('Failed to update profile: ' + result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showAlert('Failed to update profile. Please try again.', 'danger');
+            }
+        }
+
+        function updateProfile() {
+            loadMyRecords();
+        }
+
+        function logout() {
+            localStorage.removeItem('securehealth_user');
+            window.location.href = '/patient-portal/login.html';
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Auto-dismiss success alerts after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    const alert = alertContainer.querySelector('.alert');
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>

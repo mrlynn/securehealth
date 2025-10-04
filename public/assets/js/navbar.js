@@ -136,16 +136,27 @@ class SecureHealthNavbar {
     getPublicNavItems(currentPage) {
         return `
             <li class="nav-item">
-                <a class="nav-link ${currentPage === '/index.html' ? 'active' : ''}" href="/index.html#features">Features</a>
+                <a class="nav-link ${currentPage === '/index.html' ? 'active' : ''}" href="/index.html">Home</a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link ${currentPage === '/index.html' ? 'active' : ''}" href="/index.html#security">Security</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link ${currentPage === '/index.html' ? 'active' : ''}" href="/index.html#demo">Demo</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link ${currentPage === '/documentation.html' ? 'active' : ''}" href="/documentation.html">Documentation</a>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle ${currentPage === '/documentation.html' || currentPage.includes('/docs/') ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Resources
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item ${currentPage === '/documentation.html' ? 'active' : ''}" href="/documentation.html">
+                        <i class="fas fa-book me-1"></i>Documentation
+                    </a></li>
+                    <li><a class="dropdown-item" href="/index.html#features">
+                        <i class="fas fa-star me-1"></i>Features
+                    </a></li>
+                    <li><a class="dropdown-item" href="/index.html#security">
+                        <i class="fas fa-shield-alt me-1"></i>Security
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item ${currentPage === '/queryable-encryption-search.html' ? 'active' : ''}" href="/queryable-encryption-search.html">
+                        <i class="fas fa-search me-1"></i>Encryption Demo
+                    </a></li>
+                </ul>
             </li>
         `;
     }
@@ -156,38 +167,34 @@ class SecureHealthNavbar {
     getRoleBasedNavItems(currentPage) {
         let items = '';
 
-        // Patients link - visible to all authenticated users
+        // Patients dropdown - visible to all authenticated users
         items += `
-            <li class="nav-item">
-                <a class="nav-link ${currentPage === '/patients.html' ? 'active' : ''}" href="/patients.html">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle ${currentPage.includes('/patient') ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-users me-1"></i>Patients
                 </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item ${currentPage === '/patients.html' ? 'active' : ''}" href="/patients.html">View All Patients</a></li>
+                    <li><a class="dropdown-item ${currentPage === '/patient-add.html' ? 'active' : ''}" href="/patient-add.html">Add New Patient</a></li>
+                    ${this.isReceptionist ? `<li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item ${currentPage === '/scheduling.html' ? 'active' : ''}" href="/scheduling.html"><i class="fas fa-calendar-alt me-1"></i>Scheduling</a></li>` : ''}
+                </ul>
             </li>
         `;
 
-        // Admin-specific links
+        // Admin-specific dropdown
         if (this.isAdmin) {
             items += `
-                <li class="nav-item">
-                    <a class="nav-link ${currentPage === '/admin.html' ? 'active' : ''}" href="/admin.html">
-                        <i class="fas fa-cog me-1"></i>Admin Dashboard
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle ${(currentPage.includes('/admin') || currentPage.includes('/queryable')) ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-cog me-1"></i>Admin
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link ${currentPage === '/admin-demo-data.html' ? 'active' : ''}" href="/admin-demo-data.html">
-                        <i class="fas fa-database me-1"></i>Demo Data
-                    </a>
-                </li>
-            `;
-        }
-
-        // Receptionist-specific links
-        if (this.isReceptionist) {
-            items += `
-                <li class="nav-item">
-                    <a class="nav-link ${currentPage === '/scheduling.html' ? 'active' : ''}" href="/scheduling.html">
-                        <i class="fas fa-calendar-alt me-1"></i>Scheduling
-                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item ${currentPage === '/admin.html' ? 'active' : ''}" href="/admin.html">Dashboard</a></li>
+                        <li><a class="dropdown-item ${currentPage === '/admin-demo-data.html' ? 'active' : ''}" href="/admin-demo-data.html">Demo Data</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item ${currentPage === '/queryable-encryption-search.html' ? 'active' : ''}" href="/queryable-encryption-search.html"><i class="fas fa-lock me-1"></i>Encryption Search</a></li>
+                    </ul>
                 </li>
             `;
         }
@@ -204,7 +211,7 @@ class SecureHealthNavbar {
 
         return `
             <li class="nav-item d-flex align-items-center ms-3">
-                <span class="text-muted me-2">${userName}</span>
+                <span class="text-white me-2">${userName}</span>
                 <span class="role-badge ${roleClass} me-2">${this.userRole}</span>
                 <button id="logoutBtn" class="btn btn-primary-custom btn-custom">
                     <i class="fas fa-sign-out-alt me-2"></i>Logout

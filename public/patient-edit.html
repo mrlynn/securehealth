@@ -211,6 +211,8 @@
   <link href="/assets/css/navbar.css" rel="stylesheet">
   <!-- Role-aware navbar script -->
   <script src="/assets/js/navbar.js"></script>
+  <!-- Patient verification script -->
+  <script src="/assets/js/patient-verification.js"></script>
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </head>
@@ -275,7 +277,8 @@
         console.log("Loading patient data for ID:", id);
         
         try {
-          const response = await fetch(`/api/patients/${id}`, {
+          // Use the verification system to handle patient data loading
+          const response = await window.patientVerification.fetchWithVerification(`/api/patients/${id}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -547,7 +550,7 @@
         
         console.log("Saving patient data:", updatedData);
         
-        const response = await fetch(`/api/patients/${window.patientData.id}`, {
+        const response = await window.patientVerification.fetchWithVerification(`/api/patients/${window.patientData.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

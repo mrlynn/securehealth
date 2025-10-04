@@ -133,6 +133,35 @@ class AppointmentController extends AbstractController
         return $this->json($appointment->toArray(), Response::HTTP_CREATED);
     }
 
+    #[Route('/patient/{patientId}', name: 'appointment_by_patient', methods: ['GET'])]
+    public function getPatientAppointments(string $patientId): JsonResponse
+    {
+        // Doctor, nurse, and admin roles can also view patient appointments
+        try {
+            $objectId = new ObjectId($patientId);
+            
+            // Check if patient exists
+            $patient = $this->patientRepository->findByIdString($patientId);
+            if (!$patient) {
+                return $this->json([
+                    'message' => 'Patient not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+            
+            $appointments = $this->appointmentRepository->findByPatient($objectId);
+            $data = array_map(static fn(Appointment $appointment) => $appointment->toArray(), $appointments);
+            
+            return $this->json([
+                'appointments' => $data,
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->json([
+                'message' => 'Invalid patient ID format'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+    
     private function assertReceptionistOnly(): void
     {
         if ($this->isGranted('ROLE_DOCTOR') || $this->isGranted('ROLE_NURSE') || $this->isGranted('ROLE_ADMIN')) {

@@ -58,7 +58,9 @@ class SessionAuthenticator extends AbstractAuthenticator implements Authenticati
             return new SessionUser(
                 $userData['email'],
                 $userData['username'] ?? $userData['email'],
-                $userData['roles'] ?? []
+                $userData['roles'] ?? [],
+                $userData['isPatient'] ?? false,
+                $userData['patientId'] ?? null
             );
         });
 

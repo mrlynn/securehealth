@@ -3,6 +3,7 @@
 namespace App\Document;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
+use MongoDB\BSON\ObjectId;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -26,6 +27,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[MongoDB\Field(type: "bool")]
     private bool $isAdmin = false;
+
+    #[MongoDB\Field(type: "bool")]
+    private bool $isPatient = false;
+
+    #[MongoDB\Field(type: "object_id", nullable: true)]
+    private $patientId = null;
 
     public function getId(): ?string
     {
@@ -93,6 +100,32 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsAdmin(bool $isAdmin): self
     {
         $this->isAdmin = $isAdmin;
+        return $this;
+    }
+
+    public function isPatient(): bool
+    {
+        return $this->isPatient;
+    }
+
+    public function setIsPatient(bool $isPatient): self
+    {
+        $this->isPatient = $isPatient;
+        return $this;
+    }
+
+    public function getPatientId()
+    {
+        return $this->patientId;
+    }
+
+    public function setPatientId($patientId): self
+    {
+        if (is_string($patientId)) {
+            $this->patientId = new ObjectId($patientId);
+        } else {
+            $this->patientId = $patientId;
+        }
         return $this;
     }
 

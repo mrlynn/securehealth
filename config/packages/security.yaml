@@ -10,6 +10,9 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+        public_api:
+            pattern: ^/api/(login|patient-portal/register|patient-portal/health)
+            security: false
         main:
             pattern: ^/
             lazy: false
@@ -26,6 +29,11 @@ security:
         - { path: ^/docs, roles: PUBLIC_ACCESS }
         # API Access Control
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        # Patient Portal API access control - specific routes first
+        - { path: ^/api/patient-portal/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/patient-portal/health, roles: PUBLIC_ACCESS }
+        - { path: ^/api/patient-portal/appointments, roles: ROLE_PATIENT }
+        - { path: ^/api/patient-portal, roles: ROLE_PATIENT }
         # Create, update, delete operations restricted to doctors
         - { path: ^/api/patients$, methods: [POST], roles: ROLE_DOCTOR }
         - { path: '^/api/patients/[a-f0-9]{24}$', methods: [PUT, DELETE], roles: ROLE_DOCTOR }
@@ -33,11 +41,13 @@ security:
         - { path: ^/api/patients, methods: [GET], roles: [IS_AUTHENTICATED_FULLY, ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST, ROLE_ADMIN] }
         # Admin API access control
         - { path: ^/api/admin, roles: ROLE_ADMIN }
-        # Appointments API access control - restricted to receptionists
-        - { path: ^/api/appointments, roles: ROLE_RECEPTIONIST }
+        # Appointments API access control - allow healthcare staff
+        - { path: ^/api/appointments, roles: [ROLE_RECEPTIONIST, ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
 
     role_hierarchy:
         # Doctor has all permissions
         ROLE_DOCTOR: [ROLE_NURSE, ROLE_RECEPTIONIST]
         # Nurse has more permissions than receptionist
         ROLE_NURSE: [ROLE_RECEPTIONIST]
+        # Patients have their own separate role hierarchy
+        ROLE_PATIENT: [ROLE_USER]

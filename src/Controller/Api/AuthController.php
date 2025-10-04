@@ -72,7 +72,9 @@ class AuthController extends AbstractController
         $session->set('user', [
             'email' => $user->getEmail(),
             'username' => $user->getUsername(),
-            'roles' => $user->getRoles()
+            'roles' => $user->getRoles(),
+            'isPatient' => $user->isPatient(),
+            'patientId' => $user->getPatientId() ? (string)$user->getPatientId() : null
         ]);
         
         // Create an authenticated user for logging
