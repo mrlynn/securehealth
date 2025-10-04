@@ -88,6 +88,12 @@ class MongoDBEncryptionService
         if (!$mongodbDisabled) {
             // Load master key
             $keyFile = $params->get('mongodb_encryption_key_path', __DIR__ . '/../../docker/encryption.key');
+            
+            // Railway fallback: if the configured path doesn't exist, try the Railway path
+            if (!file_exists($keyFile) && file_exists('/app/docker/encryption.key')) {
+                $keyFile = '/app/docker/encryption.key';
+                $this->logger->info('Using Railway fallback encryption key path: ' . $keyFile);
+            }
             // Ensure the directory exists
             $keyDir = dirname($keyFile);
             if (!is_dir($keyDir)) {
