@@ -4,6 +4,16 @@ require dirname(__DIR__).'/vendor/autoload.php';
 
 echo "<h1>MongoDB Connection Debug</h1>";
 
+function redactMongoUri(?string $uri): string
+{
+    if (!$uri) {
+        return '(not set)';
+    }
+
+    // Replace any credentials between scheme and host with masked placeholders
+    return preg_replace('/(mongodb(\+srv)?:\/\/)([^@]+)@/i', '$1***:***@', $uri);
+}
+
 // Network connectivity test
 echo "<h2>Network Connectivity Test</h2>";
 $servers = [
@@ -25,7 +35,7 @@ foreach ($servers as $host => $port) {
 
 // Display environment variables
 echo "<h2>Environment Variables</h2>";
-echo "MONGODB_URI: " . getenv('MONGODB_URI') . "<br>";
+echo "MONGODB_URI: " . htmlspecialchars(redactMongoUri(getenv('MONGODB_URI'))) . "<br>";
 echo "MONGODB_DB: " . getenv('MONGODB_DB') . "<br>";
 echo "MONGODB_KEY_VAULT_NAMESPACE: " . getenv('MONGODB_KEY_VAULT_NAMESPACE') . "<br>";
 
@@ -77,7 +87,7 @@ try {
     echo "<h3>Attempt 3 - Modified URI</h3>";
     try {
         // Try with a more basic URI
-        $simpleUri = "mongodb://mike:xxx%21@performance-shard-00-00.zbcul.mongodb.net:27017/?authSource=admin&ssl=true";
+        $simpleUri = "mongodb://demo-user:***@performance-shard-00-00.zbcul.mongodb.net:27017/?authSource=admin&ssl=true";
         $options = [
             'retryWrites' => true,
             'serverSelectionTimeoutMS' => 5000,

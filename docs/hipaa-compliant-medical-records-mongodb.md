@@ -1790,7 +1790,7 @@ One of the most powerful aspects of Queryable Encryption is that you can still u
 1. **Open MongoDB Compass**
 2. **Connect using your Atlas connection string:**
    ```
-   mongodb+srv://mike:Password456%21@performance.zbcul.mongodb.net/?retryWrites=true&w=majority
+   mongodb+srv://<user>:<password>@performance.zbcul.mongodb.net/?retryWrites=true&w=majority
    ```
 
 ### What You'll See in Compass

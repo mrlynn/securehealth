@@ -9,6 +9,7 @@ use MongoDB\BSON\UTCDateTime;
 use MongoDB\Client;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 header('Content-Type: application/json');
 
@@ -37,8 +38,11 @@ if (!$patientId) {
 }
 
 try {
-    // Get MongoDB URI from environment or use default
-    $mongoUri = getenv('MONGODB_URI') ?: 'mongodb+srv://mike:Password456%21@performance.zbcul.mongodb.net/?retryWrites=true&w=majority&appName=performance';
+    // Get MongoDB connection details from environment
+    $mongoUri = getenv('MONGODB_URI');
+    if (!$mongoUri) {
+        throw new RuntimeException('MongoDB connection string missing. Set MONGODB_URI in the environment.');
+    }
     $dbName = getenv('MONGODB_DB') ?: 'securehealth';
     $keyVaultNamespace = getenv('MONGODB_KEY_VAULT_NAMESPACE') ?: 'encryption.__keyVault';
     $keyFile = getenv('MONGODB_ENCRYPTION_KEY_PATH') ?: __DIR__ . '/../docker/encryption.key';

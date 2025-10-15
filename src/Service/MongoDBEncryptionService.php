@@ -32,11 +32,12 @@ class MongoDBEncryptionService
     ) {
         $this->logger = $logger;
         
-        // Check if MongoDB is disabled with fallbacks
+        // Check if MongoDB is disabled with fallbacks - only do this once
         $mongodbDisabled = false;
         try {
             if ($params->has('MONGODB_DISABLED')) {
                 $mongodbDisabled = filter_var($params->get('MONGODB_DISABLED'), FILTER_VALIDATE_BOOLEAN);
+                $this->logger->info('MongoDB disabled status: ' . ($mongodbDisabled ? 'true' : 'false'));
             }
         } catch (\Exception $e) {
             $this->logger->info('MongoDB disabled parameter not found, using default false');
@@ -73,60 +74,44 @@ class MongoDBEncryptionService
         $this->keyVaultNamespace = $_ENV['MONGODB_KEY_VAULT_NAMESPACE'] ?? 'encryption.__keyVault';
         
         try {
-            // Initialize MongoDB client with readPreference: primary
-            $this->client = new Client($mongoUrl, [
-                'readPreference' => 'primary'
-            ]);
-            
-            // Set up key vault namespace
-            list($keyVaultDb, $keyVaultColl) = explode('.', $this->keyVaultNamespace, 2);
-            
-            // Set up encryption key vault
-            $this->keyVaultCollection = $this->client->selectCollection($keyVaultDb, $keyVaultColl);
-            
-            // Create key vault collection if it doesn't exist
             try {
-                $this->client->selectDatabase($keyVaultDb)->createCollection($keyVaultColl);
-            } catch (\Exception $e) {
-                // Collection may already exist, that's fine
-                $this->logger->info('Key vault collection already exists: ' . $e->getMessage());
+                // Initialize MongoDB client with readPreference: primary
+                $this->client = new Client($mongoUrl, [
+                    'readPreference' => 'primary',
+                    'serverSelectionTimeoutMS' => 5000 // 5 second timeout for server selection
+                ]);
+                
+                // Verify connection with a ping command
+                $this->client->selectDatabase('admin')->command(['ping' => 1]);
+                $this->logger->info('MongoDB connection successful');
+                
+                // Set up key vault namespace
+                list($keyVaultDb, $keyVaultColl) = explode('.', $this->keyVaultNamespace, 2);
+                
+                // Set up encryption key vault
+                $this->keyVaultCollection = $this->client->selectCollection($keyVaultDb, $keyVaultColl);
+                
+                // Create key vault collection if it doesn't exist
+                try {
+                    $this->client->selectDatabase($keyVaultDb)->createCollection($keyVaultColl);
+                } catch (\Exception $e) {
+                    // Collection may already exist, that's fine
+                    $this->logger->info('Key vault collection already exists: ' . $e->getMessage());
+                }
+            } catch (\MongoDB\Driver\Exception\ConnectionTimeoutException $e) {
+                $this->logger->error('MongoDB connection timeout: ' . $e->getMessage());
+                throw new \RuntimeException('Failed to connect to MongoDB: connection timeout. Check your MongoDB connection string and network settings.');
+            } catch (\MongoDB\Driver\Exception\AuthenticationException $e) {
+                $this->logger->error('MongoDB authentication failed: ' . $e->getMessage());
+                throw new \RuntimeException('Failed to authenticate with MongoDB. Check your credentials in the connection string.');
             }
         } catch (\Exception $e) {
             $this->logger->error('Failed to initialize MongoDB client: ' . $e->getMessage());
         }
         
-        // Check if MongoDB is disabled with fallbacks
-        $mongodbDisabled = false;
-        try {
-            if ($params->has('MONGODB_DISABLED')) {
-                $mongodbDisabled = filter_var($params->get('MONGODB_DISABLED'), FILTER_VALIDATE_BOOLEAN);
-            }
-        } catch (\Exception $e) {
-            $this->logger->info('MongoDB disabled parameter not found, using default false');
-        }
-        
+        // We already initialized MongoDB above, so just create client encryption
         if (!$mongodbDisabled) {
-            // Load master key
-            $keyFile = $params->get('mongodb_encryption_key_path', __DIR__ . '/../../docker/encryption.key');
-            
-            // Railway fallback: if the configured path doesn't exist, try the Railway path
-            if (!file_exists($keyFile) && file_exists('/app/docker/encryption.key')) {
-                $keyFile = '/app/docker/encryption.key';
-                $this->logger->info('Using Railway fallback encryption key path: ' . $keyFile);
-            }
-            // Ensure the directory exists
-            $keyDir = dirname($keyFile);
-            if (!is_dir($keyDir)) {
-                mkdir($keyDir, 0755, true);
-            }
-            if (!file_exists($keyFile)) {
-                $this->logger->warning('Encryption key file not found, generating new key: ' . $keyFile);
-                file_put_contents($keyFile, random_bytes(96));
-            }
-            // Read 96-byte local master key as raw binary
-            $this->masterKey = file_get_contents($keyFile);
-            
-            // Create client encryption
+            // Create client encryption using the masterKey already loaded
             $this->clientEncryption = $this->createClientEncryption();
         }
         

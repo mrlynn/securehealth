@@ -3,11 +3,15 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 use MongoDB\Client;
 use MongoDB\BSON\UTCDateTime;
+use RuntimeException;
 
 header('Content-Type: application/json');
 
 try {
-    $mongoUri = getenv('MONGODB_URI') ?: 'mongodb+srv://mike:Password456%21@performance.zbcul.mongodb.net/?retryWrites=true&w=majority&appName=performance';
+    $mongoUri = getenv('MONGODB_URI');
+    if (!$mongoUri) {
+        throw new RuntimeException('MongoDB connection string missing. Set MONGODB_URI in the environment.');
+    }
     $dbName = getenv('MONGODB_DB') ?: 'securehealth';
 
     $client = new Client($mongoUri);
@@ -64,5 +68,4 @@ try {
         'message' => 'Error: ' . $e->getMessage(),
     ]);
 }
-
 
