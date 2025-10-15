@@ -42,9 +42,25 @@ class MongoDBEncryptionService
             $this->logger->info('MongoDB disabled parameter not found, using default false');
         }
         
-        // Temporarily disable encryption to restore system functionality
-        $mongodbDisabled = true;
-        $this->logger->info('MongoDB encryption temporarily disabled to restore system functionality');
+        // Respect configuration; do not force-disable encryption
+        
+        // Always set up the key vault namespace for auto encryption
+        $this->keyVaultNamespace = $_ENV['MONGODB_KEY_VAULT_NAMESPACE'] ?? 'encryption.__keyVault';
+        
+        // Always read the encryption key for auto encryption
+        $keyFile = $_ENV['MONGODB_ENCRYPTION_KEY_PATH'] ?? 'docker/encryption.key';
+        if (!file_exists($keyFile)) {
+            $this->logger->warning('Encryption key file not found, generating new key: ' . $keyFile);
+            file_put_contents($keyFile, random_bytes(96));
+        } else {
+            // Validate key length (96 bytes)
+            $existing = file_get_contents($keyFile);
+            if ($existing === false || strlen($existing) !== 96) {
+                $this->logger->warning('Invalid local KMS key length, regenerating 96-byte key');
+                file_put_contents($keyFile, random_bytes(96));
+            }
+        }
+        $this->masterKey = file_get_contents($keyFile); // Keep as binary for auto encryption
         
         if ($mongodbDisabled) {
             $this->logger->info('MongoDB is disabled, running in documentation-only mode');
@@ -54,7 +70,7 @@ class MongoDBEncryptionService
         
         // Get connection parameters
         $mongoUrl = $params->get('mongodb_url', 'mongodb://localhost:27017');
-        $this->keyVaultNamespace = $params->get('mongodb_key_vault_namespace', 'encryption.__keyVault');
+        $this->keyVaultNamespace = $_ENV['MONGODB_KEY_VAULT_NAMESPACE'] ?? 'encryption.__keyVault';
         
         try {
             // Initialize MongoDB client with readPreference: primary
@@ -105,9 +121,10 @@ class MongoDBEncryptionService
             }
             if (!file_exists($keyFile)) {
                 $this->logger->warning('Encryption key file not found, generating new key: ' . $keyFile);
-                file_put_contents($keyFile, base64_encode(random_bytes(96)));
+                file_put_contents($keyFile, random_bytes(96));
             }
-            $this->masterKey = base64_decode(file_get_contents($keyFile));
+            // Read 96-byte local master key as raw binary
+            $this->masterKey = file_get_contents($keyFile);
             
             // Create client encryption
             $this->clientEncryption = $this->createClientEncryption();
@@ -145,6 +162,33 @@ class MongoDBEncryptionService
             // Keep deterministic for backwards compatibility with existing queries
             'patientId' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
         ];
+
+        // Message document fields
+        $this->encryptedFields['message'] = [
+            // Queryable linkage
+            'patientId' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'senderUserId' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'senderName' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'senderRoles' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'recipientRoles' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'direction' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            // Threading fields
+            'conversationId' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'parentMessageId' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            // Optional search by subject
+            'subject' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            // Sensitive content
+            'body' => ['algorithm' => self::ALGORITHM_RANDOM],
+        ];
+
+        // Conversation document fields
+        $this->encryptedFields['conversation'] = [
+            'patientId' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'subject' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'participants' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'status' => ['algorithm' => self::ALGORITHM_DETERMINISTIC],
+            'lastMessagePreview' => ['algorithm' => self::ALGORITHM_RANDOM],
+        ];
     }
     
     /**
@@ -156,7 +200,7 @@ class MongoDBEncryptionService
         $clientEncryptionOpts = [
             'keyVaultNamespace' => $this->keyVaultNamespace,
             'kmsProviders' => [
-                'local' => ['key' => $this->masterKey]
+                'local' => ['key' => new Binary($this->masterKey, Binary::TYPE_GENERIC)]
             ]
         ];
         
@@ -206,6 +250,23 @@ class MongoDBEncryptionService
      */
     public function getEncryptionOptions(): array
     {
+        $extraOptions = [];
+        
+        // Allow overriding the shared lib path via env if needed
+        $sharedLibPath = $_ENV['MONGOCRYPT_SHARED_LIB_PATH'] ?? null;
+        if ($sharedLibPath && file_exists($sharedLibPath)) {
+            $extraOptions['cryptSharedLibPath'] = $sharedLibPath;
+            $extraOptions['cryptSharedLibRequired'] = true;
+        } else {
+            // Don't require crypt_shared if not available - fall back to mongocryptd or manual encryption
+            $extraOptions['cryptSharedLibRequired'] = false;
+        }
+
+        // Note: For auto-encryption to work properly, encryption must be configured
+        // at the MongoDB collection level using encrypted collections feature.
+        // This requires MongoDB 6.0+ with Queryable Encryption support.
+        // Currently, this application uses manual encryption/decryption in the repository layer.
+        
         return [
             'keyVaultNamespace' => $this->keyVaultNamespace,
             'kmsProviders' => [
@@ -213,19 +274,11 @@ class MongoDBEncryptionService
                     'key' => new Binary($this->masterKey, Binary::TYPE_GENERIC)
                 ]
             ],
-            'bypassAutoEncryption' => false,
-            'extraOptions' => [
-                'cryptSharedLibPath' => '/usr/local/lib/libcrypt_shared.so'
-            ],
-            // MongoDB 8.2 specific options
-            'encryptedFieldsMap' => [], // Will be populated dynamically
-            'cryptSharedLibRequired' => true,
-            'bypassQueryAnalysis' => false,
-            'schemaMap' => null, // Will be populated as needed
-            // Performance optimization options for MongoDB 8.2
-            'cacheSize' => 1000, // Number of cached operations
-            'maxWireVersion' => 17, // For MongoDB 8.2
-            'useClientMemoryCursor' => true // Memory-optimized cursor for encrypted results
+            'bypassAutoEncryption' => true, // Use manual encryption instead of auto-encryption
+            'extraOptions' => $extraOptions,
+            'encryptedFieldsMap' => [],
+            'bypassQueryAnalysis' => true, // Skip query analysis for manual encryption
+            'schemaMap' => []
         ];
     }
     

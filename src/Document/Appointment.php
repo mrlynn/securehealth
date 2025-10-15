@@ -96,7 +96,7 @@ class Appointment
 
     public function setScheduledAt($scheduledAt): self
     {
-        if ($scheduledAt instanceof \DateTime) {
+        if ($scheduledAt instanceof \DateTime || $scheduledAt instanceof \DateTimeImmutable) {
             $this->scheduledAt = new UTCDateTime($scheduledAt);
         } else {
             $this->scheduledAt = $scheduledAt;

@@ -7,8 +7,11 @@ use App\Repository\UserRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Doctrine\ODM\MongoDB\DocumentManager;
 
 #[AsCommand(
     name: 'app:create-users',
@@ -17,11 +20,20 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class CreateUsersCommand extends Command
 {
     private UserRepository $userRepository;
+    private UserPasswordHasherInterface $passwordHasher;
+    private DocumentManager $documentManager;
 
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository, UserPasswordHasherInterface $passwordHasher, DocumentManager $documentManager)
     {
         parent::__construct();
         $this->userRepository = $userRepository;
+        $this->passwordHasher = $passwordHasher;
+        $this->documentManager = $documentManager;
+    }
+    
+    protected function configure(): void
+    {
+        $this->addOption('force', 'f', InputOption::VALUE_NONE, 'Recreate users even if they already exist');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -61,23 +73,33 @@ class CreateUsersCommand extends Command
 
         $createdCount = 0;
         $skippedCount = 0;
+        $force = $input->getOption('force');
 
         foreach ($users as $userData) {
             // Check if user already exists
             $existingUser = $this->userRepository->findOneByEmail($userData['email']);
             
             if ($existingUser) {
-                $io->text("User {$userData['email']} already exists. Skipping.");
-                $skippedCount++;
-                continue;
+                if ($force) {
+                    $this->documentManager->remove($existingUser);
+                    $this->documentManager->flush();
+                    $io->text("Removed existing user: {$userData['email']}");
+                } else {
+                    $io->text("User {$userData['email']} already exists. Skipping.");
+                    $skippedCount++;
+                    continue;
+                }
             }
             
             // Create new user
             $user = new User();
             $user->setEmail($userData['email']);
             $user->setUsername($userData['username']);
-            $user->setPassword($userData['password']); // We're storing plain passwords for the demo
             $user->setRoles($userData['roles']);
+            
+            // Hash the password
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $userData['password']);
+            $user->setPassword($hashedPassword);
             
             // Set admin flag if specified
             if (isset($userData['isAdmin']) && $userData['isAdmin']) {

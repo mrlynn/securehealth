@@ -18,7 +18,7 @@ class SecurityController extends AbstractController
         $this->auditLogService = $auditLogService;
     }
     
-    #[Route('/api/security/login', name: 'app_login', methods: ['POST'])]
+    #[Route('/api/login', name: 'app_login', methods: ['POST'])]
     public function login(): JsonResponse
     {
         if ($this->getUser()) {

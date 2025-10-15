@@ -3,7 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Document\Patient;
-use App\Document\User;
+use App\Security\SessionUser;
 use App\Repository\PatientRepository;
 use App\Service\AuditLogService;
 use MongoDB\BSON\ObjectId;
@@ -96,14 +96,14 @@ class PatientNotesController extends AbstractController
         }
 
         $user = $this->getUser();
-        if (!$user instanceof User) {
+        if (!$user instanceof SessionUser) {
             return $this->json(['message' => 'Invalid user'], Response::HTTP_UNAUTHORIZED);
         }
 
         // Add the note
         $patient->addNote(
             trim($data['content']),
-            new ObjectId($user->getId()),
+            new ObjectId(), // Generate new ObjectId for the note
             $user->getUsername()
         );
 
@@ -155,7 +155,7 @@ class PatientNotesController extends AbstractController
         }
 
         $user = $this->getUser();
-        if (!$user instanceof User) {
+        if (!$user instanceof SessionUser) {
             return $this->json(['message' => 'Invalid user'], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -169,7 +169,7 @@ class PatientNotesController extends AbstractController
         $success = $patient->updateNote(
             $noteId,
             trim($data['content']),
-            new ObjectId($user->getId()),
+            new ObjectId(), // Generate new ObjectId for the update
             $user->getUsername()
         );
 
@@ -217,7 +217,7 @@ class PatientNotesController extends AbstractController
         $this->denyAccessUnlessGranted(PatientVoter::DELETE_NOTE, $patient);
 
         $user = $this->getUser();
-        if (!$user instanceof User) {
+        if (!$user instanceof SessionUser) {
             return $this->json(['message' => 'Invalid user'], Response::HTTP_UNAUTHORIZED);
         }
 

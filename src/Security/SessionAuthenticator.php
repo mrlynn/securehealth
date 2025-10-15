@@ -26,14 +26,25 @@ class SessionAuthenticator extends AbstractAuthenticator implements Authenticati
 
     public function supports(Request $request): ?bool
     {
-        // Only authenticate API requests (not login endpoint)
         $path = $request->getPathInfo();
-        $shouldSupport = str_starts_with($path, '/api/') && 
-                        !str_starts_with($path, '/api/login');
+        
+        // Don't authenticate the login endpoint itself - JsonLoginAuthenticator will handle that
+        if ($path === '/api/login') {
+            error_log("SessionAuthenticator::supports - Skipping /api/login");
+            return false;
+        }
+        
+        // Don't authenticate public endpoints
+        if (str_starts_with($path, '/api/patient-portal/register') || 
+            str_starts_with($path, '/api/patient-portal/health')) {
+            error_log("SessionAuthenticator::supports - Skipping public endpoint");
+            return false;
+        }
+        
+        // Only authenticate API requests that should have sessions
+        $shouldSupport = str_starts_with($path, '/api/');
         
         error_log("SessionAuthenticator::supports - Path: $path, Should support: " . ($shouldSupport ? 'YES' : 'NO'));
-        error_log("SessionAuthenticator::supports - Request URI: " . $request->getRequestUri());
-        error_log("SessionAuthenticator::supports - Method: " . $request->getMethod());
         
         return $shouldSupport;
     }

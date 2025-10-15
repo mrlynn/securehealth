@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Knowledge Base - SecureHealth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .knowledge-card {
+            border-left: 4px solid #007bff;
+            transition: transform 0.2s;
+        }
+        .knowledge-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .confidence-badge {
+            font-size: 0.8em;
+        }
+        .evidence-badge {
+            font-size: 0.8em;
+        }
+        .search-filters {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .search-results {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .knowledge-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .specialty-tag {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .condition-tag {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+        .medication-tag {
+            background-color: #e8f5e8;
+            color: #388e3c;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .search-tabs {
+            border-bottom: 1px solid #dee2e6;
+        }
+        .search-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+        }
+        .search-tabs .nav-link.active {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+        }
+        .clinical-decision-form {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-shield-alt me-2"></i>SecureHealth
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="patients.html">
+                    <i class="fas fa-users me-1"></i>Patients
+                </a>
+                <a class="nav-link active" href="medical-knowledge-search.html">
+                    <i class="fas fa-book-medical me-1"></i>Knowledge Base
+                </a>
+                <a class="nav-link" href="#" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="fas fa-book-medical me-2"></i>Medical Knowledge Base
+                    <small class="text-muted">AI-Powered Clinical Decision Support</small>
+                </h1>
+
+                <!-- Search Tabs -->
+                <ul class="nav nav-tabs search-tabs" id="searchTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="semantic-search-tab" data-bs-toggle="tab" data-bs-target="#semantic-search" type="button" role="tab">
+                            <i class="fas fa-search me-1"></i>Semantic Search
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="clinical-decision-tab" data-bs-toggle="tab" data-bs-target="#clinical-decision" type="button" role="tab">
+                            <i class="fas fa-user-md me-1"></i>Clinical Decision Support
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="drug-interactions-tab" data-bs-toggle="tab" data-bs-target="#drug-interactions" type="button" role="tab">
+                            <i class="fas fa-pills me-1"></i>Drug Interactions
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="treatment-guidelines-tab" data-bs-toggle="tab" data-bs-target="#treatment-guidelines" type="button" role="tab">
+                            <i class="fas fa-clipboard-list me-1"></i>Treatment Guidelines
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content mt-4" id="searchTabContent">
+                    <!-- Semantic Search Tab -->
+                    <div class="tab-pane fade show active" id="semantic-search" role="tabpanel">
+                        <div class="search-filters">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="semanticQuery" class="form-label">Search Query</label>
+                                        <input type="text" class="form-control" id="semanticQuery" placeholder="Enter your medical question or search term...">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="semanticSpecialty" class="form-label">Specialty</label>
+                                        <select class="form-select" id="semanticSpecialty">
+                                            <option value="">All Specialties</option>
+                                            <option value="cardiology">Cardiology</option>
+                                            <option value="endocrinology">Endocrinology</option>
+                                            <option value="pulmonology">Pulmonology</option>
+                                            <option value="nephrology">Nephrology</option>
+                                            <option value="neurology">Neurology</option>
+                                            <option value="infectious-disease">Infectious Disease</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="minConfidence" class="form-label">Min Confidence</label>
+                                        <select class="form-select" id="minConfidence">
+                                            <option value="">Any</option>
+                                            <option value="8">High (8+)</option>
+                                            <option value="6">Medium (6+)</option>
+                                            <option value="4">Low (4+)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="minEvidence" class="form-label">Min Evidence Level</label>
+                                        <select class="form-select" id="minEvidence">
+                                            <option value="">Any</option>
+                                            <option value="5">Systematic Reviews</option>
+                                            <option value="4">RCTs</option>
+                                            <option value="3">Case Studies</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="similarityThreshold" class="form-label">Similarity Threshold</label>
+                                        <select class="form-select" id="similarityThreshold">
+                                            <option value="0.9">Very High (0.9)</option>
+                                            <option value="0.8">High (0.8)</option>
+                                            <option value="0.7" selected>Medium (0.7)</option>
+                                            <option value="0.6">Low (0.6)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="resultLimit" class="form-label">Results Limit</label>
+                                        <select class="form-select" id="resultLimit">
+                                            <option value="10">10</option>
+                                            <option value="20">20</option>
+                                            <option value="50">50</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="performSemanticSearch()">
+                                <i class="fas fa-search me-1"></i>Search Knowledge Base
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Decision Support Tab -->
+                    <div class="tab-pane fade" id="clinical-decision" role="tabpanel">
+                        <div class="clinical-decision-form">
+                            <h5><i class="fas fa-user-md me-2"></i>Patient Clinical Data</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="patientConditions" class="form-label">Conditions</label>
+                                        <input type="text" class="form-control" id="patientConditions" placeholder="e.g., hypertension, diabetes, asthma">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="patientMedications" class="form-label">Current Medications</label>
+                                        <input type="text" class="form-control" id="patientMedications" placeholder="e.g., lisinopril, metformin">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="patientSymptoms" class="form-label">Symptoms</label>
+                                        <input type="text" class="form-control" id="patientSymptoms" placeholder="e.g., chest pain, shortness of breath">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="clinicalSpecialty" class="form-label">Specialty</label>
+                                        <select class="form-select" id="clinicalSpecialty">
+                                            <option value="">All Specialties</option>
+                                            <option value="cardiology">Cardiology</option>
+                                            <option value="endocrinology">Endocrinology</option>
+                                            <option value="pulmonology">Pulmonology</option>
+                                            <option value="nephrology">Nephrology</option>
+                                            <option value="neurology">Neurology</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-warning" onclick="getClinicalDecisionSupport()">
+                                <i class="fas fa-brain me-1"></i>Get Clinical Decision Support
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Drug Interactions Tab -->
+                    <div class="tab-pane fade" id="drug-interactions" role="tabpanel">
+                        <div class="search-filters">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="interactionMedications" class="form-label">Medications</label>
+                                        <input type="text" class="form-control" id="interactionMedications" placeholder="e.g., warfarin, aspirin, metformin">
+                                        <div class="form-text">Enter medications separated by commas</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="interactionConditions" class="form-label">Patient Conditions</label>
+                                        <input type="text" class="form-control" id="interactionConditions" placeholder="e.g., diabetes, hypertension">
+                                        <div class="form-text">Enter conditions separated by commas</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="interactionAllergies" class="form-label">Known Allergies</label>
+                                        <input type="text" class="form-control" id="interactionAllergies" placeholder="e.g., penicillin, sulfa drugs">
+                                        <div class="form-text">Enter allergies separated by commas</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-danger" onclick="searchDrugInteractions()">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Check Drug Interactions
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Treatment Guidelines Tab -->
+                    <div class="tab-pane fade" id="treatment-guidelines" role="tabpanel">
+                        <div class="search-filters">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="guidelineCondition" class="form-label">Condition</label>
+                                        <input type="text" class="form-control" id="guidelineCondition" placeholder="e.g., hypertension, diabetes, asthma">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="guidelineSpecialty" class="form-label">Specialty</label>
+                                        <select class="form-select" id="guidelineSpecialty">
+                                            <option value="">All Specialties</option>
+                                            <option value="cardiology">Cardiology</option>
+                                            <option value="endocrinology">Endocrinology</option>
+                                            <option value="pulmonology">Pulmonology</option>
+                                            <option value="nephrology">Nephrology</option>
+                                            <option value="neurology">Neurology</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="conditionSeverity" class="form-label">Severity</label>
+                                        <select class="form-select" id="conditionSeverity">
+                                            <option value="">Any Severity</option>
+                                            <option value="mild">Mild</option>
+                                            <option value="moderate">Moderate</option>
+                                            <option value="severe">Severe</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="patientAgeGroup" class="form-label">Patient Age Group</label>
+                                        <select class="form-select" id="patientAgeGroup">
+                                            <option value="">Any Age</option>
+                                            <option value="pediatric">Pediatric (<18)</option>
+                                            <option value="adult">Adult (18-65)</option>
+                                            <option value="elderly">Elderly (>65)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-success" onclick="searchTreatmentGuidelines()">
+                                <i class="fas fa-clipboard-list me-1"></i>Find Treatment Guidelines
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div class="text-center loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Searching...</span>
+                    </div>
+                    <p class="mt-2">Searching medical knowledge base...</p>
+                </div>
+
+                <!-- Search Results -->
+                <div id="searchResults" class="mt-4"></div>
+
+                <!-- Knowledge Base Stats -->
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <h4>Knowledge Base Statistics</h4>
+                        <div class="row" id="knowledgeStats">
+                            <!-- Stats will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Check authentication
+        async function checkAuthentication() {
+            // First, try to get current user from session via API
+            try {
+                const response = await fetch('/api/user', {
+                    credentials: 'include',
+                    method: 'GET'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        const user = data.user;
+                        const userRoles = user.roles || [];
+                        
+                        // Check if user has required role
+                        if (userRoles.includes('ROLE_DOCTOR') || userRoles.includes('ROLE_ADMIN')) {
+                            // Store user data in localStorage for consistency
+                            localStorage.setItem('securehealth_user', JSON.stringify(user));
+                            console.log('Authentication successful via session API');
+                            return true;
+                        } else {
+                            alert('Access denied. This feature requires doctor or admin privileges.');
+                            window.location.href = 'login.html';
+                            return false;
+                        }
+                    }
+                } else {
+                    console.log('Session API returned status:', response.status);
+                }
+            } catch (error) {
+                console.log('Session API call failed:', error.message);
+            }
+            
+            // Fallback: check localStorage if session API failed
+            const userData = localStorage.getItem('securehealth_user');
+            if (!userData) {
+                alert('Please log in to access the medical knowledge base.');
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            const user = JSON.parse(userData);
+            const userRoles = user.roles || [];
+            
+            // Check if user has required role
+            if (!userRoles.includes('ROLE_DOCTOR') && !userRoles.includes('ROLE_ADMIN')) {
+                alert('Access denied. This feature requires doctor or admin privileges.');
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Only proceed if authentication is successful
+        checkAuthentication().then(isAuthenticated => {
+            if (isAuthenticated) {
+                // Load knowledge base stats on page load
+                document.addEventListener('DOMContentLoaded', function() {
+                    loadKnowledgeBaseStats();
+                });
+            }
+        });
+
+        async function performSemanticSearch() {
+            if (!(await checkAuthentication())) return;
+            
+            const query = document.getElementById('semanticQuery').value.trim();
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+
+            const filters = {};
+            const specialty = document.getElementById('semanticSpecialty').value;
+            const minConfidence = document.getElementById('minConfidence').value;
+            const minEvidence = document.getElementById('minEvidence').value;
+            const threshold = parseFloat(document.getElementById('similarityThreshold').value);
+            const limit = parseInt(document.getElementById('resultLimit').value);
+
+            if (specialty) filters.specialty = specialty;
+            if (minConfidence) filters.minConfidenceLevel = parseInt(minConfidence);
+            if (minEvidence) filters.minEvidenceLevel = parseInt(minEvidence);
+
+            showLoading(true);
+            
+            fetch('/api/medical-knowledge/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    query: query,
+                    filters: filters,
+                    limit: limit,
+                    threshold: threshold
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                if (data.error) {
+                    alert('Search failed: ' + data.error);
+                } else {
+                    displaySearchResults(data.results, 'Semantic Search Results');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                console.error('Error:', error);
+                if (error.message.includes('Unexpected token')) {
+                    alert('Session expired. Please refresh the page and log in again.');
+                    localStorage.removeItem('securehealth_user');
+                    window.location.href = 'login.html';
+                } else {
+                    alert('Search failed: ' + error.message);
+                }
+            });
+        }
+
+        async function getClinicalDecisionSupport() {
+            if (!(await checkAuthentication())) return;
+            
+            const conditions = document.getElementById('patientConditions').value.trim();
+            const medications = document.getElementById('patientMedications').value.trim();
+            const symptoms = document.getElementById('patientSymptoms').value.trim();
+            const specialty = document.getElementById('clinicalSpecialty').value;
+
+            if (!conditions && !medications && !symptoms) {
+                alert('Please enter at least one piece of patient information');
+                return;
+            }
+
+            const patientData = {};
+            if (conditions) patientData.conditions = conditions.split(',').map(s => s.trim());
+            if (medications) patientData.medications = medications.split(',').map(s => s.trim());
+            if (symptoms) patientData.symptoms = symptoms.split(',').map(s => s.trim());
+
+            showLoading(true);
+            
+            fetch('/api/medical-knowledge/clinical-decision-support', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    patientData: patientData,
+                    specialty: specialty || null
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                if (data.error) {
+                    alert('Clinical decision support failed: ' + data.error);
+                } else {
+                    displaySearchResults(data.results, 'Clinical Decision Support');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                console.error('Error:', error);
+                if (error.message.includes('Unexpected token')) {
+                    alert('Session expired. Please refresh the page and log in again.');
+                    localStorage.removeItem('securehealth_user');
+                    window.location.href = 'login.html';
+                } else {
+                    alert('Clinical decision support failed: ' + error.message);
+                }
+            });
+        }
+
+        async function searchDrugInteractions() {
+            if (!(await checkAuthentication())) return;
+            
+            const medications = document.getElementById('interactionMedications').value.trim();
+            if (!medications) {
+                alert('Please enter at least one medication');
+                return;
+            }
+
+            const conditions = document.getElementById('interactionConditions').value.trim();
+            const allergies = document.getElementById('interactionAllergies').value.trim();
+
+            const requestData = {
+                medications: medications.split(',').map(s => s.trim())
+            };
+            if (conditions) requestData.conditions = conditions.split(',').map(s => s.trim());
+            if (allergies) requestData.allergies = allergies.split(',').map(s => s.trim());
+
+            showLoading(true);
+            
+            fetch('/api/medical-knowledge/drug-interactions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                if (data.error) {
+                    alert('Drug interaction search failed: ' + data.error);
+                } else {
+                    displaySearchResults(data.results, 'Drug Interaction Analysis');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                console.error('Error:', error);
+                if (error.message.includes('Unexpected token')) {
+                    alert('Session expired. Please refresh the page and log in again.');
+                    localStorage.removeItem('securehealth_user');
+                    window.location.href = 'login.html';
+                } else {
+                    alert('Drug interaction search failed: ' + error.message);
+                }
+            });
+        }
+
+        async function searchTreatmentGuidelines() {
+            if (!(await checkAuthentication())) return;
+            
+            const condition = document.getElementById('guidelineCondition').value.trim();
+            if (!condition) {
+                alert('Please enter a condition');
+                return;
+            }
+
+            const specialty = document.getElementById('guidelineSpecialty').value;
+            const severity = document.getElementById('conditionSeverity').value;
+            const ageGroup = document.getElementById('patientAgeGroup').value;
+
+            showLoading(true);
+            
+            fetch('/api/medical-knowledge/treatment-guidelines', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    condition: condition,
+                    specialty: specialty || null,
+                    severity: severity || null,
+                    patientAge: ageGroup || null
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                if (data.error) {
+                    alert('Treatment guidelines search failed: ' + data.error);
+                } else {
+                    displaySearchResults(data.results, 'Treatment Guidelines');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                console.error('Error:', error);
+                if (error.message.includes('Unexpected token')) {
+                    alert('Session expired. Please refresh the page and log in again.');
+                    localStorage.removeItem('securehealth_user');
+                    window.location.href = 'login.html';
+                } else {
+                    alert('Treatment guidelines search failed: ' + error.message);
+                }
+            });
+        }
+
+        function displaySearchResults(results, title) {
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (!results || results.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No results found for your search.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <h4>${title} (${results.length} results)</h4>
+                <div class="search-results">
+            `;
+
+            results.forEach(result => {
+                const confidenceColor = result.confidenceLevel >= 8 ? 'success' : result.confidenceLevel >= 6 ? 'warning' : 'secondary';
+                const evidenceColor = result.evidenceLevel >= 5 ? 'success' : result.evidenceLevel >= 4 ? 'primary' : 'secondary';
+                
+                html += `
+                    <div class="card knowledge-card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title">${result.title}</h5>
+                                <div>
+                                    <span class="badge bg-${confidenceColor} confidence-badge me-1">
+                                        Confidence: ${result.confidenceLevel}/10
+                                    </span>
+                                    <span class="badge bg-${evidenceColor} evidence-badge">
+                                        Evidence: ${result.evidenceLevel}/5
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            ${result.summary ? `<p class="card-text text-muted">${result.summary}</p>` : ''}
+                            
+                            <div class="knowledge-content">
+                                <p class="card-text">${result.content || 'Content not available'}</p>
+                            </div>
+                            
+                            <div class="mt-3">
+                                ${result.specialties && result.specialties.length > 0 ? `
+                                    <div class="mb-2">
+                                        <strong>Specialties:</strong>
+                                        ${result.specialties.map(s => `<span class="badge specialty-tag me-1">${s}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+                                
+                                ${result.tags && result.tags.length > 0 ? `
+                                    <div class="mb-2">
+                                        <strong>Tags:</strong>
+                                        ${result.tags.map(t => `<span class="badge bg-light text-dark me-1">${t}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+                                
+                                ${result.relatedConditions && result.relatedConditions.length > 0 ? `
+                                    <div class="mb-2">
+                                        <strong>Related Conditions:</strong>
+                                        ${result.relatedConditions.map(c => `<span class="badge condition-tag me-1">${c}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+                                
+                                ${result.relatedMedications && result.relatedMedications.length > 0 ? `
+                                    <div class="mb-2">
+                                        <strong>Related Medications:</strong>
+                                        ${result.relatedMedications.map(m => `<span class="badge medication-tag me-1">${m}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <small class="text-muted">
+                                    Source: ${result.source}
+                                    ${result.sourceUrl ? `<a href="${result.sourceUrl}" target="_blank" class="ms-2"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                                </small>
+                                <small class="text-muted">Created: ${new Date(result.createdAt).toLocaleDateString()}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        async function loadKnowledgeBaseStats() {
+            if (!(await checkAuthentication())) return;
+            
+            fetch('/api/medical-knowledge/stats', {
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Failed to load stats:', data.error);
+                    return;
+                }
+
+                const statsDiv = document.getElementById('knowledgeStats');
+                statsDiv.innerHTML = `
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">${data.totalEntries || 0}</h5>
+                                <p class="card-text">Total Entries</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-success">${data.avgConfidenceLevel || 0}</h5>
+                                <p class="card-text">Avg Confidence</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-info">${data.avgEvidenceLevel || 0}</h5>
+                                <p class="card-text">Avg Evidence Level</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-warning">${data.totalSpecialties || 0}</h5>
+                                <p class="card-text">Specialties</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+                if (error.message.includes('Unexpected token')) {
+                    console.log('Session expired, stats not loaded');
+                }
+            });
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+            document.getElementById('searchResults').style.display = show ? 'none' : 'block';
+        }
+
+        function logout() {
+            localStorage.removeItem('securehealth_user');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

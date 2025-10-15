@@ -70,8 +70,19 @@ if (preg_match('/^\/api\//', $uri)) {
     return true;
 }
 
+// If the request is for staff routes, route to index.php
+if (preg_match('/^\/staff\//', $uri)) {
+    $_SERVER['REQUEST_URI'] = $uri;
+    include __DIR__ . '/index.php';
+    return true;
+}
+
 // If the request is for a static file that exists, serve it
 if (file_exists(__DIR__ . $uri)) {
+    // Set proper content type for JSON files
+    if (preg_match('/\.json$/', $uri)) {
+        header('Content-Type: application/json');
+    }
     return false; // Let PHP serve the static file
 }
 

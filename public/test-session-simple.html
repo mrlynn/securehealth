@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Test - Simple</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-box {
+            border: 2px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .info { border-color: #17a2b8; background: #d1ecf1; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Session Test - Simple</h1>
+    
+    <div class="test-box info">
+        <h3>Step 1: Login</h3>
+        <button onclick="testLogin()">Test Login (Doctor)</button>
+    </div>
+    
+    <div class="test-box info">
+        <h3>Step 2: Check Session</h3>
+        <button onclick="checkSession()">Check Session via API</button>
+        <button onclick="checkLocalStorage()">Check localStorage</button>
+    </div>
+    
+    <div class="test-box info">
+        <h3>Step 3: Navigate</h3>
+        <button onclick="goToPatients()">Go to Patients Page</button>
+    </div>
+    
+    <div class="test-box info">
+        <h3>Actions</h3>
+        <button onclick="clearAll()">Clear All Data</button>
+        <button onclick="location.reload()">Refresh Page</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-box ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            document.getElementById('results').prepend(div);
+        }
+        
+        async function testLogin() {
+            addResult('🔐 Attempting login...', 'info');
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        _username: 'doctor@example.com',
+                        _password: 'doctor'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                if (data.success) {
+                    // Save to localStorage
+                    localStorage.setItem('securehealth_user', JSON.stringify(data.user));
+                    
+                    addResult(`✅ Login successful! User: ${data.user.username}<pre>${JSON.stringify(data.user, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ Login failed: ${data.error || data.message}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Login error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        async function checkSession() {
+            addResult('🔍 Checking session...', 'info');
+            
+            try {
+                const response = await fetch('/api/user', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('Session check response:', data);
+                
+                if (data.success) {
+                    addResult(`✅ Session valid! User: ${data.user.username}<pre>${JSON.stringify(data.user, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ Session invalid: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Session check error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        function checkLocalStorage() {
+            const stored = localStorage.getItem('securehealth_user');
+            
+            if (stored) {
+                try {
+                    const user = JSON.parse(stored);
+                    addResult(`✅ localStorage has user data:<pre>${JSON.stringify(user, null, 2)}</pre>`, 'success');
+                } catch (e) {
+                    addResult(`❌ localStorage has corrupt data: ${stored}`, 'error');
+                }
+            } else {
+                addResult(`⚠️ localStorage is empty`, 'error');
+            }
+        }
+        
+        function goToPatients() {
+            const stored = localStorage.getItem('securehealth_user');
+            if (!stored) {
+                addResult('⚠️ No user data in localStorage! Login first.', 'error');
+                return;
+            }
+            
+            addResult('➡️ Navigating to patients.html...', 'info');
+            setTimeout(() => {
+                window.location.href = '/patients.html';
+            }, 500);
+        }
+        
+        function clearAll() {
+            localStorage.clear();
+            sessionStorage.clear();
+            addResult('🗑️ Cleared localStorage and sessionStorage', 'info');
+        }
+        
+        // Check status on page load
+        window.addEventListener('load', () => {
+            addResult('📄 Page loaded', 'info');
+            checkLocalStorage();
+        });
+    </script>
+</body>
+</html>
+

@@ -196,6 +196,9 @@
                         <a href="#security-voters" class="btn btn-outline-custom btn-custom">
                             <i class="fas fa-shield-alt me-2"></i>HIPAA-Compliant Security
                         </a>
+                        <a href="#command-line-tool" class="btn btn-outline-custom btn-custom">
+                            <i class="fas fa-terminal me-2"></i>Command-Line Management Tool
+                        </a>
                     </div>
                 </div>
                 <div class="col-lg-4 text-center">
@@ -216,6 +219,7 @@
                 <li><a href="#symfony-encryption">MongoDB 8.2 Queryable Encryption</a></li>
                 <li><a href="#security-voters">HIPAA-Compliant Security & RBAC</a></li>
                 <li><a href="#api-reference">HIPAA-Compliant API Reference</a></li>
+                <li><a href="#command-line-tool">Command-Line Management Tool</a></li>
                 <li><a href="#development-guide">Development Guide</a></li>
             </ul>
         </div>
@@ -789,6 +793,337 @@
             </div>
         </div>
 
+        <!-- Command-Line Management Tool -->
+        <div class="section-card" id="command-line-tool">
+            <h2><i class="fas fa-terminal me-2"></i>Command-Line Management Tool</h2>
+            
+            <p>SecureHealth includes a comprehensive command-line management tool that provides administrators with powerful capabilities for system management, data operations, and HIPAA compliance monitoring. This tool serves as a central hub for all administrative tasks and system maintenance operations.</p>
+
+            <div class="alert alert-success">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Production Ready:</strong> The SecureHealth command-line tool is fully functional with real implementations for all features, making it suitable for production environments and daily administrative tasks.
+            </div>
+
+            <h3>Quick Start</h3>
+            <p>Access the command-line tool using the main command with various options:</p>
+
+            <div class="code-block">
+<span class="comment"># Show main menu with all available commands</span><br>
+<span class="keyword">php bin/console securehealth</span><br>
+<br>
+<span class="comment"># Run in interactive mode with menu-driven interface</span><br>
+<span class="keyword">php bin/console securehealth --interactive</span><br>
+<br>
+<span class="comment"># Run specific command directly</span><br>
+<span class="keyword">php bin/console securehealth -c setup</span><br>
+<span class="keyword">php bin/console securehealth -c status</span><br>
+<span class="keyword">php bin/console securehealth -c validation</span>
+            </div>
+
+            <h3>Available Commands</h3>
+            <p>The SecureHealth command-line tool provides comprehensive system management through the following command categories:</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-rocket me-2 text-primary"></i>System Setup
+                            </h5>
+                            <p class="card-text">Complete system initialization and setup operations.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-database me-2"></i>Database schema creation</li>
+                                <li><i class="fas fa-users me-2"></i>Default user creation</li>
+                                <li><i class="fas fa-user-injured me-2"></i>Sample patient data generation</li>
+                                <li><i class="fas fa-brain me-2"></i>Medical knowledge base seeding</li>
+                                <li><i class="fas fa-check-circle me-2"></i>System validation</li>
+                            </ul>
+                            <div class="mt-auto">
+                                <span class="badge bg-primary">php bin/console securehealth -c setup</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-users me-2 text-info"></i>User Management
+                            </h5>
+                            <p class="card-text">Comprehensive user administration and role management.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-list me-2"></i>List all system users</li>
+                                <li><i class="fas fa-user-plus me-2"></i>Create new admin users</li>
+                                <li><i class="fas fa-user-shield me-2"></i>Role assignment</li>
+                                <li><i class="fas fa-key me-2"></i>Password management</li>
+                                <li><i class="fas fa-user-check me-2"></i>User validation</li>
+                            </ul>
+                            <div class="mt-auto">
+                                <span class="badge bg-info">php bin/console securehealth -c users</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-user-injured me-2 text-success"></i>Patient Management
+                            </h5>
+                            <p class="card-text">HIPAA-compliant patient data operations and management.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-plus me-2"></i>Generate sample patient data</li>
+                                <li><i class="fas fa-chart-bar me-2"></i>Patient statistics and counts</li>
+                                <li><i class="fas fa-download me-2"></i>Export patient data (JSON/CSV/XML)</li>
+                                <li><i class="fas fa-upload me-2"></i>Import patient data</li>
+                                <li><i class="fas fa-shield-alt me-2"></i>Encryption status monitoring</li>
+                            </ul>
+                            <div class="mt-auto">
+                                <span class="badge bg-success">php bin/console securehealth -c patients</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-brain me-2 text-warning"></i>Medical Knowledge
+                            </h5>
+                            <p class="card-text">AI-powered medical knowledge base management.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-seedling me-2"></i>Seed knowledge base</li>
+                                <li><i class="fas fa-chart-pie me-2"></i>Knowledge base statistics</li>
+                                <li><i class="fas fa-search me-2"></i>Interactive knowledge search</li>
+                                <li><i class="fas fa-vector-square me-2"></i>Vector embedding management</li>
+                                <li><i class="fas fa-sync me-2"></i>Knowledge base updates</li>
+                            </ul>
+                            <div class="mt-auto">
+                                <span class="badge bg-warning text-dark">php bin/console securehealth -c medical-knowledge</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-lock me-2 text-danger"></i>Encryption Utilities
+                            </h5>
+                            <p class="card-text">MongoDB Queryable Encryption management and debugging.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-key me-2"></i>Initialize encryption systems</li>
+                                <li><i class="fas fa-bug me-2"></i>Debug encryption configuration</li>
+                                <li><i class="fas fa-vial me-2"></i>Test encryption/decryption</li>
+                                <li><i class="fas fa-info-circle me-2"></i>Check encryption status</li>
+                                <li><i class="fas fa-cog me-2"></i>Encryption configuration</li>
+                            </ul>
+                            <div class="mt-auto">
+                                <span class="badge bg-danger">php bin/console securehealth -c encryption</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-check-circle me-2 text-primary"></i>System Validation
+                            </h5>
+                            <p class="card-text">Comprehensive health checks and HIPAA compliance validation.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-database me-2"></i>Database connection tests</li>
+                                <li><i class="fas fa-shield-alt me-2"></i>Authentication system checks</li>
+                                <li><i class="fas fa-globe me-2"></i>API endpoint validation</li>
+                                <li><i class="fas fa-lock me-2"></i>Encryption service tests</li>
+                                <li><i class="fas fa-file-alt me-2"></i>File permission checks</li>
+                            </ul>
+                            <div class="mt-auto">
+                                <span class="badge bg-primary">php bin/console securehealth -c validation</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Interactive Mode</h3>
+            <p>The command-line tool features an intuitive interactive mode that provides a menu-driven interface for easy navigation and operation:</p>
+
+            <div class="code-block">
+<span class="comment"># Start interactive mode</span><br>
+<span class="keyword">php bin/console securehealth --interactive</span><br>
+<br>
+<span class="comment"># Example interactive session:</span><br>
+🏥 SecureHealth - HIPAA-Compliant Medical Records System<br>
+========================================================<br>
+<br>
+Interactive Mode<br>
+----------------<br>
+<br>
+What would you like to do?<br>
+  [0] setup<br>
+  [1] users<br>
+  [2] patients<br>
+  [3] medical-knowledge<br>
+  [4] encryption<br>
+  [5] database<br>
+  [6] validation<br>
+  [7] status<br>
+  [8] help<br>
+ > 
+            </div>
+
+            <h3>Real-World Usage Examples</h3>
+            <p>Here are practical examples of how to use the SecureHealth command-line tool in different scenarios:</p>
+
+            <h4>Initial System Setup</h4>
+            <div class="code-block">
+<span class="comment"># Complete system setup for new installation</span><br>
+<span class="keyword">php bin/console securehealth -c setup</span><br>
+<br>
+<span class="comment"># This will:</span><br>
+<span class="comment"># 1. Create MongoDB schema</span><br>
+<span class="comment"># 2. Create default users (Doctor, Nurse, Receptionist, Admin)</span><br>
+<span class="comment"># 3. Generate sample patient data</span><br>
+<span class="comment"># 4. Seed medical knowledge base</span><br>
+<span class="comment"># 5. Run system validation</span>
+            </div>
+
+            <h4>Daily Administrative Tasks</h4>
+            <div class="code-block">
+<span class="comment"># Check system health and status</span><br>
+<span class="keyword">php bin/console securehealth -c status</span><br>
+<br>
+<span class="comment"># Run comprehensive validation checks</span><br>
+<span class="keyword">php bin/console securehealth -c validation</span><br>
+<br>
+<span class="comment"># Check encryption status and configuration</span><br>
+<span class="keyword">php bin/console securehealth -c encryption</span><br>
+<br>
+<span class="comment"># Generate additional test patient data</span><br>
+<span class="keyword">php bin/console securehealth -c patients</span>
+            </div>
+
+            <h4>User Management Operations</h4>
+            <div class="code-block">
+<span class="comment"># List all system users with roles and permissions</span><br>
+<span class="keyword">php bin/console securehealth -c users</span><br>
+<br>
+<span class="comment"># Interactive user creation (follow prompts)</span><br>
+<span class="comment"># Select "Create admin user" option</span><br>
+<span class="comment"># Enter email, username, and password when prompted</span>
+            </div>
+
+            <h4>Data Management and Export</h4>
+            <div class="code-block">
+<span class="comment"># Check patient data statistics</span><br>
+<span class="keyword">php bin/console securehealth -c patients</span><br>
+<br>
+<span class="comment"># Export patient data for backup or analysis</span><br>
+<span class="comment"># Select "Export patient data" option</span><br>
+<span class="comment"># Choose format (JSON, CSV, XML)</span><br>
+<span class="comment"># Specify filename</span>
+            </div>
+
+            <h3>HIPAA Compliance Features</h3>
+            <p>The command-line tool includes several features specifically designed for HIPAA compliance and healthcare data management:</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-shield-alt me-2 text-primary"></i>Audit Logging</h5>
+                    <ul>
+                        <li>All administrative actions are logged</li>
+                        <li>User access and permission changes tracked</li>
+                        <li>Data export/import operations recorded</li>
+                        <li>System configuration changes logged</li>
+                        <li>Comprehensive audit trail for compliance</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-lock me-2 text-success"></i>Data Protection</h5>
+                    <ul>
+                        <li>Encryption status monitoring and validation</li>
+                        <li>Secure data export with encryption awareness</li>
+                        <li>Role-based access control validation</li>
+                        <li>Data integrity checks and validation</li>
+                        <li>Secure key management operations</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Error Handling and Troubleshooting</h3>
+            <p>The command-line tool provides comprehensive error handling and troubleshooting capabilities:</p>
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Robust Error Handling:</strong> All operations include detailed error messages, validation checks, and recovery suggestions to help administrators quickly identify and resolve issues.
+            </div>
+
+            <div class="code-block">
+<span class="comment"># Example error handling output:</span><br>
+❌ Database Connection: FAIL (Connection failed: Authentication failed)<br>
+✅ User Authentication: PASS (Authentication system ready (4 users))<br>
+⚠️ Encryption Service: WARNING (Encryption configured but currently disabled)<br>
+✅ Medical Knowledge Base: PASS (Medical knowledge base ready (0 entries))<br>
+✅ File Permissions: PASS (File permissions correct)<br>
+<br>
+[WARNING] 1 validation check(s) failed. Please review the issues above.
+            </div>
+
+            <h3>Integration with Existing Commands</h3>
+            <p>The SecureHealth command-line tool integrates seamlessly with existing Symfony console commands while providing a unified interface:</p>
+
+            <div class="code-block">
+<span class="comment"># Traditional Symfony commands (still available)</span><br>
+<span class="keyword">php bin/console app:create-users</span><br>
+<span class="keyword">php bin/console app:generate-patient-data --count=50</span><br>
+<span class="keyword">php bin/console app:seed-medical-knowledge --count=100</span><br>
+<span class="keyword">php bin/console app:initialize-encryption</span><br>
+<span class="keyword">php bin/console app:debug-encryption</span><br>
+<br>
+<span class="comment"># SecureHealth unified commands (recommended)</span><br>
+<span class="keyword">php bin/console securehealth -c users</span><br>
+<span class="keyword">php bin/console securehealth -c patients</span><br>
+<span class="keyword">php bin/console securehealth -c medical-knowledge</span><br>
+<span class="keyword">php bin/console securehealth -c encryption</span>
+            </div>
+
+            <h3>Production Deployment</h3>
+            <p>For production environments, the command-line tool provides additional security and monitoring capabilities:</p>
+
+            <div class="code-block">
+<span class="comment"># Production environment setup</span><br>
+<span class="keyword">php bin/console securehealth -c setup</span><br>
+<br>
+<span class="comment"># Regular health monitoring</span><br>
+<span class="keyword">php bin/console securehealth -c validation</span><br>
+<br>
+<span class="comment"># Encryption status monitoring</span><br>
+<span class="keyword">php bin/console securehealth -c encryption</span><br>
+<br>
+<span class="comment"># System status and statistics</span><br>
+<span class="keyword">php bin/console securehealth -c status</span>
+            </div>
+
+            <div class="mt-4">
+                <a href="https://github.com/mrlynn/securehealth/blob/main/src/Command/SecureHealthCommand.php" target="_blank" class="btn btn-primary me-3">
+                    <i class="fab fa-github me-2"></i>View Command Source Code
+                </a>
+                <a href="https://github.com/mrlynn/securehealth/blob/main/docs/COMMAND_LINE_TOOL.md" target="_blank" class="btn btn-outline-primary me-3">
+                    <i class="fas fa-book me-2"></i>Full Documentation
+                </a>
+                <a href="https://github.com/mrlynn/securehealth/blob/main/docs/COMMAND_REFERENCE.md" target="_blank" class="btn btn-outline-primary">
+                    <i class="fas fa-list me-2"></i>Quick Reference
+                </a>
+            </div>
+        </div>
+
         <!-- Development Guide -->
         <div class="section-card" id="development-guide">
             <h2><i class="fas fa-tools me-2"></i>Development Guide</h2>
@@ -1032,6 +1367,7 @@
                         <li><a href="#symfony-encryption" class="text-light text-decoration-none">Encryption</a></li>
                         <li><a href="#security-voters" class="text-light text-decoration-none">Security</a></li>
                         <li><a href="#api-reference" class="text-light text-decoration-none">API Reference</a></li>
+                        <li><a href="#command-line-tool" class="text-light text-decoration-none">CLI Tool</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4">

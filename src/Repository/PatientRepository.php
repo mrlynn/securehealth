@@ -270,32 +270,42 @@ class PatientRepository
         if (isset($criteria['minAge']) || isset($criteria['maxAge'])) {
             $today = new \DateTime();
             
+            // Initialize birthDate query if not already set
+            if (!isset($query['birthDate'])) {
+                $query['birthDate'] = [];
+            }
+            
             if (isset($criteria['maxAge'])) {
-                $minBirthDate = clone $today;
-                $minBirthDate->modify('-' . $criteria['maxAge'] . ' years');
-                $minBirthDateUtc = new \MongoDB\BSON\UTCDateTime($minBirthDate);
+                // For maxAge (e.g., 60), we want patients who are AT MOST 60 years old
+                // So their birth date should be AT LEAST 60 years ago (older birth dates)
+                $oldestBirthDate = clone $today;
+                $oldestBirthDate->modify('-' . $criteria['maxAge'] . ' years');
+                $oldestBirthDateUtc = new \MongoDB\BSON\UTCDateTime($oldestBirthDate);
+                $query['birthDate']['$gte'] = $encryptionService->encrypt('patient', 'birthDate', $oldestBirthDateUtc);
                 
-                if (!isset($query['birthDate'])) {
-                    $query['birthDate'] = [];
-                }
-                $query['birthDate']['$lte'] = $encryptionService->encrypt('patient', 'birthDate', $minBirthDateUtc);
+                // Debug logging
+                error_log("Range search - maxAge {$criteria['maxAge']}: oldestBirthDate = " . $oldestBirthDate->format('Y-m-d'));
             }
             
             if (isset($criteria['minAge'])) {
-                $maxBirthDate = clone $today;
-                $maxBirthDate->modify('-' . $criteria['minAge'] . ' years');
-                $maxBirthDateUtc = new \MongoDB\BSON\UTCDateTime($maxBirthDate);
+                // For minAge (e.g., 40), we want patients who are AT LEAST 40 years old
+                // So their birth date should be AT MOST 40 years ago (newer birth dates)
+                $newestBirthDate = clone $today;
+                $newestBirthDate->modify('-' . $criteria['minAge'] . ' years');
+                $newestBirthDateUtc = new \MongoDB\BSON\UTCDateTime($newestBirthDate);
+                $query['birthDate']['$lte'] = $encryptionService->encrypt('patient', 'birthDate', $newestBirthDateUtc);
                 
-                if (!isset($query['birthDate'])) {
-                    $query['birthDate'] = [];
-                }
-                $query['birthDate']['$gte'] = $encryptionService->encrypt('patient', 'birthDate', $maxBirthDateUtc);
+                // Debug logging
+                error_log("Range search - minAge {$criteria['minAge']}: newestBirthDate = " . $newestBirthDate->format('Y-m-d'));
             }
         }
         
         if (empty($query)) {
             return [];
         }
+        
+        // Debug logging for the final query
+        error_log("Range search MongoDB query: " . json_encode($query, JSON_PRETTY_PRINT));
         
         $cursor = $this->collection->find($query);
         
@@ -324,18 +334,28 @@ class PatientRepository
         }
         
         if (isset($criteria['email'])) {
-            $query['email'] = $encryptionService->encrypt('patient', 'email', $criteria['email']);
+            // Check if this is an email domain search vs full email search
+            if (!str_contains($criteria['email'], '@')) {
+                // This is a domain search - we can't handle this with deterministic encryption
+                // The frontend fallback will handle this case with proper domain matching
+                // Skip this filter for the backend query
+            } else {
+                // This is a full email search
+                $query['email'] = $encryptionService->encrypt('patient', 'email', $criteria['email']);
+            }
         }
         
         // Range encryption fields
         if (isset($criteria['minAge'])) {
             $today = new \DateTime();
-            $maxBirthDate = clone $today;
-            $maxBirthDate->modify('-' . $criteria['minAge'] . ' years');
-            $maxBirthDateUtc = new \MongoDB\BSON\UTCDateTime($maxBirthDate);
+            // For minAge (e.g., 50), we want patients who are AT LEAST 50 years old
+            // So their birth date should be AT MOST 50 years ago (newer birth dates)
+            $newestBirthDate = clone $today;
+            $newestBirthDate->modify('-' . $criteria['minAge'] . ' years');
+            $newestBirthDateUtc = new \MongoDB\BSON\UTCDateTime($newestBirthDate);
             
             $query['birthDate'] = [
-                '$gte' => $encryptionService->encrypt('patient', 'birthDate', $maxBirthDateUtc)
+                '$lte' => $encryptionService->encrypt('patient', 'birthDate', $newestBirthDateUtc)
             ];
         }
         

@@ -11,17 +11,20 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         public_api:
-            pattern: ^/api/(login|patient-portal/register|patient-portal/health)
+            pattern: ^/api/(patient-portal/register|patient-portal/health)
             security: false
         main:
             pattern: ^/
             lazy: false
+            stateless: false
             provider: app_user_provider
             custom_authenticators:
+                - App\Security\JsonLoginAuthenticator
                 - App\Security\SessionAuthenticator
             logout:
                 path: app_logout
                 target: app_login
+            entry_point: App\Security\SessionAuthenticator
 
     # Configure access control based on paths and roles
     access_control:

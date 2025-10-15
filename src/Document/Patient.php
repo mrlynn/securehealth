@@ -374,7 +374,7 @@ class Patient
     }
 
     /**
-     * Convert Patient to MongoDB document (with encryption)
+     * Convert Patient to MongoDB document (with manual encryption)
      */
     public function toDocument(MongoDBEncryptionService $encryptionService): array
     {
@@ -384,7 +384,7 @@ class Patient
             $document['_id'] = $this->id;
         }
 
-        // Encrypt sensitive fields
+        // Manual encryption for HIPAA compliance
         $document['firstName'] = $encryptionService->encrypt('patient', 'firstName', $this->firstName);
         $document['lastName'] = $encryptionService->encrypt('patient', 'lastName', $this->lastName);
         $document['email'] = $encryptionService->encrypt('patient', 'email', $this->email);
@@ -470,6 +470,11 @@ class Patient
     {
         $this->lastName = $lastName;
         return $this;
+    }
+
+    public function getFullName(): string
+    {
+        return trim($this->firstName . ' ' . $this->lastName);
     }
 
     public function getEmail(): string

@@ -16,7 +16,38 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
             
-    # Alias MongoDB\Client to the doctrine_mongodb.odm.default_connection service
+    # Use encrypted MongoDB client for HIPAA compliance
     MongoDB\Client:
-        alias: doctrine_mongodb.odm.default_connection
+        factory: ['@App\Factory\MongoDBConnectionFactory', 'createEncryptedClient']
+        arguments: ['%env(resolve:MONGODB_URI)%']
         public: false
+
+    # Medical Knowledge Services
+    App\Service\EmbeddingService:
+        arguments:
+            $openaiApiKey: '%env(OPENAI_API_KEY)%'
+            $openaiApiUrl: '%env(OPENAI_API_URL)%'
+
+    App\Service\MedicalKnowledgeService:
+        arguments:
+            $repository: '@App\Repository\MedicalKnowledgeRepository'
+            $embeddingService: '@App\Service\EmbeddingService'
+            $logger: '@logger'
+
+    App\Service\VectorSearchService:
+        arguments:
+            $knowledgeRepository: '@App\Repository\MedicalKnowledgeRepository'
+            $embeddingService: '@App\Service\EmbeddingService'
+            $logger: '@logger'
+
+    App\Repository\MedicalKnowledgeRepository:
+        arguments:
+            $dm: '@doctrine_mongodb.odm.default_document_manager'
+            $encryptionService: '@App\Service\MongoDBEncryptionService'
+
+    # RAG Knowledge Base Command
+    App\Command\IndexKnowledgeBaseCommand:
+        arguments:
+            $mongoClient: '@MongoDB\Client'
+            $projectDir: '%kernel.project_dir%'
+            $openaiApiKey: '%env(OPENAI_API_KEY)%'

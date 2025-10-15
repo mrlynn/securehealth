@@ -180,6 +180,28 @@ class QueryableEncryptionSearchController extends AbstractController
                 ], 400);
             }
 
+            // Check if this search includes email domain search (not supported by deterministic encryption)
+            $hasEmailDomainSearch = isset($criteria['email']) && !str_contains($criteria['email'], '@');
+            
+            if ($hasEmailDomainSearch) {
+                // Email domain search requires frontend fallback since deterministic encryption can't handle partial matches
+                $searchTime = round((microtime(true) - $startTime) * 1000, 2);
+                
+                return $this->json([
+                    'success' => false,
+                    'searchType' => 'complex',
+                    'criteria' => $criteria,
+                    'results' => [],
+                    'totalResults' => 0,
+                    'searchTime' => $searchTime,
+                    'encryptedFields' => ['lastName', 'email', 'birthDate', 'phoneNumber'],
+                    'encryptionTypes' => ['deterministic', 'range'],
+                    'message' => 'Email domain search requires frontend fallback',
+                    'requiresFallback' => true,
+                    'fallbackReason' => 'Email domain search not supported by deterministic encryption'
+                ], 200); // Return 200 but indicate fallback needed
+            }
+
             // Perform complex encrypted search
             $patients = $this->patientRepository->findByComplexCriteria($criteria, $this->encryptionService);
             

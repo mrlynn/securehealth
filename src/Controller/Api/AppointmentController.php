@@ -17,7 +17,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/appointments')]
-#[IsGranted('ROLE_RECEPTIONIST')]
 class AppointmentController extends AbstractController
 {
     public function __construct(
@@ -30,7 +29,7 @@ class AppointmentController extends AbstractController
     #[Route('', name: 'appointment_list', methods: ['GET'])]
     public function index(Request $request): JsonResponse
     {
-        $this->assertReceptionistOnly();
+        // All authenticated users can view appointments
         $patientIdParam = $request->query->get('patientId');
         $fromParam = $request->query->get('from');
 
@@ -62,6 +61,35 @@ class AppointmentController extends AbstractController
         return $this->json([
             'appointments' => $data,
         ]);
+    }
+
+    #[Route('/calendar', name: 'appointment_calendar', methods: ['GET'])]
+    public function calendar(Request $request): JsonResponse
+    {
+        // All authenticated users can view calendar
+        $month = $request->query->get('month', date('Y-m'));
+        
+        try {
+            // Parse the month parameter which should be in YYYY-MM format
+            if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+                throw new \InvalidArgumentException('Month must be in YYYY-MM format');
+            }
+            
+            $startDate = new DateTimeImmutable("$month-01");
+            $endDate = $startDate->modify('last day of this month')->setTime(23, 59, 59);
+            
+            $appointments = $this->appointmentRepository->findByDateRange($startDate, $endDate);
+            $data = array_map(static fn(Appointment $appointment) => $appointment->toArray(), $appointments);
+
+            return $this->json([
+                'appointments' => $data,
+                'month' => $month,
+            ]);
+        } catch (\Exception $e) {
+            return $this->json([
+                'message' => 'Invalid date parameters: ' . $e->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
+        }
     }
 
     #[Route('', name: 'appointment_create', methods: ['POST'])]
@@ -161,11 +189,142 @@ class AppointmentController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
     }
+
+    #[Route('/{id}', name: 'appointment_update', methods: ['PUT'])]
+    public function update(string $id, Request $request): JsonResponse
+    {
+        // Log the incoming request for debugging
+        error_log("Appointment update request - ID: $id, Content: " . $request->getContent());
+        
+        $this->assertReceptionistOnly();
+        
+        try {
+            $objectId = new ObjectId($id);
+            $appointment = $this->appointmentRepository->findById((string) $objectId);
+            
+            if (!$appointment) {
+                return $this->json([
+                    'message' => 'Appointment not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $data = json_decode($request->getContent(), true);
+            
+            if (isset($data['patientId'])) {
+                error_log("Looking up patient with ID: " . $data['patientId']);
+                $patient = $this->patientRepository->findByIdString($data['patientId']);
+                if (!$patient) {
+                    error_log("Patient not found with ID: " . $data['patientId']);
+                    return $this->json([
+                        'message' => 'Patient not found'
+                    ], Response::HTTP_BAD_REQUEST);
+                }
+                
+                error_log("Patient found: " . $patient->getFullName());
+                $appointment->setPatientId($data['patientId']);
+                $appointment->setPatientFullName($patient->getFullName());
+            }
+
+            if (isset($data['scheduledAt'])) {
+                $scheduledAt = new DateTimeImmutable($data['scheduledAt']);
+                $appointment->setScheduledAt($scheduledAt);
+            }
+
+            if (isset($data['notes'])) {
+                $appointment->setNotes($data['notes']);
+            }
+
+            error_log("Updating appointment timestamp and saving...");
+            $appointment->touchUpdatedAt();
+            
+            try {
+                $this->appointmentRepository->save($appointment);
+                error_log("Appointment saved successfully");
+            } catch (\Exception $saveError) {
+                error_log("Error saving appointment: " . $saveError->getMessage());
+                throw $saveError;
+            }
+
+            $this->auditLogService->log(
+                $this->getUser(),
+                'APPOINTMENT_UPDATE',
+                [
+                    'description' => 'Updated appointment',
+                    'entityId' => (string) $appointment->getId(),
+                    'entityType' => 'Appointment',
+                    'patientId' => (string) $appointment->getPatientId(),
+                    'scheduledAt' => $appointment->getScheduledAt()->toDateTime()->format(DateTimeImmutable::ATOM),
+                ]
+            );
+
+            return $this->json($appointment->toArray());
+            
+        } catch (\Exception $e) {
+            // Log the actual error for debugging
+            error_log("Appointment update error: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            return $this->json([
+                'message' => 'Failed to update appointment: ' . $e->getMessage(),
+                'error' => $e->getMessage(),
+                'type' => get_class($e)
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/{id}', name: 'appointment_delete', methods: ['DELETE'])]
+    public function delete(string $id): JsonResponse
+    {
+        $this->assertReceptionistOnly();
+        
+        try {
+            $objectId = new ObjectId($id);
+            $appointment = $this->appointmentRepository->findById((string) $objectId);
+            
+            if (!$appointment) {
+                return $this->json([
+                    'message' => 'Appointment not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $this->auditLogService->log(
+                $this->getUser(),
+                'APPOINTMENT_DELETE',
+                [
+                    'description' => 'Deleted appointment',
+                    'entityId' => (string) $appointment->getId(),
+                    'entityType' => 'Appointment',
+                    'patientId' => (string) $appointment->getPatientId(),
+                    'scheduledAt' => $appointment->getScheduledAt()->toDateTime()->format(DateTimeImmutable::ATOM),
+                ]
+            );
+
+            $this->appointmentRepository->remove($appointment);
+
+            return $this->json([
+                'message' => 'Appointment deleted successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->json([
+                'message' => 'Invalid appointment ID format'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
     
     private function assertReceptionistOnly(): void
     {
-        if ($this->isGranted('ROLE_DOCTOR') || $this->isGranted('ROLE_NURSE') || $this->isGranted('ROLE_ADMIN')) {
-            throw $this->createAccessDeniedException('Scheduling is restricted to receptionists.');
+        // Log user information for debugging
+        $user = $this->getUser();
+        error_log("Checking permissions for user: " . ($user ? $user->getUserIdentifier() : 'null'));
+        error_log("User roles: " . json_encode($user ? $user->getRoles() : []));
+        
+        // Allow receptionists, admins, and doctors to create/edit/delete appointments
+        if (!$this->isGranted('ROLE_RECEPTIONIST') && !$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_DOCTOR')) {
+            error_log("Access denied - user does not have required roles");
+            throw $this->createAccessDeniedException('Appointment management is restricted to receptionists, admins, and doctors.');
         }
+        
+        error_log("Access granted to user");
     }
 }

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test All Login Accounts</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-box { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+        .success { background: #d4edda; border-color: #28a745; }
+        .error { background: #f8d7da; border-color: #dc3545; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f4f4f4; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test All Login Accounts</h1>
+    
+    <div class="test-box">
+        <h3>Test Accounts</h3>
+        <button onclick="testLogin('doctor@example.com', 'doctor', 'Doctor')">Test Doctor</button>
+        <button onclick="testLogin('nurse@example.com', 'nurse', 'Nurse')">Test Nurse</button>
+        <button onclick="testLogin('receptionist@example.com', 'receptionist', 'Receptionist')">Test Receptionist</button>
+        <button onclick="testLogin('admin@securehealth.com', 'admin123', 'Admin')">Test Admin</button>
+    </div>
+    
+    <div class="test-box">
+        <h3>Actions</h3>
+        <button onclick="clearAll()">Clear All Data</button>
+        <button onclick="testCurrentSession()">Test Current Session</button>
+        <button onclick="goToPatients()">Go to Patients Page</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-box ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            document.getElementById('results').prepend(div);
+            console.log(message);
+        }
+        
+        async function testLogin(email, password, roleName) {
+            log(`🔐 Testing ${roleName} login (${email})...`, 'info');
+            
+            // Clear any existing session before testing
+            if (roleName !== 'Doctor') {
+                log(`🧹 Clearing session before ${roleName} test...`, 'info');
+                await fetch('/api/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+                localStorage.clear();
+                sessionStorage.clear();
+                // Wait a moment for session to clear
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        _username: email,
+                        _password: password
+                    })
+                });
+                
+                // Check what we actually received
+                const responseText = await response.text();
+                console.log(`${roleName} raw response:`, responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    log(`❌ ${roleName} login failed: Received HTML instead of JSON<br><pre>${responseText.substring(0, 200)}...</pre>`, 'error');
+                    return;
+                }
+                
+                if (data.success) {
+                    // Save to localStorage
+                    localStorage.setItem('securehealth_user', JSON.stringify(data.user));
+                    log(`✅ ${roleName} login successful!<br>User: ${data.user.username}<br>Roles: ${data.user.roles.join(', ')}`, 'success');
+                    
+                    // Test session persistence
+                    setTimeout(() => testSessionForRole(roleName), 500);
+                } else {
+                    log(`❌ ${roleName} login failed: ${data.error || data.message}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ ${roleName} login error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testSessionForRole(roleName) {
+            log(`🔍 Testing session for ${roleName}...`, 'info');
+            
+            try {
+                const response = await fetch('/api/user', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    log(`✅ ${roleName} session works!`, 'success');
+                } else {
+                    log(`❌ ${roleName} session failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ ${roleName} session error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testCurrentSession() {
+            log('🔍 Testing current session...', 'info');
+            
+            const stored = localStorage.getItem('securehealth_user');
+            if (!stored) {
+                log('❌ No user in localStorage', 'error');
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(stored);
+                log(`📝 Stored user: ${user.username} (${user.roles.join(', ')})`, 'info');
+                
+                const response = await fetch('/api/user', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                log(`🔍 Session API response: <pre>${JSON.stringify(data, null, 2)}</pre>`, data.success ? 'success' : 'error');
+                
+            } catch (error) {
+                log(`❌ Session test error: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearAll() {
+            localStorage.clear();
+            sessionStorage.clear();
+            log('🗑️ Cleared all data', 'info');
+        }
+        
+        function goToPatients() {
+            const stored = localStorage.getItem('securehealth_user');
+            if (!stored) {
+                log('⚠️ No user data! Login first.', 'error');
+                return;
+            }
+            
+            log('➡️ Going to patients page...', 'info');
+            window.location.href = '/patients.html';
+        }
+        
+        // Check current state on load
+        window.addEventListener('load', () => {
+            const stored = localStorage.getItem('securehealth_user');
+            if (stored) {
+                try {
+                    const user = JSON.parse(stored);
+                    log(`👤 Current user: ${user.username} (${user.roles.join(', ')})`, 'info');
+                } catch (e) {
+                    log('❌ Corrupt user data in localStorage', 'error');
+                }
+            } else {
+                log('👤 No user logged in', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
+

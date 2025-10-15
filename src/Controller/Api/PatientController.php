@@ -44,7 +44,10 @@ class PatientController extends AbstractController
     #[Route('', name: 'patient_list', methods: ['GET'])]
     public function index(Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted(PatientVoter::VIEW);
+        // Check if user has permission to view patients (no specific patient needed)
+        if (!$this->isGranted(PatientVoter::VIEW)) {
+            return $this->json(['message' => 'Access denied'], Response::HTTP_FORBIDDEN);
+        }
 
         // Get query parameters for filtering
         $lastName = $request->query->get('lastName');

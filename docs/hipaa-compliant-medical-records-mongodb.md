@@ -110,11 +110,11 @@ Let me show you the big picture before we zoom into the details.
 │    Frontend (HTML/CSS/JS + Bootstrap)   │
 │    Role-aware UI components              │
 └──────────────┬──────────────────────────┘
-               │ HTTPS/JWT
+               │ HTTPS/Session Cookie
                │
 ┌──────────────▼──────────────────────────┐
 │    Symfony 7.0 Backend API               │
-│    • JWT Authentication                  │
+│    • Session-Based Authentication        │
 │    • Role-Based Access Control           │
 │    • Audit Logging Service              │
 │    • Encryption Service                 │
@@ -134,13 +134,13 @@ Let me show you the big picture before we zoom into the details.
 Here's what happens when a doctor searches for a patient:
 
 1. **Doctor searches** for "Smith" in the web interface
-2. **Frontend sends** encrypted JWT token + search query to API
-3. **Symfony validates** the JWT and checks: "Is this user a doctor?"
+2. **Frontend sends** authenticated request with session cookie + search query to API
+3. **Symfony validates** the session and checks: "Is this user a doctor?"
 4. **Encryption service** encrypts "Smith" using deterministic encryption
 5. **MongoDB query** searches the encrypted field using the encrypted value
 6. **MongoDB returns** encrypted results
 7. **Symfony decrypts** the data (only the fields the doctor can see)
-8. **Audit service logs** "Doctor John Doe viewed patient records for search: Smith"
+8. **Audit service logs** "Doctor John Doe viewed patient records for search: Smith" with session ID
 9. **Response** sent back with role-filtered data
 
 The beauty? **MongoDB never sees unencrypted patient data.** Even if someone hacks the database, they get encrypted gibberish. Even database administrators can't read patient information.
@@ -163,7 +163,7 @@ Before we start, make sure you have:
 - Basic understanding of Symfony and MongoDB
 
 # Recommended
-- MongoDB Compass (for visualizing your data)
+- MongoDB Compass (for visualizing your encrypted data)
 - Postman or curl (for API testing)
 - A sense of adventure 😎
 ```
@@ -223,7 +223,11 @@ services:
       # App settings
       - APP_ENV=dev
       - APP_SECRET=${APP_SECRET}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      
+      # Session security settings
+      - SESSION_COOKIE_SECURE=true
+      - SESSION_COOKIE_HTTPONLY=true
+      - SESSION_COOKIE_SAMESITE=strict
 
   nginx:
     image: nginx:alpine
@@ -246,11 +250,279 @@ docker-compose up -d
 # Install Symfony dependencies
 docker-compose exec php composer require symfony/orm-pack
 docker-compose exec php composer require doctrine/mongodb-odm-bundle
-docker-compose exec php composer require lexik/jwt-authentication-bundle
 
 # Install MongoDB PHP library with encryption support
 docker-compose exec php composer require mongodb/mongodb:^1.17
+
+# Install security components
+docker-compose exec php composer require symfony/security-bundle
 ```
+
+---
+
+## Why Session-Based Authentication for Healthcare?
+
+Before we dive into the encryption service, let's talk about a crucial architectural decision: **why we chose session-based authentication over JWT tokens** for this healthcare application.
+
+### The Authentication Landscape
+
+When building modern web applications, developers often reach for JWT (JSON Web Tokens) as the default authentication mechanism. And for many use cases, JWT is excellent. But healthcare applications have unique requirements that make session-based authentication the superior choice.
+
+### Security Advantages for Healthcare
+
+**1. Immediate Session Revocation**
+
+This is the biggest advantage. In healthcare, you need the ability to **instantly** terminate access:
+
+```php
+// With sessions: Immediate revocation
+public function revokeAccess(User $user): void
+{
+    // Delete the session from storage
+    $sessionHandler->destroy($user->getSessionId());
+    // User is immediately logged out - next request fails
+}
+```
+
+With JWT tokens, this is impossible. Once issued, a JWT token remains valid until it expires. Even if you discover a security breach or need to immediately remove access, JWT tokens continue to work. This is unacceptable in healthcare where regulatory compliance requires immediate access termination.
+
+**2. No Sensitive Data in Client Storage**
+
+Healthcare sessions store only a random session ID on the client:
+
+```
+Session Cookie: PHPSESSID=k3j2h4kj5h2k3j4h5k2j3h45
+(Random identifier, no user information)
+```
+
+JWT tokens encode user claims:
+
+```
+JWT Token: eyJhbGci...
+Decoded: {
+  "user_id": "123",
+  "email": "doctor@hospital.com",
+  "roles": ["ROLE_DOCTOR"],
+  "exp": 1234567890
+}
+```
+
+Even though JWT tokens are signed, the data is **readable** by anyone with the token. Session IDs reveal nothing.
+
+**3. Superior Audit Trail**
+
+HIPAA requires comprehensive audit logging. Session-based authentication provides:
+
+```php
+// Audit log with session tracking
+[
+    'username' => 'dr.smith@hospital.com',
+    'sessionId' => 'k3j2h4kj5h2k3j4h5k2j3h45',  // Consistent across requests
+    'action' => 'PATIENT_VIEW',
+    'timestamp' => '2024-10-10 14:23:45',
+    'ipAddress' => '192.168.1.100'
+]
+```
+
+With sessions, every action by a user has the same `sessionId`, making it trivial to:
+- Track all actions in a single user session
+- Detect suspicious activity patterns
+- Generate session-based reports for HIPAA audits
+- Correlate user activities across different endpoints
+
+### HIPAA Compliance Requirements
+
+**Automatic Logoff (§164.312(a)(2)(iii))**
+
+HIPAA's Security Rule requires automatic logoff after a period of inactivity. Sessions make this trivial:
+
+```yaml
+# config/packages/framework.yaml
+framework:
+    session:
+        cookie_lifetime: 1800      # 30 minutes - HIPAA recommended
+        gc_maxlifetime: 1800        # Server-side timeout
+        cookie_secure: true         # HTTPS only
+        cookie_httponly: true       # No JavaScript access
+        cookie_samesite: 'strict'   # CSRF protection
+```
+
+Session automatically expires after 30 minutes of inactivity. No custom logic required.
+
+With JWT, you'd need to:
+- Implement refresh tokens (added complexity)
+- Build token revocation lists (negates JWT benefits)
+- Handle token renewal (security concerns)
+- Manage short-lived vs long-lived tokens
+
+**Access Termination**
+
+When an employee leaves or a device is compromised:
+
+```php
+// Session-based: Instant termination
+public function terminateAllUserSessions(User $user): void
+{
+    $sessions = $this->sessionRepository->findByUser($user);
+    foreach ($sessions as $session) {
+        $this->sessionHandler->destroy($session->getId());
+    }
+    // All devices immediately logged out
+}
+```
+
+This is a HIPAA requirement that's simple with sessions but complex with JWT.
+
+### Configuration for Production
+
+Here's our production-ready session configuration:
+
+```yaml
+# config/packages/framework.yaml
+framework:
+    session:
+        # Session storage (use Redis in production)
+        handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler
+        
+        # Security settings
+        cookie_secure: true         # HTTPS only
+        cookie_httponly: true       # No JavaScript access  
+        cookie_samesite: 'strict'   # CSRF protection
+        
+        # Timeout (30 minutes per HIPAA guidelines)
+        cookie_lifetime: 1800
+        gc_maxlifetime: 1800
+        
+        # Session name (customize to avoid defaults)
+        name: SECURE_HEALTH_SESSION
+```
+
+```yaml
+# config/packages/security.yaml
+security:
+    firewalls:
+        login:
+            pattern: ^/api/login$
+            stateless: false
+            provider: app_user_provider
+            custom_authenticators:
+                - App\Security\JsonLoginAuthenticator
+                
+        main:
+            pattern: ^/
+            lazy: false
+            provider: app_user_provider
+            custom_authenticators:
+                - App\Security\SessionAuthenticator
+            logout:
+                path: app_logout
+                target: app_login
+                invalidate_session: true
+```
+
+### Performance Considerations
+
+**Session Validation is Fast**
+
+Modern session storage is highly optimized:
+
+```php
+// Session validation: Single Redis lookup
+$session = $redis->get('session:' . $sessionId);  // ~1ms
+```
+
+Compare to JWT:
+```php
+// JWT validation: Cryptographic signature verification
+$jwt = $jwtParser->parse($token);
+$isValid = $jwt->verify($signer, $publicKey);  // ~5-10ms
+```
+
+For high-security healthcare applications, the marginal performance difference is negligible compared to the security benefits.
+
+**Scalability with Distributed Sessions**
+
+Use Redis for session storage across multiple servers:
+
+```yaml
+# config/packages/redis.yaml
+redis:
+    clients:
+        session:
+            type: predis
+            alias: session
+            dsn: '%env(REDIS_URL)%'
+```
+
+This provides:
+- **Horizontal scaling**: Add more web servers without session issues
+- **High availability**: Redis clusters for redundancy
+- **Fast access**: In-memory session storage
+- **Session persistence**: Survives server restarts
+
+### When JWT Makes Sense
+
+Don't get me wrong - JWT is excellent for many use cases:
+
+**✅ Use JWT when you have:**
+- Stateless microservices architecture
+- Mobile apps needing offline capability
+- Public APIs for third-party integration
+- High-volume, low-security applications
+- Short-lived access tokens with refresh tokens
+
+**❌ Avoid JWT for:**
+- Healthcare applications (like ours)
+- Banking/financial applications
+- Applications requiring immediate access revocation
+- Applications with strict audit requirements
+- Applications where session tracking is critical
+
+### Real-World Security Scenario
+
+Let's walk through a security incident:
+
+**Scenario:** A doctor's laptop is stolen with an active session.
+
+**With Sessions:**
+```bash
+# Security team response (immediate)
+1. Call received: "Dr. Smith's laptop stolen"
+2. Admin logs in, finds active sessions for dr.smith@hospital.com
+3. Clicks "Terminate All Sessions"
+4. All sessions destroyed in Redis
+5. Stolen laptop's session immediately invalid
+6. Dr. Smith logs in from new device, continues work
+```
+
+**With JWT:**
+```bash
+# Security team response (problematic)
+1. Call received: "Dr. Smith's laptop stolen"
+2. JWT token remains valid for hours (can't be invalidated)
+3. Options:
+   - Wait for token expiration (security risk)
+   - Add token to revocation list (defeats JWT purpose)
+   - Change secret key (logs out ALL users)
+4. Attacker has hours of access to patient records
+5. HIPAA violation, potential breach notification required
+```
+
+### The Verdict
+
+For HIPAA-compliant healthcare applications, **session-based authentication is the clear winner**:
+
+| Feature | Sessions | JWT |
+|---------|----------|-----|
+| Immediate revocation | ✅ Yes | ❌ No |
+| Automatic timeout | ✅ Built-in | ⚠️ Custom logic |
+| Audit trail | ✅ Session ID | ⚠️ Complex |
+| HIPAA compliance | ✅ Natural fit | ❌ Workarounds needed |
+| Security | ✅ High | ⚠️ Medium |
+| Scalability | ✅ Redis clusters | ✅ Stateless |
+| Implementation | ✅ Simple | ⚠️ Complex for healthcare |
+
+Our choice of session-based authentication aligns with healthcare security best practices and makes HIPAA compliance straightforward rather than fighting against the authentication mechanism.
 
 ---
 
@@ -1509,6 +1781,189 @@ Look at `findByLastName()`. Here's what's happening:
 
 ---
 
+## Viewing Encrypted Data with MongoDB Compass
+
+One of the most powerful aspects of Queryable Encryption is that you can still use standard MongoDB tools like Compass to explore your data - you'll just see it in its encrypted form. This is actually a feature, not a bug!
+
+### Connecting to Your Atlas Cluster
+
+1. **Open MongoDB Compass**
+2. **Connect using your Atlas connection string:**
+   ```
+   mongodb+srv://mike:Password456%21@performance.zbcul.mongodb.net/?retryWrites=true&w=majority
+   ```
+
+### What You'll See in Compass
+
+**Patient Documents (Raw Encrypted View):**
+```json
+{
+  "_id": ObjectId("68e1b6b0499ced6b89078764"),
+  "firstName": {
+    "$binary": {
+      "base64": "AUOiqlYbaEpAuJyZenFvxeUC3Le0MvM4U8sGuD...",
+      "subType": "06"
+    }
+  },
+  "lastName": {
+    "$binary": {
+      "base64": "AUOiqlYbaEpAuJyZenFvxeUCphSsvGiLyai8VL...",
+      "subType": "06"
+    }
+  },
+  "email": {
+    "$binary": {
+      "base64": "AUOiqlYbaEpAuJyZenFvxeUCBfURU9PoFCKBaW...",
+      "subType": "06"
+    }
+  },
+  "ssn": {
+    "$binary": {
+      "base64": "AkOiqlYbaEpAuJyZenFvxeUCHg7zOwXwK+ohJA...",
+      "subType": "06"
+    }
+  },
+  "createdAt": ISODate("2024-10-04T20:04:00.000Z"),
+  "updatedAt": ISODate("2024-10-04T20:04:00.000Z")
+}
+```
+
+**Key Vault Collection (`encryption.__keyVault`):**
+```json
+{
+  "_id": UUID("..."),
+  "keyMaterial": {
+    "$binary": {
+      "base64": "encrypted_key_material_here...",
+      "subType": "00"
+    }
+  },
+  "keyAltNames": ["patient_firstName_key"],
+  "creationDate": ISODate("2024-10-04T20:04:00.000Z"),
+  "updateDate": ISODate("2024-10-04T20:04:00.000Z"),
+  "status": 0,
+  "masterKey": {
+    "provider": "local"
+  }
+}
+```
+
+### Understanding What You're Seeing
+
+**Binary Objects with SubType 06:**
+- These are your encrypted fields
+- `subType: "06"` indicates Queryable Encryption
+- The base64 string is the encrypted data
+- **Even with database access, you can't read the actual patient data**
+
+**Key Vault:**
+- Contains Data Encryption Keys (DEKs)
+- Each DEK is encrypted with your master key
+- Keys are organized by field name for easy management
+
+### Compass Features That Still Work
+
+**✅ What Works:**
+- Browse collections and documents
+- View document structure
+- Run aggregation pipelines (on non-encrypted fields)
+- Create indexes (on non-encrypted fields)
+- Monitor performance metrics
+
+**❌ What Doesn't Work:**
+- Reading encrypted field values (you see Binary objects)
+- Searching encrypted fields directly
+- Creating indexes on encrypted fields (handled by the driver)
+
+### Security Benefits of This Approach
+
+**1. Database Administrator Protection**
+Even if a DBA has full access to your MongoDB cluster, they cannot read patient data. The encrypted Binary objects are meaningless without the master key.
+
+**2. Compliance Verification**
+Auditors can verify that sensitive data is encrypted by examining the document structure in Compass. They'll see Binary objects instead of plaintext values.
+
+**3. Debugging Without Exposure**
+Developers can troubleshoot database issues, check indexes, and monitor performance without ever seeing actual patient data.
+
+### Practical Compass Usage Tips
+
+**1. Verify Encryption Status**
+```javascript
+// In Compass's MongoDB shell
+db.patients.findOne({}, {firstName: 1, lastName: 1, email: 1})
+// You should see Binary objects, not strings
+```
+
+**2. Check Key Vault Health**
+```javascript
+// Verify your encryption keys exist
+db.getSiblingDB("encryption").__keyVault.find({})
+// Should return your Data Encryption Keys
+```
+
+**3. Monitor Collection Size**
+```javascript
+// Check storage overhead from encryption
+db.patients.stats()
+// Compare with unencrypted collections to see ~2x size increase
+```
+
+**4. Index Analysis**
+```javascript
+// Check which indexes exist (encrypted fields won't have direct indexes)
+db.patients.getIndexes()
+// Encrypted indexes are managed by the driver
+```
+
+### Decrypted View Through the Application
+
+To see the actual patient data, use the application's API endpoints:
+
+```bash
+# First, login to create a session
+curl -X POST http://localhost:8081/api/login \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{
+    "username": "doctor@example.com",
+    "password": "doctor_password"
+  }'
+
+# Get decrypted patient data
+curl -X GET "http://localhost:8081/api/patients/PATIENT_ID" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Response shows decrypted data:
+{
+  "id": "68e1b6b0499ced6b89078764",
+  "firstName": "John",
+  "lastName": "Smith", 
+  "email": "john.smith@example.com",
+  "ssn": "123-45-6789",
+  "diagnosis": ["Type 2 Diabetes"],
+  "medications": ["Metformin 500mg"]
+}
+```
+
+### Best Practices for Compass Usage
+
+**1. Use Read-Only Connections**
+When connecting to production databases, use read-only database users to prevent accidental modifications.
+
+**2. Document Your Encryption Schema**
+Keep a record of which fields are encrypted and with which algorithms. This helps with debugging and compliance audits.
+
+**3. Monitor Key Vault**
+Regularly check the key vault collection to ensure keys are being created and managed properly.
+
+**4. Use Compass for Structure, API for Data**
+Use Compass to understand your data structure and troubleshoot database issues. Use your application's API to view actual patient data.
+
+This approach gives you the best of both worlds: powerful database tools for administration and development, while maintaining complete data security and HIPAA compliance.
+
+---
+
 ## Testing It Out
 
 Let's test our HIPAA-compliant system:
@@ -1516,18 +1971,21 @@ Let's test our HIPAA-compliant system:
 ### 1. Create a Test Patient
 
 ```bash
+# First, login to create a session and save the cookie
 curl -X POST http://localhost:8081/api/login \
   -H "Content-Type: application/json" \
+  -c cookies.txt \
   -d '{
-    "_username": "doctor@example.com",
-    "_password": "doctor"
+    "username": "doctor@example.com",
+    "password": "doctor_password"
   }'
 
-# Save the JWT token from the response
+# The session cookie is automatically saved to cookies.txt
+# Now use the cookie for authenticated requests
 
 curl -X POST http://localhost:8081/api/patients \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -b cookies.txt \
   -d '{
     "firstName": "John",
     "lastName": "Smith",
@@ -1548,8 +2006,9 @@ curl -X POST http://localhost:8081/api/patients \
 ### 2. Search for the Patient (Encrypted Search!)
 
 ```bash
+# Use the same cookie file from login
 curl -X GET "http://localhost:8081/api/patients/search?lastName=Smith" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -b cookies.txt
 ```
 
 ### 3. Test Role-Based Access
@@ -1557,41 +2016,55 @@ curl -X GET "http://localhost:8081/api/patients/search?lastName=Smith" \
 Log in as a nurse:
 
 ```bash
+# Login as nurse (creates new session, overwrites cookies.txt)
 curl -X POST http://localhost:8081/api/login \
   -H "Content-Type: application/json" \
+  -c cookies.txt \
   -d '{
-    "_username": "nurse@example.com",
-    "_password": "nurse"
+    "username": "nurse@example.com",
+    "password": "nurse_password"
   }'
 
 # Get patient as nurse - you'll see medications but NOT SSN
 curl -X GET http://localhost:8081/api/patients/PATIENT_ID \
-  -H "Authorization: Bearer NURSE_JWT_TOKEN"
+  -b cookies.txt
 ```
 
 Log in as a receptionist:
 
 ```bash
+# Login as receptionist (creates new session)
 curl -X POST http://localhost:8081/api/login \
   -H "Content-Type: application/json" \
+  -c cookies.txt \
   -d '{
-    "_username": "receptionist@example.com",
-    "_password": "receptionist"
+    "username": "receptionist@example.com",
+    "password": "receptionist_password"
   }'
 
 # Get patient as receptionist - you'll see insurance but NO medical data
 curl -X GET http://localhost:8081/api/patients/PATIENT_ID \
-  -H "Authorization: Bearer RECEPTIONIST_JWT_TOKEN"
+  -b cookies.txt
 ```
 
 ### 4. Check the Audit Logs
 
 ```bash
+# Login as doctor first
+curl -X POST http://localhost:8081/api/login \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{
+    "username": "doctor@example.com",
+    "password": "doctor_password"
+  }'
+
+# View audit logs
 curl -X GET http://localhost:8081/api/audit-logs \
-  -H "Authorization: Bearer DOCTOR_JWT_TOKEN"
+  -b cookies.txt
 ```
 
-You'll see every single access logged!
+You'll see every single access logged with session IDs for complete traceability!
 
 ---
 
@@ -1692,10 +2165,11 @@ Let's verify our implementation against HIPAA requirements:
 ### Technical Safeguards
 
 ✅ **Access Controls**
-- Unique user identification via JWT authentication
+- Unique user identification via session-based authentication
 - Role-based access control (Doctor, Nurse, Receptionist)
-- Automatic session timeout (JWT expiration)
+- Automatic session timeout (configurable, 30-minute default)
 - Emergency access procedures (via admin override)
+- Session invalidation on logout
 
 ✅ **Audit Controls**
 - Comprehensive audit logging of all PHI access
@@ -1712,7 +2186,7 @@ Let's verify our implementation against HIPAA requirements:
 ✅ **Transmission Security**
 - All data encrypted in transit via TLS/SSL
 - API endpoints require HTTPS only
-- JWT tokens for secure authentication
+- Secure session cookies (HttpOnly, Secure, SameSite)
 - No sensitive data in URLs or logs
 
 ### Administrative Safeguards

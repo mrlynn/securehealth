@@ -185,6 +185,74 @@
             padding: 1.5rem 0;
             margin-top: auto;
         }
+        
+        /* Debug Panel Styles */
+        .debug-panel {
+            margin-top: 20px;
+            border: 2px solid #6c757d;
+            border-radius: 0.5rem;
+            background-color: #f8f9fa;
+        }
+        
+        .debug-panel .card {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .debug-panel .card-header {
+            background-color: #343a40 !important;
+            border-bottom: 1px solid #495057;
+        }
+        
+        .debug-section {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .debug-section h6 {
+            color: #495057;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .debug-section pre {
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .debug-section code {
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
+        .debug-section .badge {
+            font-size: 0.8em;
+        }
+        
+        .debug-panel .alert {
+            margin-bottom: 0;
+        }
+        
+        /* Debug toggle button */
+        .btn-outline-secondary {
+            border-color: #6c757d;
+            color: #6c757d;
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -425,6 +493,103 @@
                             <small>Query Type</small>
                         </div>
                     </div>
+                    
+                    <!-- Debug Panel Toggle -->
+                    <div class="text-center mt-3">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="toggleDebugPanel()">
+                            <i class="fas fa-bug me-2"></i>Toggle Debug Panel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Debug Panel -->
+                <div class="debug-panel" id="debugPanel" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-bug me-2"></i>Developer Debug Panel
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Query Details -->
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-database me-2"></i>MongoDB Query Details</h6>
+                                    <div class="debug-section">
+                                        <div class="mb-2">
+                                            <strong>Search Type:</strong> <span id="debugSearchType" class="badge bg-primary">-</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>API Endpoint:</strong> <code id="debugEndpoint">-</code>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Request Payload:</strong>
+                                            <pre id="debugRequestPayload" class="bg-light p-2 rounded small">-</pre>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>MongoDB Query:</strong>
+                                            <pre id="debugMongoQuery" class="bg-light p-2 rounded small">-</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Encryption Details -->
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-lock me-2"></i>Encryption Details</h6>
+                                    <div class="debug-section">
+                                        <div class="mb-2">
+                                            <strong>Encryption Types:</strong>
+                                            <div id="debugEncryptionTypes">-</div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Encrypted Fields:</strong>
+                                            <div id="debugEncryptedFields">-</div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Response Data:</strong>
+                                            <pre id="debugResponseData" class="bg-light p-2 rounded small">-</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Performance Metrics -->
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h6><i class="fas fa-tachometer-alt me-2"></i>Performance Metrics</h6>
+                                    <div class="debug-section">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <strong>Total Time:</strong> <span id="debugTotalTime">-</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Network Time:</strong> <span id="debugNetworkTime">-</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Processing Time:</strong> <span id="debugProcessingTime">-</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Result Count:</strong> <span id="debugResultCount">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Error Information -->
+                            <div class="row mt-3" id="debugErrorSection" style="display: none;">
+                                <div class="col-12">
+                                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Error Information</h6>
+                                    <div class="debug-section">
+                                        <div class="alert alert-warning">
+                                            <strong>Error Details:</strong>
+                                            <pre id="debugErrorDetails" class="mt-2">-</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Results Container -->
@@ -494,10 +659,24 @@
                     });
                     
                     if (response.ok) {
-                        const capabilities = await response.json();
-                        console.log('Capabilities loaded from primary API:', capabilities);
-                        updateEncryptionInfo(capabilities);
-                        return;
+                        // Check if response is JSON
+                        const contentType = response.headers.get('content-type');
+                        const isJson = contentType && contentType.includes('application/json') && !contentType.includes('text/html');
+                        
+                        if (isJson) {
+                            try {
+                                const capabilities = await response.json();
+                                console.log('Capabilities loaded from primary API:', capabilities);
+                                updateEncryptionInfo(capabilities);
+                                return;
+                            } catch (jsonError) {
+                                console.error('Failed to parse capabilities JSON:', jsonError);
+                                console.warn('Capabilities response was marked as JSON but parsing failed');
+                                // Fall through to demo data fallback
+                            }
+                        } else {
+                            console.warn('Primary capabilities API returned HTML instead of JSON');
+                        }
                     } else {
                         console.warn('Primary capabilities API returned:', response.status, response.statusText);
                     }
@@ -507,7 +686,7 @@
                 
                 // Fallback to static demo data
                 console.info('Falling back to static demo data');
-                const demoResponse = await fetch('/demo_patients.json');
+                const demoResponse = await fetch('/demo_patients_endpoint.php');
                 const demoData = await demoResponse.json();
                 console.log('Demo data loaded:', demoData);
                 
@@ -651,14 +830,56 @@
             showLoading();
 
             try {
+                const networkStartTime = Date.now();
+                
                 // Call the real Symfony API endpoints
                 const response = await callSearchAPI(searchType, criteria);
                 
-                const searchTime = Date.now() - searchStartTime;
-                displayResults(response.results, searchType, searchTime, response);
-                updateSearchStats(response.totalResults, searchTime, searchType);
+                const networkEndTime = Date.now();
+                const totalTime = networkEndTime - searchStartTime;
+                const networkTime = networkEndTime - networkStartTime;
+                const processingTime = totalTime - networkTime;
+                
+                // Prepare performance data for debug panel
+                const performanceData = {
+                    totalTime: totalTime,
+                    networkTime: networkTime,
+                    processingTime: processingTime,
+                    resultCount: response.results ? response.results.length : 0
+                };
+                
+                // Update debug panel
+                updateDebugPanel(searchType, criteria, response, performanceData);
+                
+                displayResults(response.results, searchType, totalTime, response);
+                updateSearchStats(response.totalResults, totalTime, searchType);
                 
             } catch (error) {
+                console.error('Search failed with error:', error);
+                
+                // Update debug panel with error information
+                const performanceData = {
+                    totalTime: Date.now() - searchStartTime,
+                    networkTime: 0,
+                    processingTime: 0,
+                    resultCount: 0
+                };
+                
+                const errorData = {
+                    message: error.message,
+                    stack: error.stack,
+                    timestamp: new Date().toISOString()
+                };
+                
+                try {
+                    updateDebugPanel(searchType, criteria, null, performanceData, errorData);
+                } catch (debugError) {
+                    console.error('Failed to update debug panel:', debugError);
+                }
+                
+                // Show search statistics even on error so debug button is available
+                updateSearchStats(0, performanceData.totalTime, searchType);
+                
                 showError('Search failed: ' + error.message);
             }
         }
@@ -686,18 +907,113 @@
                     body: JSON.stringify(criteria)
                 });
 
-                // If primary API succeeds, return the data
-                if (primaryResponse.ok) {
-                    const data = await primaryResponse.json();
-                    console.log('Primary API response:', data);
+                // Check if the response is JSON or HTML
+                const contentType = primaryResponse.headers.get('content-type');
+                const isJson = contentType && contentType.includes('application/json') && !contentType.includes('text/html');
+                
+                if (primaryResponse.ok && isJson) {
+                    let data;
+                    try {
+                        data = await primaryResponse.json();
+                        console.log('Primary API response:', data);
+                    } catch (jsonError) {
+                        console.error('Failed to parse JSON response:', jsonError);
+                        console.warn('Response was marked as JSON but parsing failed, falling back to demo data');
+                        // Fall through to demo data fallback
+                        const demoData = await fetch('/demo_patients_endpoint.php');
+                        const demoPatients = await demoData.json();
+                        
+                        let results = [];
+                        if (searchType === 'equality') {
+                            results = filterPatientsForEquality(demoPatients.patients, criteria);
+                        } else if (searchType === 'range') {
+                            results = filterPatientsForRange(demoPatients.patients, criteria);
+                        } else if (searchType === 'complex') {
+                            results = filterPatientsForComplex(demoPatients.patients, criteria);
+                        }
+                        
+                        const fallbackData = {
+                            success: true,
+                            message: "Search completed with demo data (JSON parsing failed)",
+                            searchType: searchType,
+                            totalResults: results.length,
+                            results: results,
+                            usingFallback: true,
+                            fallbackReason: 'Primary API returned invalid JSON'
+                        };
+                        
+                        console.log('Demo data response (JSON parsing failed):', fallbackData);
+                        return fallbackData;
+                    }
+                    
+                    // Check if the API indicates that fallback is required
+                    if (data.requiresFallback) {
+                        console.log('API requires fallback for email domain search, using demo data');
+                        // Use fallback demo data
+                        const demoData = await fetch('/demo_patients_endpoint.php');
+                        const demoPatients = await demoData.json();
+                        
+                        // Filter the demo patients based on criteria
+                        let results = [];
+                        
+                        if (searchType === 'complex') {
+                            results = filterPatientsForComplex(demoPatients.patients, criteria);
+                        }
+                        
+                        const fallbackData = {
+                            success: true,
+                            message: "Search completed with demo data due to email domain search",
+                            searchType: searchType,
+                            totalResults: results.length,
+                            results: results,
+                            usingFallback: true,
+                            fallbackReason: data.fallbackReason || 'Email domain search requires frontend filtering'
+                        };
+                        
+                        console.log('Fallback data response:', fallbackData);
+                        return fallbackData;
+                    }
+                    
                     return data;
+                } else if (!primaryResponse.ok || !isJson) {
+                    // Response is HTML (likely authentication error page)
+                    console.warn(`API returned HTML instead of JSON (${primaryResponse.status}: ${primaryResponse.statusText})`);
+                    console.info('Falling back to demo data due to authentication issue');
+                    
+                    // Use static demo data as fallback
+                    const demoData = await fetch('/demo_patients_endpoint.php');
+                    const demoPatients = await demoData.json();
+                    
+                    // Filter the demo patients based on criteria
+                    let results = [];
+                    
+                    if (searchType === 'equality') {
+                        results = filterPatientsForEquality(demoPatients.patients, criteria);
+                    } else if (searchType === 'range') {
+                        results = filterPatientsForRange(demoPatients.patients, criteria);
+                    } else if (searchType === 'complex') {
+                        results = filterPatientsForComplex(demoPatients.patients, criteria);
+                    }
+                    
+                    const fallbackData = {
+                        success: true,
+                        message: "Search completed with demo data (authentication required for live data)",
+                        searchType: searchType,
+                        totalResults: results.length,
+                        results: results,
+                        usingFallback: true,
+                        fallbackReason: 'Authentication required for live API access'
+                    };
+                    
+                    console.log('Demo data response (auth fallback):', fallbackData);
+                    return fallbackData;
                 }
                 
                 console.warn(`Primary API returned ${primaryResponse.status}: ${primaryResponse.statusText}`);
                 console.info('Falling back to static demo data');
                 
                 // If primary API fails, use static demo data
-                const demoData = await fetch('/demo_patients.json');
+                const demoData = await fetch('/demo_patients_endpoint.php');
                 const demoPatients = await demoData.json();
                 
                 // Filter the demo patients based on criteria
@@ -714,9 +1030,12 @@
                 const fallbackData = {
                     success: true,
                     message: "Search completed successfully with demo data",
+                    searchType: searchType,
                     totalResults: results.length,
                     results: results,
-                    usingFallback: true
+                    usingFallback: true,
+                    fallbackReason: `Primary API returned ${primaryResponse.status}: ${primaryResponse.statusText}`,
+                    searchTime: 50 // Simulated search time for demo data
                 };
                 
                 console.log('Demo data response:', fallbackData);
@@ -834,13 +1153,16 @@
                 if (!response.ok) {
                     // For demo purposes, allow access without authentication
                     console.log('Authentication check failed, but allowing demo access');
+                    console.warn('Note: Live API features require authentication. Using demo data fallback.');
                     return true;
                 }
                 
+                console.log('Authentication successful - live API access available');
                 return true;
             } catch (error) {
                 // For demo purposes, allow access without authentication
                 console.log('Authentication check failed, but allowing demo access');
+                console.warn('Note: Live API features require authentication. Using demo data fallback.');
                 return true;
             }
         }
@@ -1034,6 +1356,219 @@
                 age--;
             }
             return age;
+        }
+
+        // Debug Panel Functions
+        let debugData = {
+            searchType: null,
+            endpoint: null,
+            requestPayload: null,
+            mongoQuery: null,
+            encryptionTypes: null,
+            encryptedFields: null,
+            responseData: null,
+            performanceMetrics: null,
+            errorDetails: null
+        };
+
+        // Toggle debug panel visibility
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debugPanel');
+            const isVisible = panel.style.display !== 'none';
+            panel.style.display = isVisible ? 'none' : 'block';
+            
+            // Update button text
+            const button = document.querySelector('button[onclick="toggleDebugPanel()"]');
+            const icon = button.querySelector('i');
+            if (isVisible) {
+                button.innerHTML = '<i class="fas fa-bug me-2"></i>Show Debug Panel';
+            } else {
+                button.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Hide Debug Panel';
+            }
+        }
+
+        // Update debug panel with search data
+        function updateDebugPanel(searchType, criteria, response, performanceData, errorData = null) {
+            try {
+                debugData = {
+                    searchType: searchType,
+                    endpoint: `/api/encrypted-search/${searchType}`,
+                    requestPayload: criteria,
+                    mongoQuery: generateMongoQuery(searchType, criteria),
+                    encryptionTypes: getEncryptionTypes(searchType),
+                    encryptedFields: getEncryptedFields(searchType),
+                    responseData: response,
+                    performanceMetrics: performanceData,
+                    errorDetails: errorData
+                };
+
+            // Update debug panel elements
+            document.getElementById('debugSearchType').textContent = searchType.toUpperCase();
+            document.getElementById('debugEndpoint').textContent = debugData.endpoint;
+            document.getElementById('debugRequestPayload').textContent = JSON.stringify(debugData.requestPayload, null, 2);
+            document.getElementById('debugMongoQuery').textContent = debugData.mongoQuery;
+            
+            // Update encryption types
+            const encryptionTypesDiv = document.getElementById('debugEncryptionTypes');
+            encryptionTypesDiv.innerHTML = debugData.encryptionTypes.map(type => 
+                `<span class="badge bg-info me-1">${type}</span>`
+            ).join('');
+            
+            // Update encrypted fields
+            const encryptedFieldsDiv = document.getElementById('debugEncryptedFields');
+            encryptedFieldsDiv.innerHTML = debugData.encryptedFields.map(field => 
+                `<span class="badge bg-warning me-1">${field}</span>`
+            ).join('');
+            
+            // Update response data (truncated for readability)
+            const responseData = debugData.responseData;
+            if (responseData) {
+                const truncatedResponse = {
+                    success: responseData.success,
+                    searchType: responseData.searchType,
+                    totalResults: responseData.totalResults,
+                    searchTime: responseData.searchTime,
+                    results: responseData.results ? responseData.results.slice(0, 2) : [], // Show only first 2 results
+                    truncated: responseData.results && responseData.results.length > 2
+                };
+                document.getElementById('debugResponseData').textContent = JSON.stringify(truncatedResponse, null, 2);
+            } else {
+                document.getElementById('debugResponseData').textContent = 'No response data available';
+            }
+            
+            // Update performance metrics
+            if (debugData.performanceMetrics) {
+                document.getElementById('debugTotalTime').textContent = debugData.performanceMetrics.totalTime + 'ms';
+                document.getElementById('debugNetworkTime').textContent = debugData.performanceMetrics.networkTime + 'ms';
+                document.getElementById('debugProcessingTime').textContent = debugData.performanceMetrics.processingTime + 'ms';
+                document.getElementById('debugResultCount').textContent = debugData.performanceMetrics.resultCount;
+            }
+            
+            // Handle errors
+            if (errorData) {
+                document.getElementById('debugErrorSection').style.display = 'block';
+                document.getElementById('debugErrorDetails').textContent = JSON.stringify(errorData, null, 2);
+                
+                // Auto-show debug panel when there are errors
+                const panel = document.getElementById('debugPanel');
+                if (panel.style.display === 'none') {
+                    toggleDebugPanel();
+                }
+            } else {
+                document.getElementById('debugErrorSection').style.display = 'none';
+            }
+            
+            } catch (debugError) {
+                console.error('Error updating debug panel:', debugError);
+                // Show a basic error message in the debug panel
+                document.getElementById('debugResponseData').textContent = 'Error loading debug data';
+            }
+        }
+
+        // Generate MongoDB query representation
+        function generateMongoQuery(searchType, criteria) {
+            let query = {};
+            
+            switch(searchType) {
+                case 'equality':
+                    if (criteria.lastName) {
+                        query.lastName = `encrypt_deterministic("${criteria.lastName}")`;
+                    }
+                    if (criteria.firstName) {
+                        query.firstName = `encrypt_deterministic("${criteria.firstName}")`;
+                    }
+                    if (criteria.email) {
+                        query.email = `encrypt_deterministic("${criteria.email}")`;
+                    }
+                    if (criteria.phone) {
+                        query.phoneNumber = `encrypt_deterministic("${criteria.phone}")`;
+                    }
+                    break;
+                    
+                case 'range':
+                    query.birthDate = {};
+                    if (criteria.birthDateFrom || criteria.birthDateTo) {
+                        if (criteria.birthDateFrom) {
+                            query.birthDate.$gte = `encrypt_range(new Date("${criteria.birthDateFrom}"))`;
+                        }
+                        if (criteria.birthDateTo) {
+                            query.birthDate.$lte = `encrypt_range(new Date("${criteria.birthDateTo}"))`;
+                        }
+                    }
+                    if (criteria.minAge || criteria.maxAge) {
+                        const today = new Date();
+                        if (criteria.minAge) {
+                            const maxBirthDate = new Date(today.getFullYear() - criteria.minAge, today.getMonth(), today.getDate());
+                            query.birthDate.$lte = `encrypt_range(new Date("${maxBirthDate.toISOString().split('T')[0]}"))`;
+                        }
+                        if (criteria.maxAge) {
+                            const minBirthDate = new Date(today.getFullYear() - criteria.maxAge, today.getMonth(), today.getDate());
+                            query.birthDate.$gte = `encrypt_range(new Date("${minBirthDate.toISOString().split('T')[0]}"))`;
+                        }
+                    }
+                    break;
+                    
+                case 'complex':
+                    if (criteria.lastName) {
+                        query.lastName = `encrypt_deterministic("${criteria.lastName}")`;
+                    }
+                    if (criteria.email) {
+                        if (criteria.email.includes('@')) {
+                            // Full email search
+                            query.email = `encrypt_deterministic("${criteria.email}")`;
+                        } else {
+                            // Email domain search - not supported by deterministic encryption
+                            query.email = `// Domain search: "${criteria.email}" (handled by frontend filtering)`;
+                        }
+                    }
+                    if (criteria.minAge) {
+                        const today = new Date();
+                        const maxBirthDate = new Date(today.getFullYear() - criteria.minAge, today.getMonth(), today.getDate());
+                        query.birthDate = {
+                            $lte: `encrypt_range(new Date("${maxBirthDate.toISOString().split('T')[0]}"))`
+                        };
+                    }
+                    if (criteria.phonePrefix) {
+                        query.phoneNumber = `encrypt_deterministic("*${criteria.phonePrefix}*")`;
+                    }
+                    if (criteria.birthYear) {
+                        query.birthDate = {
+                            $gte: `encrypt_range(new Date("${criteria.birthYear}-01-01"))`,
+                            $lte: `encrypt_range(new Date("${criteria.birthYear}-12-31"))`
+                        };
+                    }
+                    break;
+            }
+            
+            return JSON.stringify(query, null, 2);
+        }
+
+        // Get encryption types for search type
+        function getEncryptionTypes(searchType) {
+            switch(searchType) {
+                case 'equality':
+                    return ['deterministic'];
+                case 'range':
+                    return ['range'];
+                case 'complex':
+                    return ['deterministic', 'range'];
+                default:
+                    return [];
+            }
+        }
+
+        // Get encrypted fields for search type
+        function getEncryptedFields(searchType) {
+            switch(searchType) {
+                case 'equality':
+                    return ['lastName', 'firstName', 'email', 'phoneNumber'];
+                case 'range':
+                    return ['birthDate'];
+                case 'complex':
+                    return ['lastName', 'email', 'birthDate', 'phoneNumber'];
+                default:
+                    return [];
+            }
         }
     </script>
 </body>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Debug Test</title>
+</head>
+<body>
+    <h1>Session Debug Test</h1>
+    
+    <div id="results"></div>
+    
+    <script>
+        function log(message) {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            document.getElementById('results').appendChild(div);
+            console.log(message);
+        }
+        
+        async function testSession() {
+            log('🧪 Starting session debug test...');
+            
+            // Step 1: Login
+            log('1. Attempting login...');
+            try {
+                const loginResponse = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        _username: 'doctor@example.com',
+                        _password: 'doctor'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                log(`Login response: ${JSON.stringify(loginData)}`);
+                
+                if (!loginData.success) {
+                    log('❌ Login failed');
+                    return;
+                }
+                
+                log('✅ Login successful');
+                
+                // Save to localStorage
+                localStorage.setItem('securehealth_user', JSON.stringify(loginData.user));
+                log('✅ Saved to localStorage');
+                
+            } catch (error) {
+                log(`❌ Login error: ${error.message}`);
+                return;
+            }
+            
+            // Step 2: Test /api/user
+            log('2. Testing /api/user...');
+            try {
+                const userResponse = await fetch('/api/user', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const userData = await userResponse.json();
+                log(`User API response: ${JSON.stringify(userData)}`);
+                
+                if (userData.success) {
+                    log('✅ /api/user works');
+                } else {
+                    log('❌ /api/user failed');
+                }
+                
+            } catch (error) {
+                log(`❌ User API error: ${error.message}`);
+            }
+            
+            // Step 3: Test /api/patients
+            log('3. Testing /api/patients...');
+            try {
+                const patientsResponse = await fetch('/api/patients', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const patientsData = await patientsResponse.json();
+                log(`Patients API response: ${JSON.stringify(patientsData)}`);
+                
+                if (patientsData.success) {
+                    log('✅ /api/patients works');
+                } else {
+                    log('❌ /api/patients failed');
+                }
+                
+            } catch (error) {
+                log(`❌ Patients API error: ${error.message}`);
+            }
+            
+            // Step 4: Check cookies
+            log(`4. Document cookies: ${document.cookie}`);
+            
+            log('🏁 Test complete!');
+        }
+        
+        // Run test on page load
+        window.addEventListener('load', testSession);
+    </script>
+</body>
+</html>

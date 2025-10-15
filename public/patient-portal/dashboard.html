@@ -383,14 +383,41 @@
                 <h5 class="card-title">
                     <i class="fas fa-envelope"></i>Messages
                 </h5>
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="showComposeForm()">
+                        <i class="fas fa-plus me-2"></i>Compose Message
+                    </button>
+                </div>
+                <div id="composeForm" class="mb-4" style="display: none;">
+                    <div class="card p-3">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Send To</label>
+                                <select class="form-select" id="recipientRoles">
+                                    <option value='["ROLE_DOCTOR","ROLE_NURSE"]' selected>Doctor or Nurse</option>
+                                    <option value='["ROLE_DOCTOR"]'>Doctor</option>
+                                    <option value='["ROLE_NURSE"]'>Nurse</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Subject (optional)</label>
+                                <input type="text" class="form-control" id="messageSubject" placeholder="Subject" />
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control" id="messageBody" rows="3" placeholder="Type your message..."></textarea>
+                        </div>
+                        <div class="mt-3 d-flex gap-2">
+                            <button class="btn btn-primary" onclick="sendMessage()"><i class="fas fa-paper-plane me-2"></i>Send</button>
+                            <button class="btn btn-outline-primary" onclick="hideComposeForm()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
                 <div id="messagesList">
-                    <div class="empty-state">
-                        <i class="fas fa-envelope-open"></i>
-                        <h5>No Messages Yet</h5>
-                        <p>You don't have any messages at this time.</p>
-                        <button class="btn btn-primary" onclick="composeMessage()">
-                            <i class="fas fa-plus me-2"></i>Compose Message
-                        </button>
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p>Loading messages...</p>
                     </div>
                 </div>
             </div>
@@ -699,15 +726,143 @@
             document.getElementById('appointmentsList').innerHTML = appointmentsHtml;
         }
 
-        function loadMessages() {
+        async function loadMessages() {
             document.getElementById('dashboardContent').style.display = 'none';
             document.getElementById('myRecordsContent').style.display = 'none';
             document.getElementById('appointmentsContent').style.display = 'none';
             document.getElementById('messagesContent').style.display = 'block';
+
+            const list = document.getElementById('messagesList');
+            list.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading messages...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/patient-portal/messages', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                const result = await response.json();
+
+                if (result.success && Array.isArray(result.data)) {
+                    renderMessages(result.data);
+                } else {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h5>Error Loading Messages</h5>
+                            <p>${result.message || 'Unable to load messages.'}</p>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Error loading messages', err);
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h5>Connection Error</h5>
+                        <p>Unable to connect to the server. Please try again.</p>
+                    </div>
+                `;
+            }
         }
 
-        function composeMessage() {
-            showAlert('Message composition feature coming soon!', 'info');
+        function renderMessages(messages) {
+            const list = document.getElementById('messagesList');
+            if (!messages || messages.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-envelope-open"></i>
+                        <h5>No Messages Yet</h5>
+                        <p>You don't have any messages at this time.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const items = messages.map(m => {
+                const date = new Date(m.createdAt?.$date || m.createdAt);
+                const when = isNaN(date.getTime()) ? '' : `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
+                const fromStaff = m.direction === 'to_patient';
+                return `
+                    <div class="appointment-item" style="border-left-color: ${fromStaff ? '#0d6efd' : '#28a745'};">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="appointment-date">${m.subject ? m.subject : (fromStaff ? 'From your care team' : 'To care team')}</div>
+                                <div class="appointment-time">${when}</div>
+                                <div class="appointment-notes">${escapeHtml(m.body)}</div>
+                            </div>
+                            <span class="badge ${fromStaff ? 'bg-primary' : 'bg-success'}">${fromStaff ? 'From Staff' : 'From You'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            list.innerHTML = items;
+        }
+
+        function showComposeForm() {
+            document.getElementById('composeForm').style.display = 'block';
+        }
+
+        function hideComposeForm() {
+            document.getElementById('composeForm').style.display = 'none';
+            document.getElementById('messageSubject').value = '';
+            document.getElementById('messageBody').value = '';
+            document.getElementById('recipientRoles').value = '["ROLE_DOCTOR","ROLE_NURSE"]';
+        }
+
+        async function sendMessage() {
+            const subject = document.getElementById('messageSubject').value.trim();
+            const body = document.getElementById('messageBody').value.trim();
+            const rolesStr = document.getElementById('recipientRoles').value;
+
+            if (!body) {
+                showAlert('Please enter a message.', 'warning');
+                return;
+            }
+
+            let recipientRoles = [];
+            try {
+                recipientRoles = JSON.parse(rolesStr);
+            } catch (_) {
+                recipientRoles = ['ROLE_DOCTOR', 'ROLE_NURSE'];
+            }
+
+            try {
+                const response = await fetch('/api/patient-portal/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ subject, body, recipientRoles })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showAlert('Message sent.', 'success');
+                    hideComposeForm();
+                    // Reload messages
+                    loadMessages();
+                } else {
+                    showAlert(result.message || 'Failed to send message.', 'danger');
+                }
+            } catch (err) {
+                console.error('Error sending message', err);
+                showAlert('Failed to send message. Please try again.', 'danger');
+            }
+        }
+
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         async function saveProfileChanges() {

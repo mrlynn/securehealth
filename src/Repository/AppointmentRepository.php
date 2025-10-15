@@ -82,4 +82,19 @@ class AppointmentRepository
             ->execute()
             ->toArray(false);
     }
+
+    /**
+     * @return Appointment[]
+     */
+    public function findByDateRange(DateTimeInterface $startDate, DateTimeInterface $endDate): array
+    {
+        return $this->documentManager
+            ->createQueryBuilder(Appointment::class)
+            ->field('scheduledAt')->gte(new UTCDateTime($startDate))
+            ->field('scheduledAt')->lte(new UTCDateTime($endDate))
+            ->sort('scheduledAt', 'asc')
+            ->getQuery()
+            ->execute()
+            ->toArray(false);
+    }
 }

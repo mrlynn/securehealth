@@ -13,13 +13,7 @@ main_routes:
     resource: ../src/Controller/MainController.php
     type: attribute
 
-app_login:
-    path: /api/login
-    methods: POST
-
-app_logout:
-    path: /api/logout
-    methods: POST
+# Security routes are handled by SecurityController.php with attributes
 
 app_health:
     path: /api/health

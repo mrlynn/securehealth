@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureHealth Calendar</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Shared navbar styles -->
+  <link href="/assets/css/navbar.css" rel="stylesheet">
+  <!-- Authentication guard (MUST be before other scripts) -->
+  <script src="/assets/js/auth-guard.js"></script>
+  <!-- Role-aware navbar script -->
+  <script src="/assets/js/navbar.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --primary-color: #2c5aa0;
+      --secondary-color: #1e3a5f;
+      --accent-color: #4a90e2;
+      --success-color: #28a745;
+      --warning-color: #ffc107;
+      --danger-color: #dc3545;
+      --light-bg: #f8f9fa;
+      --dark-text: #2c3e50;
+    }
+    
+    body { 
+      background-color: #f8f9fa; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding-top: 80px;
+    }
+    
+    .navbar-custom {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-custom {
+      padding: 12px 30px;
+      border-radius: 25px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary-custom {
+      background: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      color: white;
+    }
+    
+    .btn-primary-custom:hover {
+      background: transparent;
+      color: var(--accent-color);
+      transform: translateY(-2px);
+    }
+    
+    .badge-pill { border-radius: 10rem; }
+    .navbar-nav .nav-link.active { text-decoration: underline; }
+    
+    .role-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .role-doctor { background-color: #dc3545; color: white; }
+    .role-nurse { background-color: #0d6efd; color: white; }
+    .role-receptionist { background-color: #6c757d; color: white; }
+    .role-admin { background-color: #6f42c1; color: white; }
+    .role-user { background-color: #6c757d; color: white; }
+
+    /* Calendar specific styles */
+    .calendar-container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .calendar-header {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: white;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .calendar-nav button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .calendar-nav button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .calendar-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: #e9ecef;
+    }
+
+    .calendar-day-header {
+      background: var(--light-bg);
+      padding: 1rem 0.5rem;
+      text-align: center;
+      font-weight: 600;
+      color: var(--dark-text);
+      font-size: 0.9rem;
+    }
+
+    .calendar-day {
+      background: white;
+      min-height: 120px;
+      padding: 0.5rem;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .calendar-day:hover {
+      background: #f8f9fa;
+      border-color: var(--accent-color);
+    }
+
+    .calendar-day.today {
+      background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+      color: white;
+      font-weight: 600;
+    }
+
+    .calendar-day.today .day-number {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .calendar-day.other-month {
+      background: #f8f9fa;
+      color: #6c757d;
+    }
+
+    .calendar-day.selected {
+      border-color: var(--success-color);
+      background: rgba(40, 167, 69, 0.1);
+    }
+
+    .day-number {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .appointment-indicator {
+      position: absolute;
+      bottom: 0.25rem;
+      right: 0.25rem;
+      width: 8px;
+      height: 8px;
+      background: var(--success-color);
+      border-radius: 50%;
+    }
+
+    .appointment-list {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .appointment-header {
+      background: linear-gradient(135deg, var(--success-color), #20c997);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 15px 15px 0 0;
+    }
+
+    .appointment-list-content {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .appointment-item {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--accent-color);
+      transition: all 0.3s ease;
+    }
+
+    .appointment-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .appointment-time {
+      font-weight: 600;
+      color: var(--primary-color);
+      font-size: 0.9rem;
+    }
+
+    .appointment-patient {
+      font-weight: 600;
+      margin: 0.25rem 0;
+    }
+
+    .appointment-notes {
+      color: #6c757d;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .no-appointments {
+      text-align: center;
+      color: #6c757d;
+      padding: 2rem;
+    }
+
+    .no-appointments i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .create-appointment-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--accent-color);
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .create-appointment-btn:hover {
+      background: var(--primary-color);
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+    }
+
+    @media (max-width: 768px) {
+      .calendar-day {
+        min-height: 80px;
+        padding: 0.25rem;
+      }
+      
+      .calendar-title {
+        font-size: 1.2rem;
+      }
+      
+      .calendar-nav {
+        gap: 0.5rem;
+      }
+      
+      .calendar-nav button {
+        width: 35px;
+        height: 35px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Role-aware navbar will be inserted here -->
+  <div id="navbar-container"></div>
+
+  <main class="container-fluid my-4">
+    <div class="row">
+      <!-- Calendar Section -->
+      <div class="col-lg-8 mb-4">
+        <div class="calendar-container">
+          <div class="calendar-header">
+            <div class="calendar-nav">
+              <button id="prevMonth" title="Previous Month">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button id="todayBtn" title="Go to Today">
+                <i class="fas fa-calendar-day"></i>
+              </button>
+              <button id="nextMonth" title="Next Month">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+            <h1 class="calendar-title" id="calendarTitle">January 2024</h1>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-light" id="viewToggle">
+                <i class="fas fa-list me-1"></i>List View
+              </button>
+            </div>
+          </div>
+          
+          <div class="calendar-grid" id="calendarGrid">
+            <!-- Calendar will be generated by JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointment Details Section -->
+      <div class="col-lg-4 mb-4">
+        <div class="appointment-list">
+          <div class="appointment-header">
+            <h3 class="h5 mb-0" id="appointmentDateTitle">Select a Date</h3>
+            <p class="mb-0 opacity-75" id="appointmentDateSubtitle">Choose a date to view appointments</p>
+          </div>
+          <div class="appointment-list-content" id="appointmentListContent">
+            <div class="no-appointments">
+              <i class="fas fa-calendar-plus"></i>
+              <p>Select a date to view appointments</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Create Appointment Button (Floating) -->
+  <button class="create-appointment-btn" id="createAppointmentBtn" title="Create New Appointment">
+    <i class="fas fa-plus"></i>
+  </button>
+
+  <!-- Create Appointment Modal -->
+  <div class="modal fade" id="createAppointmentModal" tabindex="-1" aria-labelledby="createAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createAppointmentModalLabel">Create New Appointment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="createAppointmentAlert" class="alert d-none" role="alert"></div>
+          <form id="createAppointmentForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="patientSelect" class="form-label">Patient</label>
+                <select id="patientSelect" class="form-select" required>
+                  <option value="" disabled selected>Select a patient</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="appointmentDate" class="form-label">Date</label>
+                <input type="date" id="appointmentDate" class="form-control" required>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="appointmentTime" class="form-label">Time</label>
+                <input type="time" id="appointmentTime" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="appointmentDuration" class="form-label">Duration (minutes)</label>
+                <select id="appointmentDuration" class="form-select">
+                  <option value="30">30 minutes</option>
+                  <option value="60" selected>60 minutes</option>
+                  <option value="90">90 minutes</option>
+                  <option value="120">120 minutes</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="appointmentNotes" class="form-label">Notes (optional)</label>
+              <textarea id="appointmentNotes" class="form-control" rows="3" placeholder="Add any helpful context for this appointment"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveAppointmentBtn">Create Appointment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Appointment Modal -->
+  <div class="modal fade" id="editAppointmentModal" tabindex="-1" aria-labelledby="editAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editAppointmentModalLabel">Edit Appointment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="editAppointmentAlert" class="alert d-none" role="alert"></div>
+          <form id="editAppointmentForm">
+            <input type="hidden" id="editAppointmentId">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="editPatientSelect" class="form-label">Patient</label>
+                <select id="editPatientSelect" class="form-select" required>
+                  <option value="" disabled selected>Select a patient</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="editAppointmentDate" class="form-label">Date</label>
+                <input type="date" id="editAppointmentDate" class="form-control" required>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="editAppointmentTime" class="form-label">Time</label>
+                <input type="time" id="editAppointmentTime" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="editAppointmentDuration" class="form-label">Duration (minutes)</label>
+                <select id="editAppointmentDuration" class="form-select">
+                  <option value="30">30 minutes</option>
+                  <option value="60" selected>60 minutes</option>
+                  <option value="90">90 minutes</option>
+                  <option value="120">120 minutes</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="editAppointmentNotes" class="form-label">Notes (optional)</label>
+              <textarea id="editAppointmentNotes" class="form-control" rows="3" placeholder="Add any helpful context for this appointment"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="updateAppointmentBtn">Update Appointment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+      // NEW: Use AuthGuard for consistent authentication checking
+      const isAuthenticated = await requireAuth();
+      if (!isAuthenticated) return; // Already redirected to login
+      
+      console.log('✅ Calendar access granted for:', window.authGuard.getUser().username);
+      
+      // Initialize calendar after authentication verified
+      setTimeout(() => {
+        initializeCalendar();
+      }, 100);
+    });
+
+      function initializeCalendar() {
+        // Initialize calendar with current date
+        const now = new Date();
+        currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        renderCalendar();
+        loadAppointments();
+        setupEventListeners();
+      }
+
+      let currentDate = new Date();
+      let selectedDate = null;
+      let appointments = [];
+      let isListView = false;
+
+      function setupEventListeners() {
+        // Calendar navigation
+        document.getElementById('prevMonth').addEventListener('click', () => {
+          currentDate.setMonth(currentDate.getMonth() - 1);
+          renderCalendar();
+          loadAppointments();
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          renderCalendar();
+          loadAppointments();
+        });
+
+        document.getElementById('todayBtn').addEventListener('click', () => {
+          const today = new Date();
+          currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          renderCalendar();
+          loadAppointments();
+        });
+
+        // View toggle
+        document.getElementById('viewToggle').addEventListener('click', () => {
+          isListView = !isListView;
+          const btn = document.getElementById('viewToggle');
+          if (isListView) {
+            btn.innerHTML = '<i class="fas fa-calendar-alt me-1"></i>Calendar View';
+            renderListView();
+          } else {
+            btn.innerHTML = '<i class="fas fa-list me-1"></i>List View';
+            renderCalendar();
+          }
+        });
+
+        // Create appointment button
+        document.getElementById('createAppointmentBtn').addEventListener('click', () => {
+          const modal = new bootstrap.Modal(document.getElementById('createAppointmentModal'));
+          loadPatients();
+          modal.show();
+        });
+
+        // Save appointment
+        document.getElementById('saveAppointmentBtn').addEventListener('click', saveAppointment);
+        
+        // Update appointment
+        document.getElementById('updateAppointmentBtn').addEventListener('click', updateAppointment);
+      }
+
+      function renderCalendar() {
+        const calendarGrid = document.getElementById('calendarGrid');
+        const calendarTitle = document.getElementById('calendarTitle');
+        
+        // Set title
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'];
+        calendarTitle.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+        // Clear grid
+        calendarGrid.innerHTML = '';
+
+        // Add day headers
+        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayHeaders.forEach(day => {
+          const header = document.createElement('div');
+          header.className = 'calendar-day-header';
+          header.textContent = day;
+          calendarGrid.appendChild(header);
+        });
+
+        // Get first day of month and number of days
+        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+        // Generate calendar days
+        for (let i = 0; i < 42; i++) {
+          const dayDate = new Date(startDate);
+          dayDate.setDate(startDate.getDate() + i);
+          
+          const dayElement = document.createElement('div');
+          dayElement.className = 'calendar-day';
+          
+          // Check if it's today
+          const today = new Date();
+          if (dayDate.toDateString() === today.toDateString()) {
+            dayElement.classList.add('today');
+          }
+          
+          // Check if it's selected date
+          if (selectedDate && dayDate.toDateString() === selectedDate.toDateString()) {
+            dayElement.classList.add('selected');
+          }
+          
+          // Check if it's current month
+          if (dayDate.getMonth() !== currentDate.getMonth()) {
+            dayElement.classList.add('other-month');
+          }
+
+          // Add day number
+          const dayNumber = document.createElement('div');
+          dayNumber.className = 'day-number';
+          dayNumber.textContent = dayDate.getDate();
+          dayElement.appendChild(dayNumber);
+
+          // Check for appointments on this day
+          const dayAppointments = getAppointmentsForDate(dayDate);
+          if (dayAppointments.length > 0) {
+            const indicator = document.createElement('div');
+            indicator.className = 'appointment-indicator';
+            indicator.title = `${dayAppointments.length} appointment(s)`;
+            dayElement.appendChild(indicator);
+          }
+
+          // Add click event
+          dayElement.addEventListener('click', () => {
+            selectDate(dayDate);
+          });
+
+          calendarGrid.appendChild(dayElement);
+        }
+      }
+
+      function renderListView() {
+        const calendarGrid = document.getElementById('calendarGrid');
+        const calendarTitle = document.getElementById('calendarTitle');
+        
+        calendarTitle.textContent = 'Appointment List';
+        calendarGrid.innerHTML = '';
+
+        // Create list container
+        const listContainer = document.createElement('div');
+        listContainer.className = 'col-12';
+        
+        // Sort appointments by date
+        const sortedAppointments = [...appointments].sort((a, b) => 
+          new Date(a.scheduledAt) - new Date(b.scheduledAt)
+        );
+
+        if (sortedAppointments.length === 0) {
+          listContainer.innerHTML = `
+            <div class="text-center py-5">
+              <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No appointments scheduled</h5>
+              <p class="text-muted">Click the + button to create your first appointment</p>
+            </div>
+          `;
+        } else {
+          sortedAppointments.forEach(appointment => {
+            const appointmentElement = document.createElement('div');
+            appointmentElement.className = 'appointment-item';
+            appointmentElement.innerHTML = `
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="appointment-time">${formatTime(appointment.scheduledAt)}</div>
+                  <div class="appointment-patient">${escapeHtml(appointment.patientFullName)}</div>
+                  ${appointment.notes ? `<div class="appointment-notes">${escapeHtml(appointment.notes)}</div>` : ''}
+                </div>
+                <small class="text-muted">${formatDate(appointment.scheduledAt)}</small>
+              </div>
+            `;
+            listContainer.appendChild(appointmentElement);
+          });
+        }
+
+        calendarGrid.appendChild(listContainer);
+      }
+
+      function selectDate(date) {
+        selectedDate = date;
+        renderCalendar();
+        showAppointmentsForDate(date);
+      }
+
+      function showAppointmentsForDate(date) {
+        const appointmentDateTitle = document.getElementById('appointmentDateTitle');
+        const appointmentDateSubtitle = document.getElementById('appointmentDateSubtitle');
+        const appointmentListContent = document.getElementById('appointmentListContent');
+
+        const dateStr = date.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+
+        appointmentDateTitle.textContent = dateStr;
+        appointmentDateSubtitle.textContent = 'Appointments for this date';
+
+        const dayAppointments = getAppointmentsForDate(date);
+
+        if (dayAppointments.length === 0) {
+          appointmentListContent.innerHTML = `
+            <div class="no-appointments">
+              <i class="fas fa-calendar-plus"></i>
+              <p>No appointments scheduled for this date</p>
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('createAppointmentBtn').click()">
+                <i class="fas fa-plus me-1"></i>Create Appointment
+              </button>
+            </div>
+          `;
+        } else {
+          appointmentListContent.innerHTML = dayAppointments.map(appointment => `
+            <div class="appointment-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <div class="appointment-time">${formatTime(appointment.scheduledAt)}</div>
+                  <div class="appointment-patient">${escapeHtml(appointment.patientFullName)}</div>
+                  ${appointment.notes ? `<div class="appointment-notes">${escapeHtml(appointment.notes)}</div>` : ''}
+                  <small class="text-muted">Created by ${escapeHtml(appointment.createdBy)}</small>
+                </div>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="editAppointment('${appointment.id}')">
+                      <i class="fas fa-edit me-2"></i>Edit
+                    </a></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteAppointment('${appointment.id}')">
+                      <i class="fas fa-trash me-2"></i>Delete
+                    </a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      function getAppointmentsForDate(date) {
+        const dateStr = date.toISOString().split('T')[0];
+        return appointments.filter(appointment => {
+          const appointmentDate = new Date(appointment.scheduledAt).toISOString().split('T')[0];
+          return appointmentDate === dateStr;
+        });
+      }
+
+      function loadAppointments() {
+        const month = currentDate.getMonth() + 1;
+        const year = currentDate.getFullYear();
+        const monthStr = month.toString().padStart(2, '0');
+        
+        fetch(`/api/appointments/calendar?month=${year}-${monthStr}`, {
+          method: 'GET',
+          credentials: 'include'
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to load appointments');
+          }
+          return response.json();
+        })
+        .then(data => {
+          appointments = data.appointments || [];
+          if (isListView) {
+            renderListView();
+          } else {
+            renderCalendar();
+          }
+          if (selectedDate) {
+            showAppointmentsForDate(selectedDate);
+          }
+        })
+        .catch(error => {
+          console.error('Error loading appointments:', error);
+          showAlert('danger', 'Failed to load appointments');
+        });
+      }
+
+      function loadPatients() {
+        fetch('/api/patients?page=1&limit=100', {
+          method: 'GET',
+          credentials: 'include'
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to load patients');
+          }
+          return response.json();
+        })
+        .then(data => {
+          const patientSelect = document.getElementById('patientSelect');
+          patientSelect.innerHTML = '<option value="" disabled selected>Select a patient</option>';
+          
+          const patients = data.patients || [];
+          patients.forEach(patient => {
+            const option = document.createElement('option');
+            option.value = patient.id;
+            option.textContent = `${patient.lastName || ''}, ${patient.firstName || ''}`.replace(/^,\s*|,\s*$/g, '') || patient.email || patient.id;
+            patientSelect.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('Error loading patients:', error);
+          showAlert('danger', 'Failed to load patients');
+        });
+      }
+
+      function saveAppointment() {
+        const form = document.getElementById('createAppointmentForm');
+        const formData = new FormData(form);
+        
+        const patientId = document.getElementById('patientSelect').value;
+        const date = document.getElementById('appointmentDate').value;
+        const time = document.getElementById('appointmentTime').value;
+        const notes = document.getElementById('appointmentNotes').value;
+
+        if (!patientId || !date || !time) {
+          showAlert('danger', 'Please fill in all required fields');
+          return;
+        }
+
+        const scheduledAt = `${date}T${time}:00`;
+        
+        showAlert('info', 'Creating appointment...');
+
+        fetch('/api/appointments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            patientId: patientId,
+            scheduledAt: scheduledAt,
+            notes: notes || null
+          })
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw response;
+          }
+          return response.json();
+        })
+        .then(data => {
+          showAlert('success', 'Appointment created successfully');
+          form.reset();
+          loadAppointments();
+          bootstrap.Modal.getInstance(document.getElementById('createAppointmentModal')).hide();
+        })
+        .catch(error => {
+          console.error('Error creating appointment:', error);
+          showAlert('danger', 'Failed to create appointment');
+        });
+      }
+
+      function showAlert(type, message) {
+        const alertBox = document.getElementById('createAppointmentAlert');
+        if (!alertBox) return;
+
+        if (!type || !message) {
+          alertBox.classList.add('d-none');
+          alertBox.className = 'alert d-none';
+          alertBox.textContent = '';
+          return;
+        }
+
+        alertBox.className = `alert alert-${type}`;
+        alertBox.textContent = message;
+        alertBox.classList.remove('d-none');
+      }
+
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+
+      function formatTime(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Global functions for appointment management
+      window.editAppointment = function(appointmentId) {
+        const appointment = appointments.find(apt => apt.id === appointmentId);
+        if (!appointment) return;
+
+        // Load patients for edit form
+        loadPatientsForEdit().then(() => {
+          // Populate edit form
+          document.getElementById('editAppointmentId').value = appointment.id;
+          document.getElementById('editPatientSelect').value = appointment.patientId;
+          
+          const appointmentDate = new Date(appointment.scheduledAt);
+          document.getElementById('editAppointmentDate').value = appointmentDate.toISOString().split('T')[0];
+          document.getElementById('editAppointmentTime').value = appointmentDate.toTimeString().slice(0, 5);
+          document.getElementById('editAppointmentNotes').value = appointment.notes || '';
+
+          // Show modal
+          const modal = new bootstrap.Modal(document.getElementById('editAppointmentModal'));
+          modal.show();
+        });
+      };
+
+    window.deleteAppointment = function(appointmentId) {
+      if (!confirm('Are you sure you want to delete this appointment?')) {
+        return;
+      }
+
+      fetch(`/api/appointments/${appointmentId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      .then(async response => {
+        if (!response.ok) {
+          let errorMessage = 'Failed to delete appointment';
+          
+          // Handle specific error types
+          if (response.status === 401) {
+            errorMessage = 'Authentication required. Please log in again.';
+          } else if (response.status === 403) {
+            errorMessage = 'You do not have permission to delete appointments.';
+          } else if (response.status === 500) {
+            errorMessage = 'Server error occurred. Please try again or contact support.';
+          } else {
+            try {
+              const errorData = await response.json();
+              errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+              console.log('Could not parse error response:', e);
+            }
+          }
+          
+          throw new Error(errorMessage);
+        }
+        return response.json();
+      })
+      .then(() => {
+        showAlert('success', 'Appointment deleted successfully');
+        loadAppointments();
+      })
+      .catch(error => {
+        console.error('Error deleting appointment:', error);
+        showAlert('danger', error.message || 'Failed to delete appointment');
+      });
+    };
+
+      function updateAppointment() {
+        const appointmentId = document.getElementById('editAppointmentId').value;
+        const patientId = document.getElementById('editPatientSelect').value;
+        const date = document.getElementById('editAppointmentDate').value;
+        const time = document.getElementById('editAppointmentTime').value;
+        const notes = document.getElementById('editAppointmentNotes').value;
+
+        if (!patientId || !date || !time) {
+          showAlert('danger', 'Please fill in all required fields', 'edit');
+          return;
+        }
+
+        const scheduledAt = `${date}T${time}:00`;
+        
+        showAlert('info', 'Updating appointment...', 'edit');
+
+        console.log('Sending appointment update request:', {
+          appointmentId,
+          patientId,
+          scheduledAt,
+          notes
+        });
+        
+        fetch(`/api/appointments/${appointmentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            patientId: patientId,
+            scheduledAt: scheduledAt,
+            notes: notes || null
+          })
+        })
+        .then(response => {
+          console.log('Appointment update response status:', response.status);
+          if (!response.ok) {
+            throw response;
+          }
+          return response.json();
+        })
+              .then(data => {
+                showAlert('success', 'Appointment updated successfully', 'edit');
+                loadAppointments();
+                bootstrap.Modal.getInstance(document.getElementById('editAppointmentModal')).hide();
+              })
+        .catch(async error => {
+          console.error('Error updating appointment:', error);
+          
+          // Try to get detailed error message from response
+          let errorMessage = 'Failed to update appointment';
+          try {
+            if (error.response) {
+              const errorData = await error.response.json();
+              errorMessage = errorData.message || errorData.error || errorMessage;
+              
+              // Handle specific error types
+              if (error.response.status === 401) {
+                errorMessage = 'Authentication required. Please log in again.';
+              } else if (error.response.status === 403) {
+                errorMessage = 'You do not have permission to update appointments.';
+              } else if (error.response.status === 500) {
+                errorMessage = 'Server error occurred. Please try again or contact support.';
+              }
+            }
+          } catch (e) {
+            console.log('Could not parse error response:', e);
+          }
+          
+          showAlert('danger', errorMessage, 'edit');
+        });
+      }
+
+      function loadPatientsForEdit() {
+        return fetch('/api/patients?page=1&limit=100', {
+          method: 'GET',
+          credentials: 'include'
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to load patients');
+          }
+          return response.json();
+        })
+        .then(data => {
+          const patientSelect = document.getElementById('editPatientSelect');
+          patientSelect.innerHTML = '<option value="" disabled selected>Select a patient</option>';
+          
+          const patients = data.patients || [];
+          patients.forEach(patient => {
+            const option = document.createElement('option');
+            option.value = patient.id;
+            option.textContent = `${patient.lastName || ''}, ${patient.firstName || ''}`.replace(/^,\s*|,\s*$/g, '') || patient.email || patient.id;
+            patientSelect.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('Error loading patients:', error);
+          showAlert('danger', 'Failed to load patients', 'edit');
+        });
+      }
+
+      function showAlert(type, message, modal = 'create') {
+        const alertBox = document.getElementById(`${modal}AppointmentAlert`);
+        if (!alertBox) return;
+
+        if (!type || !message) {
+          alertBox.classList.add('d-none');
+          alertBox.className = 'alert d-none';
+          alertBox.textContent = '';
+          return;
+        }
+
+        alertBox.className = `alert alert-${type}`;
+        alertBox.textContent = message;
+        alertBox.classList.remove('d-none');
+      }
+
+      // Initialize with today's date selected
+      setTimeout(() => {
+        const today = new Date();
+        selectDate(today);
+      }, 500);
+    });
+  </script>
+</body>
+</html>

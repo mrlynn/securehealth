@@ -288,13 +288,20 @@
                 
                 const result = await response.json();
                 
+                console.log('Registration response:', result);
+                
                 if (result.success) {
                     showAlert('Account created successfully! You can now log in.', 'success');
                     setTimeout(() => {
                         window.location.href = '/patient-portal/login.html';
                     }, 2000);
                 } else {
-                    showAlert(result.message || 'Registration failed', 'danger');
+                    let errorMessage = result.message || 'Registration failed';
+                    if (result.debug) {
+                        console.log('Debug info:', result.debug);
+                        errorMessage += ' (Check console for details)';
+                    }
+                    showAlert(errorMessage, 'danger');
                 }
             } catch (error) {
                 console.error('Registration error:', error);

@@ -7,6 +7,7 @@ use App\Document\User;
 use App\Repository\PatientRepository;
 use App\Repository\UserRepository;
 use App\Repository\AppointmentRepository;
+use App\Repository\MessageRepository;
 use App\Service\AuditLogService;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use MongoDB\BSON\ObjectId;
@@ -29,6 +30,7 @@ class PatientPortalController extends AbstractController
     private AuditLogService $auditLogService;
     private AuthorizationCheckerInterface $authorizationChecker;
     private ValidatorInterface $validator;
+    private MessageRepository $messageRepository;
 
     public function __construct(
         PatientRepository $patientRepository,
@@ -37,7 +39,8 @@ class PatientPortalController extends AbstractController
         DocumentManager $documentManager,
         AuditLogService $auditLogService,
         AuthorizationCheckerInterface $authorizationChecker,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        MessageRepository $messageRepository
     ) {
         $this->patientRepository = $patientRepository;
         $this->userRepository = $userRepository;
@@ -46,6 +49,7 @@ class PatientPortalController extends AbstractController
         $this->auditLogService = $auditLogService;
         $this->authorizationChecker = $authorizationChecker;
         $this->validator = $validator;
+        $this->messageRepository = $messageRepository;
     }
 
     /**
@@ -217,17 +221,37 @@ class PatientPortalController extends AbstractController
         if ($existingUser) {
             return $this->json([
                 'success' => false,
-                'message' => 'An account with this email already exists.'
+                'message' => 'An account with this email already exists.',
+                'debug' => [
+                    'email' => $data['email'],
+                    'existingUserId' => (string)$existingUser->getId(),
+                    'existingUserRoles' => $existingUser->getRoles()
+                ]
             ], Response::HTTP_CONFLICT);
         }
 
         // Check if patient already exists
-        $existingPatient = $this->patientRepository->findOneByEmail($data['email']);
-        if ($existingPatient) {
+        try {
+            $existingPatient = $this->patientRepository->findOneByEmail($data['email']);
+            if ($existingPatient) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'A patient record with this email already exists.',
+                    'debug' => [
+                        'email' => $data['email'],
+                        'existingPatientId' => (string)$existingPatient->getId()
+                    ]
+                ], Response::HTTP_CONFLICT);
+            }
+        } catch (\Exception $e) {
             return $this->json([
                 'success' => false,
-                'message' => 'A patient record with this email already exists.'
-            ], Response::HTTP_CONFLICT);
+                'message' => 'Error checking for existing patient: ' . $e->getMessage(),
+                'debug' => [
+                    'email' => $data['email'],
+                    'error' => $e->getMessage()
+                ]
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         try {
@@ -461,6 +485,123 @@ class PatientPortalController extends AbstractController
                 'message' => 'Failed to retrieve upcoming appointments: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * List messages for the logged-in patient
+     */
+    #[Route('/messages', name: 'patient_portal_messages', methods: ['GET'])]
+    public function getMyMessages(UserInterface $user): JsonResponse
+    {
+        if (!$user->isPatient()) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Access denied. Patient access required.'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $patientId = $user->getPatientId();
+        if (!$patientId) {
+            return $this->json([
+                'success' => false,
+                'message' => 'No patient record associated with this account.'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        try {
+            $objectId = new ObjectId($patientId);
+            $messages = $this->messageRepository->findByPatient($objectId, 200);
+            $data = array_map(fn($m) => $m->toArray(), $messages);
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Failed to retrieve messages: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $this->auditLogService->log(
+            $user,
+            'patient_portal_messages_list',
+            [
+                'action' => 'list_messages',
+                'entityType' => 'Patient',
+                'entityId' => (string)$patientId
+            ]
+        );
+
+        return $this->json([
+            'success' => true,
+            'data' => $data
+        ]);
+    }
+
+    /**
+     * Send a message from the logged-in patient to staff
+     */
+    #[Route('/messages', name: 'patient_portal_send_message', methods: ['POST'])]
+    public function sendMessage(Request $request, UserInterface $user): JsonResponse
+    {
+        if (!$user->isPatient()) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Access denied. Patient access required.'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $patientId = $user->getPatientId();
+        if (!$patientId) {
+            return $this->json([
+                'success' => false,
+                'message' => 'No patient record associated with this account.'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $payload = json_decode($request->getContent(), true) ?? [];
+        $subject = $payload['subject'] ?? null;
+        $body = trim($payload['body'] ?? '');
+        $recipientRoles = $payload['recipientRoles'] ?? ['ROLE_DOCTOR', 'ROLE_NURSE'];
+
+        if ($body === '') {
+            return $this->json([
+                'success' => false,
+                'message' => 'Message body is required.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $message = new \App\Document\Message();
+        $message->setPatientId($patientId);
+        $message->setSenderUserId(method_exists($user, 'getId') ? (string)$user->getId() : $user->getUserIdentifier());
+        $message->setSenderName(method_exists($user, 'getUsername') ? $user->getUsername() : $user->getUserIdentifier());
+        $message->setSenderRoles($user->getRoles());
+        $message->setDirection('to_staff');
+        $message->setRecipientRoles($recipientRoles);
+        $message->setSubject($subject);
+        $message->setBody($body);
+
+        try {
+            $this->messageRepository->save($message, true);
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Failed to send message: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $this->auditLogService->log(
+            $user,
+            'patient_portal_message_send',
+            [
+                'action' => 'send_message',
+                'entityType' => 'Patient',
+                'entityId' => (string)$patientId,
+                'recipientRoles' => $recipientRoles
+            ]
+        );
+
+        return $this->json([
+            'success' => true,
+            'data' => $message->toArray()
+        ], Response::HTTP_CREATED);
     }
 
     /**

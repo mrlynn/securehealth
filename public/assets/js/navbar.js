@@ -20,6 +20,10 @@ class SecureHealthNavbar {
         this.loadUserData();
         this.renderNavbar();
         this.setupEventListeners();
+        // Start unread polling for care team
+        if (this.isDoctor || this.isNurse) {
+            this.startStaffUnreadPolling();
+        }
     }
 
     /**
@@ -167,20 +171,115 @@ class SecureHealthNavbar {
     getRoleBasedNavItems(currentPage) {
         let items = '';
 
-        // Patients dropdown - visible to all authenticated users
+        // Calendar - visible to all authenticated users
+        items += `
+            <li class="nav-item">
+                <a class="nav-link ${currentPage === '/calendar.html' ? 'active' : ''}" href="/calendar.html">
+                    <i class="fas fa-calendar-alt me-1"></i>Calendar
+                </a>
+            </li>
+        `;
+
+        // Patients dropdown - visible to all authenticated users with role-specific options
         items += `
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle ${currentPage.includes('/patient') ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-users me-1"></i>Patients
                 </a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item ${currentPage === '/patients.html' ? 'active' : ''}" href="/patients.html">View All Patients</a></li>
-                    <li><a class="dropdown-item ${currentPage === '/patient-add.html' ? 'active' : ''}" href="/patient-add.html">Add New Patient</a></li>
-                    ${this.isReceptionist ? `<li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item ${currentPage === '/scheduling.html' ? 'active' : ''}" href="/scheduling.html"><i class="fas fa-calendar-alt me-1"></i>Scheduling</a></li>` : ''}
+                    <li><a class="dropdown-item ${currentPage === '/patients.html' ? 'active' : ''}" href="/patients.html">
+                        <i class="fas fa-list me-1"></i>View All Patients
+                    </a></li>
+                    <li><a class="dropdown-item ${currentPage === '/patient-add.html' ? 'active' : ''}" href="/patient-add.html">
+                        <i class="fas fa-user-plus me-1"></i>Add New Patient
+                    </a></li>
+                    ${(this.isDoctor || this.isNurse) ? `
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item ${currentPage === '/patient-notes-demo.html' ? 'active' : ''}" href="/patient-notes-demo.html">
+                        <i class="fas fa-notes-medical me-1"></i>${this.isDoctor ? 'Manage' : 'View'} Patient Notes
+                    </a></li>` : ''}
+                    ${this.isReceptionist ? `
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item ${currentPage === '/scheduling.html' ? 'active' : ''}" href="/scheduling.html">
+                        <i class="fas fa-calendar-check me-1"></i>Scheduling
+                    </a></li>` : ''}
                 </ul>
             </li>
         `;
+
+        // Doctor-specific dropdown for clinical tools
+        if (this.isDoctor) {
+            items += `
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle ${currentPage.includes('/medical-knowledge') || currentPage === '/admin.html' ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-stethoscope me-1"></i>Clinical Tools
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item ${currentPage === '/medical-knowledge-search.html' ? 'active' : ''}" href="/medical-knowledge-search.html">
+                            <i class="fas fa-book-medical me-1"></i>Medical Knowledge
+                        </a></li>
+                        <li><a class="dropdown-item" href="/medical-knowledge-search.html?tool=clinical-decision">
+                            <i class="fas fa-brain me-1"></i>Clinical Decision Support
+                        </a></li>
+                        <li><a class="dropdown-item" href="/medical-knowledge-search.html?tool=drug-interactions">
+                            <i class="fas fa-pills me-1"></i>Drug Interactions
+                        </a></li>
+                        <li><a class="dropdown-item" href="/medical-knowledge-search.html?tool=treatment-guidelines">
+                            <i class="fas fa-clipboard-list me-1"></i>Treatment Guidelines
+                        </a></li>
+                        <li><a class="dropdown-item" href="/medical-knowledge-search.html?tool=diagnostics">
+                            <i class="fas fa-microscope me-1"></i>Diagnostic Criteria
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item ${currentPage === '/admin.html' ? 'active' : ''}" href="/admin.html">
+                            <i class="fas fa-file-alt me-1"></i>Audit Logs
+                        </a></li>
+                    </ul>
+                </li>
+            `;
+        }
+
+        // Nurse-specific medical tools (limited access)
+        if (this.isNurse && !this.isDoctor) {
+            items += `
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle ${currentPage.includes('/medical-knowledge') ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-medkit me-1"></i>Medical Tools
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/medical-knowledge-search.html?tool=drug-interactions">
+                            <i class="fas fa-pills me-1"></i>Drug Interactions
+                        </a></li>
+                        <li><a class="dropdown-item ${currentPage === '/medical-knowledge-search.html' ? 'active' : ''}" href="/medical-knowledge-search.html">
+                            <i class="fas fa-book-medical me-1"></i>Medical Knowledge (View)
+                        </a></li>
+                    </ul>
+                </li>
+            `;
+        }
+
+        // Care team messages (doctors/nurses)
+        if (this.isDoctor || this.isNurse) {
+            items += `
+                <li class="nav-item">
+                    <a class="nav-link ${currentPage === '/staff/messages' ? 'active' : ''}" href="/staff/messages">
+                        <i class="fas fa-envelope me-1"></i>Messages
+                        <span id="navMessagesBadge" class="badge bg-light text-dark ms-1"></span>
+                    </a>
+                </li>
+            `;
+        }
+
+        // Receptionist-specific tools
+        if (this.isReceptionist && !this.isDoctor && !this.isNurse) {
+            items += `
+                <li class="nav-item">
+                    <a class="nav-link ${currentPage === '/scheduling.html' ? 'active' : ''}" href="/scheduling.html">
+                        <i class="fas fa-calendar-check me-1"></i>Scheduling
+                    </a>
+                </li>
+            `;
+        }
 
         // Admin-specific dropdown
         if (this.isAdmin) {
@@ -190,10 +289,23 @@ class SecureHealthNavbar {
                         <i class="fas fa-cog me-1"></i>Admin
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item ${currentPage === '/admin.html' ? 'active' : ''}" href="/admin.html">Dashboard</a></li>
-                        <li><a class="dropdown-item ${currentPage === '/admin-demo-data.html' ? 'active' : ''}" href="/admin-demo-data.html">Demo Data</a></li>
+                        <li><a class="dropdown-item ${currentPage === '/admin.html' ? 'active' : ''}" href="/admin.html">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a></li>
+                        <li><a class="dropdown-item ${currentPage === '/admin-demo-data.html' ? 'active' : ''}" href="/admin-demo-data.html">
+                            <i class="fas fa-database me-1"></i>Demo Data
+                        </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item ${currentPage === '/queryable-encryption-search.html' ? 'active' : ''}" href="/queryable-encryption-search.html"><i class="fas fa-lock me-1"></i>Encryption Search</a></li>
+                        <li><a class="dropdown-item ${currentPage === '/medical-knowledge-search.html' ? 'active' : ''}" href="/medical-knowledge-search.html">
+                            <i class="fas fa-book-medical me-1"></i>Medical Knowledge
+                        </a></li>
+                        <li><a class="dropdown-item ${currentPage === '/queryable-encryption-search.html' ? 'active' : ''}" href="/queryable-encryption-search.html">
+                            <i class="fas fa-lock me-1"></i>Encryption Search
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/admin.html#users">
+                            <i class="fas fa-users-cog me-1"></i>User Management
+                        </a></li>
                     </ul>
                 </li>
             `;
@@ -260,6 +372,27 @@ class SecureHealthNavbar {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.handleLogout());
         }
+    }
+
+    /**
+     * Poll unread staff conversations and update navbar badge
+     */
+    startStaffUnreadPolling() {
+        const refresh = () => {
+            fetch('/api/conversations/inbox/unread-count', { credentials: 'include' })
+                .then(r => r.json())
+                .then(j => {
+                    if (!j || !j.success) return;
+                    const n = j.count || 0;
+                    const el = document.getElementById('navMessagesBadge');
+                    if (el) el.textContent = n > 0 ? String(n) : '';
+                })
+                .catch(() => {});
+        };
+        // initial and interval
+        refresh();
+        this._staffUnreadInterval && clearInterval(this._staffUnreadInterval);
+        this._staffUnreadInterval = setInterval(refresh, 15000);
     }
 
     /**

@@ -221,8 +221,13 @@
                         <a class="nav-link" href="/documentation.html">Documentation</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/calendar.html" id="calendarLink" style="display: none;">
+                            <i class="fas fa-calendar-alt me-1"></i>Calendar
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/scheduling.html" id="scheduleLink" style="display: none;">
-                            <i class="fas fa-calendar-alt me-1"></i>Scheduling
+                            <i class="fas fa-calendar-plus me-1"></i>Scheduling
                         </a>
                     </li>
                     <li class="nav-item">
@@ -595,11 +600,15 @@
         function applyRoleVisibility() {
             const storedUser = localStorage.getItem('securehealth_user');
             const adminLink = document.getElementById('adminLink');
+            const calendarLink = document.getElementById('calendarLink');
             const scheduleLink = document.getElementById('scheduleLink');
             
             if (!storedUser) {
                 if (adminLink) {
                     adminLink.style.display = 'none';
+                }
+                if (calendarLink) {
+                    calendarLink.style.display = 'none';
                 }
                 if (scheduleLink) {
                     scheduleLink.style.display = 'none';
@@ -617,6 +626,9 @@
                 if (adminLink) {
                     adminLink.style.display = isAdmin ? 'block' : 'none';
                 }
+                if (calendarLink) {
+                    calendarLink.style.display = 'block'; // All authenticated users can view calendar
+                }
                 if (scheduleLink) {
                     scheduleLink.style.display = isPureReceptionist ? 'block' : 'none';
                 }
@@ -624,6 +636,9 @@
                 console.error('Error parsing user data:', e);
                 if (adminLink) {
                     adminLink.style.display = 'none';
+                }
+                if (calendarLink) {
+                    calendarLink.style.display = 'none';
                 }
                 if (scheduleLink) {
                     scheduleLink.style.display = 'none';

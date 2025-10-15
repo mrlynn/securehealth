@@ -3,214 +3,22 @@
 namespace App\Controller\Api;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
-use Symfony\Component\Security\Core\User\UserInterface;
-use App\Service\AuditLogService;
-use App\Repository\UserRepository;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/api', name: 'api_auth_')]
+#[Route('/api')]
 class AuthController extends AbstractController
 {
-    private AuditLogService $auditLogService;
-    private UserRepository $userRepository;
-    
-    public function __construct(AuditLogService $auditLogService, UserRepository $userRepository)
+    /**
+     * Get current authenticated user information
+     */
+    #[Route('/user', name: 'api_user', methods: ['GET'])]
+    public function getCurrentUser(): JsonResponse
     {
-        $this->auditLogService = $auditLogService;
-        $this->userRepository = $userRepository;
-    }
-
-    #[Route('/login', name: 'login', methods: ['POST'])]
-    public function login(Request $request): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
-        
-        // Handle both _username/_password (Symfony standard) and email/password formats
-        $email = $data['_username'] ?? $data['email'] ?? null;
-        $password = $data['_password'] ?? $data['password'] ?? null;
-        
-        if (!$email || !$password) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Email and password are required'
-            ], Response::HTTP_BAD_REQUEST);
-        }
-        
-        // Find user in MongoDB
-        $user = $this->userRepository->findOneByEmail($email);
-        
-        // Check if user exists and password is correct
-        // TODO: Implement proper password hashing (currently using plain text comparison)
-        if (!$user || $user->getPassword() !== $password) {
-            // Log failed login attempt
-            $this->auditLogService->log(
-                new AnonymousUser($email),
-                'SECURITY_LOGIN_FAILED',
-                [
-                    'description' => 'Failed login attempt',
-                    'email' => $email,
-                    'ip' => $request->getClientIp(),
-                    'status' => 'failed'
-                ]
-            );
-            
-            return $this->json([
-                'success' => false,
-                'message' => 'Invalid credentials'
-            ], Response::HTTP_UNAUTHORIZED);
-        }
-        
-        // Set user in session
-        $session = $request->getSession();
-        if (!$session->isStarted()) {
-            $session->start();
-        }
-        $session->set('user', [
-            'email' => $user->getEmail(),
-            'username' => $user->getUsername(),
-            'roles' => $user->getRoles(),
-            'isPatient' => $user->isPatient(),
-            'patientId' => $user->getPatientId() ? (string)$user->getPatientId() : null
-        ]);
-        
-        // Create an authenticated user for logging
-        $authenticatedUser = new class($user->getEmail(), $user->getUsername(), $user->getRoles()) implements UserInterface {
-            private string $email;
-            private string $username;
-            private array $roles;
-
-            public function __construct(string $email, string $username, array $roles)
-            {
-                $this->email = $email;
-                $this->username = $username;
-                $this->roles = $roles;
-            }
-
-            public function getRoles(): array
-            {
-                return $this->roles;
-            }
-
-            public function getPassword(): ?string
-            {
-                return null;
-            }
-
-            public function getSalt(): ?string
-            {
-                return null;
-            }
-
-            public function eraseCredentials(): void
-            {
-            }
-
-            public function getUserIdentifier(): string
-            {
-                return $this->email;
-            }
-        };
-
-        // Log successful login
-        $this->auditLogService->logSecurityEvent(
-            $authenticatedUser,
-            'LOGIN',
-            [
-                'description' => 'User logged in successfully',
-                'username' => $user->getUsername(),
-                'ip' => $request->getClientIp(),
-                'status' => 'success'
-            ]
-        );
-        
-        // Return user data
-        return $this->json([
-            'success' => true,
-            'user' => [
-                'email' => $user->getEmail(),
-                'username' => $user->getUsername(),
-                'roles' => $user->getRoles(),
-                'isAdmin' => $user->isAdmin()
-            ]
-        ]);
-    }
-    
-    #[Route('/logout', name: 'logout', methods: ['POST'])]
-    public function logout(Request $request): JsonResponse
-    {
-        // Get current user from session
-        $user = $request->getSession()->get('user');
-        
-        if ($user) {
-            // Create an authenticated user for logging
-            $authenticatedUser = new class($user['email'], $user['username'], $user['roles']) implements UserInterface {
-                private string $email;
-                private string $username;
-                private array $roles;
-
-                public function __construct(string $email, string $username, array $roles)
-                {
-                    $this->email = $email;
-                    $this->username = $username;
-                    $this->roles = $roles;
-                }
-
-                public function getRoles(): array
-                {
-                    return $this->roles;
-                }
-
-                public function getPassword(): ?string
-                {
-                    return null;
-                }
-
-                public function getSalt(): ?string
-                {
-                    return null;
-                }
-
-                public function eraseCredentials(): void
-                {
-                }
-
-                public function getUserIdentifier(): string
-                {
-                    return $this->email;
-                }
-            };
-
-            // Log logout
-            $this->auditLogService->logSecurityEvent(
-                $authenticatedUser,
-                'LOGOUT',
-                [
-                    'description' => 'User logged out',
-                    'username' => $user['username'],
-                    'ip' => $request->getClientIp(),
-                    'status' => 'success'
-                ]
-            );
-            
-            // Clear session
-            $request->getSession()->remove('user');
-        }
-        
-        return $this->json([
-            'success' => true,
-            'message' => 'Logged out successfully'
-        ]);
-    }
-    
-    #[Route('/user', name: 'current_user', methods: ['GET'])]
-    public function currentUser(Request $request): JsonResponse
-    {
-        // Get current user from session
-        $user = $request->getSession()->get('user');
+        $user = $this->getUser();
         
         if (!$user) {
             return $this->json([
@@ -221,44 +29,115 @@ class AuthController extends AbstractController
         
         return $this->json([
             'success' => true,
-            'user' => $user
+            'user' => [
+                'id' => $user->getUserIdentifier(),
+                'username' => $user->getUsername(),
+                'email' => $user->getEmail(),
+                'roles' => $user->getRoles(),
+                'isAdmin' => in_array('ROLE_ADMIN', $user->getRoles()),
+                'isDoctor' => in_array('ROLE_DOCTOR', $user->getRoles()),
+                'isNurse' => in_array('ROLE_NURSE', $user->getRoles()),
+                'isReceptionist' => in_array('ROLE_RECEPTIONIST', $user->getRoles()),
+                'isPatient' => in_array('ROLE_PATIENT', $user->getRoles()),
+            ]
         ]);
     }
-}
-
-/**
- * Simple anonymous user class for audit logging before authentication
- */
-class AnonymousUser implements UserInterface
-{
-    private string $identifier;
-
-    public function __construct(string $identifier)
+    
+    /**
+     * Check if user has required role(s)
+     */
+    #[Route('/check-permission', name: 'api_check_permission', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function checkPermission(Request $request): JsonResponse
     {
-        $this->identifier = $identifier;
+        $data = json_decode($request->getContent(), true);
+        $requiredRoles = $data['roles'] ?? [];
+        
+        if (empty($requiredRoles)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'No roles specified'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+        
+        $user = $this->getUser();
+        $userRoles = $user->getRoles();
+        
+        // Check if user has any of the required roles
+        $hasPermission = false;
+        foreach ($requiredRoles as $role) {
+            if ($this->isGranted($role)) {
+                $hasPermission = true;
+                break;
+            }
+        }
+        
+        return $this->json([
+            'success' => true,
+            'hasPermission' => $hasPermission,
+            'userRoles' => $userRoles,
+            'requiredRoles' => $requiredRoles
+        ]);
     }
-
-    public function getRoles(): array
+    
+    /**
+     * Verify page access for static HTML pages
+     */
+    #[Route('/verify-access/{page}', name: 'api_verify_access', methods: ['GET'])]
+    public function verifyPageAccess(string $page): JsonResponse
     {
-        return ['ROLE_ANONYMOUS'];
-    }
-
-    public function getPassword(): ?string
-    {
-        return null;
-    }
-
-    public function getSalt(): ?string
-    {
-        return null;
-    }
-
-    public function eraseCredentials(): void
-    {
-    }
-
-    public function getUserIdentifier(): string
-    {
-        return $this->identifier;
+        $user = $this->getUser();
+        
+        if (!$user) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Not authenticated',
+                'redirectTo' => '/login.html'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+        
+        // Define page access requirements
+        $pagePermissions = [
+            'calendar' => ['ROLE_USER'], // All authenticated users
+            'patients' => ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_RECEPTIONIST', 'ROLE_ADMIN'],
+            'patient-add' => ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_RECEPTIONIST'],
+            'patient-detail' => ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_RECEPTIONIST', 'ROLE_ADMIN'],
+            'patient-edit' => ['ROLE_DOCTOR', 'ROLE_NURSE'],
+            'patient-notes-demo' => ['ROLE_DOCTOR', 'ROLE_NURSE'],
+            'scheduling' => ['ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_ADMIN'],
+            'medical-knowledge-search' => ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_ADMIN'],
+            'admin' => ['ROLE_ADMIN', 'ROLE_DOCTOR'], // Doctors can view audit logs
+            'admin-demo-data' => ['ROLE_ADMIN'],
+            'queryable-encryption-search' => ['ROLE_ADMIN'],
+        ];
+        
+        $requiredRoles = $pagePermissions[$page] ?? ['ROLE_USER'];
+        $hasAccess = false;
+        
+        foreach ($requiredRoles as $role) {
+            if ($this->isGranted($role)) {
+                $hasAccess = true;
+                break;
+            }
+        }
+        
+        if (!$hasAccess) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Access denied',
+                'redirectTo' => '/patients.html',
+                'requiredRoles' => $requiredRoles,
+                'userRoles' => $user->getRoles()
+            ], Response::HTTP_FORBIDDEN);
+        }
+        
+        return $this->json([
+            'success' => true,
+            'hasAccess' => true,
+            'user' => [
+                'username' => $user->getUsername(),
+                'roles' => $user->getRoles()
+            ]
+        ]);
     }
 }

@@ -64,7 +64,7 @@
         <div>
           <span id="roleInfo" class="text-muted small"></span>
           <button class="btn btn-outline-secondary btn-sm ms-2" id="toggleMaskingBtn" onclick="toggleDataMasking()" title="Toggle data masking">
-            <i class="fas fa-eye-slash" id="maskingIcon"></i> Hide Sensitive Data
+            <i class="fas fa-eye-slash" id="maskingIcon"></i> Show Sensitive Data
           </button>
           <a href="/patient-add.html" class="btn btn-primary btn-sm ms-2" id="addPatientBtn" style="display: none;">Add New Patient</a>
         </div>
@@ -98,8 +98,22 @@
       
       // Check authentication and load patients with session validation
       async function checkAuthAndLoadPatients() {
-        // Get user from navbar
-        currentUser = window.secureHealthNavbar.getCurrentUser();
+        // Load user data directly from localStorage first
+        const storedUser = localStorage.getItem('securehealth_user');
+        if (!storedUser) {
+          console.log("No user in localStorage, redirecting to login");
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        try {
+          currentUser = JSON.parse(storedUser);
+        } catch (e) {
+          console.error("Error parsing user data:", e);
+          localStorage.removeItem('securehealth_user');
+          window.location.href = '/login.html';
+          return;
+        }
         
         if (!currentUser) {
           console.log("No user found, redirecting to login");
@@ -445,19 +459,19 @@
         return buttons;
       }
       
-      // Toggle data masking
-      function toggleDataMasking() {
+      // Toggle data masking - moved to global scope
+      window.toggleDataMasking = function() {
         maskingEnabled = !maskingEnabled;
         const icon = document.getElementById('maskingIcon');
         const button = document.getElementById('toggleMaskingBtn');
         
         if (maskingEnabled) {
           icon.className = 'fas fa-eye-slash';
-          button.innerHTML = '<i class="fas fa-eye-slash" id="maskingIcon"></i> Hide Sensitive Data';
+          button.innerHTML = '<i class="fas fa-eye-slash" id="maskingIcon"></i> Show Sensitive Data';
           button.className = 'btn btn-outline-secondary btn-sm ms-2';
         } else {
           icon.className = 'fas fa-eye';
-          button.innerHTML = '<i class="fas fa-eye" id="maskingIcon"></i> Show Sensitive Data';
+          button.innerHTML = '<i class="fas fa-eye" id="maskingIcon"></i> Hide Sensitive Data';
           button.className = 'btn btn-outline-warning btn-sm ms-2';
         }
         

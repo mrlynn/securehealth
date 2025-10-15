@@ -10,33 +10,141 @@
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ path('app_home') }}">Home</a>
+                    <a class="nav-link" href="{{ path('app_home') }}">
+                        <i class="fas fa-home mr-1"></i>Home
+                    </a>
                 </li>
                 
                 {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                    {# Calendar - all authenticated users #}
                     <li class="nav-item">
-                        <a class="nav-link" href="/patients">Patients</a>
+                        <a class="nav-link" href="/calendar.html">
+                            <i class="fas fa-calendar-alt mr-1"></i>Calendar
+                        </a>
                     </li>
 
-                    {% if is_granted('ROLE_RECEPTIONIST') and not is_granted('ROLE_DOCTOR') and not is_granted('ROLE_NURSE') and not is_granted('ROLE_ADMIN') %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/scheduling.html">Scheduling</a>
+                    {# Patients dropdown - all authenticated users with role-specific options #}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="patientsDropdown" role="button" data-toggle="dropdown">
+                            <i class="fas fa-users mr-1"></i>Patients
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="/patients.html">
+                                <i class="fas fa-list mr-1"></i>View All Patients
+                            </a>
+                            <a class="dropdown-item" href="/patient-add.html">
+                                <i class="fas fa-user-plus mr-1"></i>Add New Patient
+                            </a>
+                            {% if is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE') %}
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="/patient-notes-demo.html">
+                                    <i class="fas fa-notes-medical mr-1"></i>{% if is_granted('ROLE_DOCTOR') %}Manage{% else %}View{% endif %} Patient Notes
+                                </a>
+                            {% endif %}
+                            {% if is_granted('ROLE_RECEPTIONIST') and not is_granted('ROLE_DOCTOR') and not is_granted('ROLE_NURSE') %}
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="/scheduling.html">
+                                    <i class="fas fa-calendar-check mr-1"></i>Scheduling
+                                </a>
+                            {% endif %}
+                        </div>
+                    </li>
+
+                    {# Doctor-specific clinical tools dropdown #}
+                    {% if is_granted('ROLE_DOCTOR') %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="clinicalToolsDropdown" role="button" data-toggle="dropdown">
+                                <i class="fas fa-stethoscope mr-1"></i>Clinical Tools
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="/medical-knowledge-search.html">
+                                    <i class="fas fa-book-medical mr-1"></i>Medical Knowledge
+                                </a>
+                                <a class="dropdown-item" href="/medical-knowledge-search.html?tool=clinical-decision">
+                                    <i class="fas fa-brain mr-1"></i>Clinical Decision Support
+                                </a>
+                                <a class="dropdown-item" href="/medical-knowledge-search.html?tool=drug-interactions">
+                                    <i class="fas fa-pills mr-1"></i>Drug Interactions
+                                </a>
+                                <a class="dropdown-item" href="/medical-knowledge-search.html?tool=treatment-guidelines">
+                                    <i class="fas fa-clipboard-list mr-1"></i>Treatment Guidelines
+                                </a>
+                                <a class="dropdown-item" href="/medical-knowledge-search.html?tool=diagnostics">
+                                    <i class="fas fa-microscope mr-1"></i>Diagnostic Criteria
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="/admin.html">
+                                    <i class="fas fa-file-alt mr-1"></i>Audit Logs
+                                </a>
+                            </div>
                         </li>
                     {% endif %}
 
-                    {% if is_granted('ROLE_DOCTOR') %}
+                    {# Nurse-specific medical tools dropdown (limited access) #}
+                    {% if is_granted('ROLE_NURSE') and not is_granted('ROLE_DOCTOR') %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="medicalToolsDropdown" role="button" data-toggle="dropdown">
+                                <i class="fas fa-medkit mr-1"></i>Medical Tools
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="/medical-knowledge-search.html?tool=drug-interactions">
+                                    <i class="fas fa-pills mr-1"></i>Drug Interactions
+                                </a>
+                                <a class="dropdown-item" href="/medical-knowledge-search.html">
+                                    <i class="fas fa-book-medical mr-1"></i>Medical Knowledge (View)
+                                </a>
+                            </div>
+                        </li>
+                    {% endif %}
+
+                    {# Receptionist-specific tools #}
+                    {% if is_granted('ROLE_RECEPTIONIST') and not is_granted('ROLE_DOCTOR') and not is_granted('ROLE_NURSE') %}
                         <li class="nav-item">
-                            <a class="nav-link" href="/audit-logs">Audit Logs</a>
+                            <a class="nav-link" href="/scheduling.html">
+                                <i class="fas fa-calendar-check mr-1"></i>Scheduling
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {# Admin dropdown #}
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">
+                                <i class="fas fa-cog mr-1"></i>Admin
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="/admin.html">
+                                    <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                                </a>
+                                <a class="dropdown-item" href="/admin-demo-data.html">
+                                    <i class="fas fa-database mr-1"></i>Demo Data
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="/medical-knowledge-search.html">
+                                    <i class="fas fa-book-medical mr-1"></i>Medical Knowledge
+                                </a>
+                                <a class="dropdown-item" href="/queryable-encryption-search.html">
+                                    <i class="fas fa-lock mr-1"></i>Encryption Search
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="/admin.html#users">
+                                    <i class="fas fa-users-cog mr-1"></i>User Management
+                                </a>
+                            </div>
                         </li>
                     {% endif %}
                 {% endif %}
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ path('docs_index') }}">Documentation</a>
+                    <a class="nav-link" href="{{ path('docs_index') }}">
+                        <i class="fas fa-book mr-1"></i>Documentation
+                    </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ path('app_help') }}">Help</a>
+                    <a class="nav-link" href="{{ path('app_help') }}">
+                        <i class="fas fa-question-circle mr-1"></i>Help
+                    </a>
                 </li>
             </ul>
             
@@ -56,6 +164,32 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/login">Login</a>
                     </li>
+                {% endif %}
+                {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                    {% if is_granted('ROLE_DOCTOR') or is_granted('ROLE_NURSE') %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('staff_messages_inbox') }}">
+                                <i class="fas fa-envelope mr-1"></i> Messages
+                                <span id="navMessagesBadge" class="badge badge-light ml-1"></span>
+                            </a>
+                        </li>
+                        <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                          function refreshNavUnread(){
+                            fetch('/api/conversations/inbox/unread-count', { credentials: 'include' })
+                              .then(r=>r.json()).then(j=>{
+                                if (j && j.success) {
+                                  const n = j.count || 0;
+                                  const el = document.getElementById('navMessagesBadge');
+                                  if (el) el.textContent = n > 0 ? String(n) : '';
+                                }
+                              }).catch(()=>{});
+                          }
+                          refreshNavUnread();
+                          setInterval(refreshNavUnread, 15000);
+                        });
+                        </script>
+                    {% endif %}
                 {% endif %}
             </ul>
         </div>

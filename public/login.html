@@ -329,7 +329,7 @@
           <div class="access-card patient-portal-card">
             <h2><i class="fas fa-hospital-user me-2"></i>Patient Portal</h2>
             <p>Access your medical records, appointments, and communicate with your healthcare providers securely.</p>
-            <a href="/patient-portal" class="portal-button">
+            <a href="/patient-portal/index.html" class="portal-button">
               <i class="fas fa-user-circle me-1"></i>Access Patient Portal
             </a>
           </div>
@@ -439,12 +439,23 @@
           localStorage.setItem('securehealth_user', JSON.stringify(user));
           debugLog("Saved to localStorage", localStorage.getItem('securehealth_user'));
           
+          // Verify it was saved
+          const verification = localStorage.getItem('securehealth_user');
+          if (!verification) {
+            console.error("❌ FAILED to save to localStorage!");
+            alertEl.className = 'alert alert-danger';
+            alertEl.textContent = 'Error: Could not save session. Please try again.';
+            return;
+          }
+          debugLog("✅ Verified localStorage has data");
+          
           alertEl.className = 'alert alert-success';
           alertEl.textContent = 'Login successful! Redirecting...';
           
           // Determine redirect based on user role
-          debugLog("Will redirect in 1.5 seconds");
+          debugLog("Will redirect in 0.5 seconds");
           setTimeout(function() {
+            debugLog("About to redirect, localStorage:", localStorage.getItem('securehealth_user'));
             // Redirect patients to patient portal, everyone else to main dashboard
             if (user.roles && (user.roles.includes('ROLE_PATIENT') || user.isPatient)) {
               debugLog("Redirecting to patient portal");
@@ -453,7 +464,7 @@
               debugLog("Redirecting to patients dashboard");
               window.location.href = 'patients.html';
             }
-          }, 1500);
+          }, 500);
         } else {
           // Login failed
           alertEl.className = 'alert alert-danger';

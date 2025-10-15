@@ -1,0 +1,17 @@
+#!/bin/bash
+# PHP Docker wrapper for IDE validation
+# This script forwards PHP commands to the Docker container
+
+# Get the project root directory (parent of bin/)
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Check if docker-compose services are running
+if ! docker-compose -f "${PROJECT_ROOT}/docker-compose.yml" ps php | grep -q "Up"; then
+    # If not running, try to start the service
+    docker-compose -f "${PROJECT_ROOT}/docker-compose.yml" up -d php >/dev/null 2>&1
+fi
+
+# Execute PHP command in the container
+# Map the file path from host to container path
+exec docker-compose -f "${PROJECT_ROOT}/docker-compose.yml" exec -T php php "$@"
+
