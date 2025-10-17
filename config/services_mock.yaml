@@ -1,0 +1,12 @@
+services:
+    # Configure mock services for when MongoDB is disabled
+    
+    # Override the UserRepository with our mock implementation when MongoDB is disabled
+    App\Repository\UserRepository:
+        alias: App\Repository\MockUserRepository
+        public: true
+        
+    # Mock user repository implementation
+    App\Repository\MockUserRepository:
+        arguments:
+            $logger: '@logger'

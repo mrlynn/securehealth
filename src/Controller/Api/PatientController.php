@@ -419,11 +419,10 @@ class PatientController extends AbstractController
         $data = json_decode($request->getContent(), true);
         if (isset($data['verification'])) {
             $verification = $data['verification'];
-            if (isset($verification['birthDate']) && isset($verification['lastFourSSN'])) {
+            if (isset($verification['birthDate'])) {
                 return $this->verificationService->verifyPatientIdentity(
                     $patientId,
                     $verification['birthDate'],
-                    $verification['lastFourSSN'],
                     $user
                 );
             }
@@ -431,13 +430,11 @@ class PatientController extends AbstractController
 
         // Check for verification data in headers
         $birthDate = $request->headers->get('X-Patient-Birth-Date');
-        $lastFourSSN = $request->headers->get('X-Patient-Last-Four-SSN');
 
-        if ($birthDate && $lastFourSSN) {
+        if ($birthDate) {
             return $this->verificationService->verifyPatientIdentity(
                 $patientId,
                 $birthDate,
-                $lastFourSSN,
                 $user
             );
         }

@@ -87,7 +87,7 @@ try {
     echo "<h3>Attempt 3 - Modified URI</h3>";
     try {
         // Try with a more basic URI
-        $simpleUri = "mongodb://demo-user:***@performance-shard-00-00.zbcul.mongodb.net:27017/?authSource=admin&ssl=true";
+        $simpleUri = "mongodb://mike:Password678%21@performance-shard-00-00.zbcul.mongodb.net:27017/?authSource=admin&ssl=true";
         $options = [
             'retryWrites' => true,
             'serverSelectionTimeoutMS' => 5000,

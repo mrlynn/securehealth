@@ -46,16 +46,21 @@ class SecurityController extends AbstractController
     }
     
     #[Route('/api/logout', name: 'app_logout', methods: ['POST'])]
-    public function logout(): void
+    public function logout(): JsonResponse
     {
-        // This method can be empty, it will be intercepted by the logout key on the firewall
-        // Log the logout event in your AuditLogService
-        $this->auditLogService->logEvent(
-            $this->getUser()->getUserIdentifier(),
-            'USER_LOGOUT',
-            'User logged out'
-        );
+        // Log the logout event if user is authenticated
+        if ($this->getUser()) {
+            $this->auditLogService->logEvent(
+                $this->getUser()->getUserIdentifier(),
+                'USER_LOGOUT',
+                'User logged out'
+            );
+        }
         
-        throw new \LogicException('This method should not be reached!');
+        // Return success response - Symfony will handle session clearing
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Logged out successfully'
+        ]);
     }
 }

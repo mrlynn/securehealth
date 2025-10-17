@@ -19,6 +19,7 @@ class MongoDBEncryptionService
     private $keyVaultCollection;
     private $logger;
     private $encryptedFields = [];
+    private $mongodbDisabled = false;
     
     // Encryption algorithms for MongoDB Atlas
     const ALGORITHM_DETERMINISTIC = 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic';
@@ -33,14 +34,23 @@ class MongoDBEncryptionService
         $this->logger = $logger;
         
         // Check if MongoDB is disabled with fallbacks - only do this once
-        $mongodbDisabled = false;
         try {
             if ($params->has('MONGODB_DISABLED')) {
-                $mongodbDisabled = filter_var($params->get('MONGODB_DISABLED'), FILTER_VALIDATE_BOOLEAN);
-                $this->logger->info('MongoDB disabled status: ' . ($mongodbDisabled ? 'true' : 'false'));
+                $this->mongodbDisabled = filter_var($params->get('MONGODB_DISABLED'), FILTER_VALIDATE_BOOLEAN);
+                $this->logger->info('MongoDB disabled status: ' . ($this->mongodbDisabled ? 'true' : 'false'));
+            } else if ($params->has('mongodb_disabled')) {
+                // Try lowercase parameter name from services.yaml
+                $this->mongodbDisabled = filter_var($params->get('mongodb_disabled'), FILTER_VALIDATE_BOOLEAN);
+                $this->logger->info('MongoDB disabled status (from services): ' . ($this->mongodbDisabled ? 'true' : 'false'));
             }
         } catch (\Exception $e) {
             $this->logger->info('MongoDB disabled parameter not found, using default false');
+        }
+        
+        // Also check environment variable directly as a fallback
+        if (!$this->mongodbDisabled && isset($_ENV['MONGODB_DISABLED'])) {
+            $this->mongodbDisabled = filter_var($_ENV['MONGODB_DISABLED'], FILTER_VALIDATE_BOOLEAN);
+            $this->logger->info('MongoDB disabled status (from env): ' . ($this->mongodbDisabled ? 'true' : 'false'));
         }
         
         // Respect configuration; do not force-disable encryption
@@ -63,7 +73,7 @@ class MongoDBEncryptionService
         }
         $this->masterKey = file_get_contents($keyFile); // Keep as binary for auto encryption
         
-        if ($mongodbDisabled) {
+        if ($this->mongodbDisabled) {
             $this->logger->info('MongoDB is disabled, running in documentation-only mode');
             $this->configureEncryptedFieldsDefinitions();
             return;
@@ -110,7 +120,7 @@ class MongoDBEncryptionService
         }
         
         // We already initialized MongoDB above, so just create client encryption
-        if (!$mongodbDisabled) {
+        if (!$this->mongodbDisabled) {
             // Create client encryption using the masterKey already loaded
             $this->clientEncryption = $this->createClientEncryption();
         }
@@ -177,8 +187,13 @@ class MongoDBEncryptionService
     }
     
     /**
-     * Create the ClientEncryption object
+     * Add isMongoDBDisabled method to check MongoDB status
      */
+    public function isMongoDBDisabled(): bool
+    {
+        return $this->mongodbDisabled;
+    }
+    
     private function createClientEncryption(): ClientEncryption
     {
         // Set up client encryption options

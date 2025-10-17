@@ -13,17 +13,24 @@ security:
         public_api:
             pattern: ^/api/(patient-portal/register|patient-portal/health)
             security: false
+        # Add a dedicated login firewall with no entry_point to avoid redirect
+        login_api:
+            pattern: ^/api/login$
+            security: true
+            stateless: false
+            provider: app_user_provider
+            custom_authenticators:
+                - App\Security\JsonLoginAuthenticator
         main:
             pattern: ^/
             lazy: false
             stateless: false
             provider: app_user_provider
             custom_authenticators:
-                - App\Security\JsonLoginAuthenticator
                 - App\Security\SessionAuthenticator
             logout:
-                path: app_logout
-                target: app_login
+                path: /api/logout
+                target: /login.html
             entry_point: App\Security\SessionAuthenticator
 
     # Configure access control based on paths and roles

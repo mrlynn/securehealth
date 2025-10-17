@@ -65,14 +65,6 @@ class PatientVerification {
                                     </div>
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label for="verificationLastFourSSN" class="form-label">
-                                        <strong>Last 4 Digits of SSN</strong> <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control" id="verificationLastFourSSN" 
-                                           pattern="[0-9]{4}" maxlength="4" required>
-                                    <div class="form-text">Pre-filled for demo - shows the last 4 digits of the patient's SSN</div>
-                                </div>
                                 
                                 <div class="alert alert-warning">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
@@ -121,13 +113,6 @@ class PatientVerification {
             }
         });
 
-        // Input validation
-        document.addEventListener('input', (e) => {
-            if (e.target.id === 'verificationLastFourSSN') {
-                // Only allow digits
-                e.target.value = e.target.value.replace(/\D/g, '');
-            }
-        });
 
         // Date conversion button
         document.addEventListener('click', (e) => {
@@ -168,7 +153,7 @@ class PatientVerification {
     /**
      * Verify patient identity
      */
-    async verifyPatient(patientId, birthDate, lastFourSSN) {
+    async verifyPatient(patientId, birthDate) {
         try {
             const response = await fetch(`/api/patients/${patientId}/verify`, {
                 method: 'POST',
@@ -177,8 +162,7 @@ class PatientVerification {
                 },
                 credentials: 'include',
                 body: JSON.stringify({
-                    birthDate: birthDate,
-                    lastFourSSN: lastFourSSN
+                    birthDate: birthDate
                 })
             });
 
@@ -202,7 +186,6 @@ class PatientVerification {
 
         // Clear form
         document.getElementById('verificationBirthDate').value = '';
-        document.getElementById('verificationLastFourSSN').value = '';
         
         // Convert button is now always visible
 
@@ -235,15 +218,6 @@ class PatientVerification {
                         console.log('Set birth date input value to:', patient.birthDate);
                     }
                     
-                    // Pre-fill last 4 digits of SSN (extract from full SSN)
-                    if (patient.ssn) {
-                        console.log('Patient SSN from API:', patient.ssn);
-                        const ssnDigits = patient.ssn.replace(/\D/g, ''); // Remove non-digits
-                        const lastFourSSN = ssnDigits.slice(-4); // Get last 4 digits
-                        const ssnInput = document.getElementById('verificationLastFourSSN');
-                        ssnInput.value = lastFourSSN;
-                        console.log('Set SSN input value to:', lastFourSSN);
-                    }
                 }
             } else {
                 console.log('No currentPatientsData available');
@@ -359,7 +333,6 @@ class PatientVerification {
      */
     async handleVerification() {
         let birthDate = document.getElementById('verificationBirthDate').value;
-        const lastFourSSN = document.getElementById('verificationLastFourSSN').value;
 
         // Auto-convert date format if needed
         if (birthDate && birthDate.includes('/')) {
@@ -370,13 +343,8 @@ class PatientVerification {
         }
 
         // Validate inputs
-        if (!birthDate || !lastFourSSN) {
-            this.showError('Please fill in all required fields');
-            return;
-        }
-
-        if (lastFourSSN.length !== 4) {
-            this.showError('Please enter exactly 4 digits for the SSN');
+        if (!birthDate) {
+            this.showError('Please enter the patient\'s birth date');
             return;
         }
 
@@ -388,15 +356,14 @@ class PatientVerification {
 
         try {
             // Perform verification
-            const result = await this.verifyPatient(this.currentPatientId, birthDate, lastFourSSN);
+            const result = await this.verifyPatient(this.currentPatientId, birthDate);
 
             if (result.success) {
                 // Cache successful verification with the verification data
                 this.verificationCache.set(this.currentPatientId, {
                     verified: true,
                     timestamp: Date.now(),
-                    birthDate: birthDate,
-                    lastFourSSN: lastFourSSN
+                    birthDate: birthDate
                 });
                 
                 // Save to sessionStorage
@@ -408,8 +375,7 @@ class PatientVerification {
                 // Execute callback
                 if (this.verificationCallback) {
                     this.verificationCallback(true, {
-                        birthDate: birthDate,
-                        lastFourSSN: lastFourSSN
+                        birthDate: birthDate
                     });
                 }
 
@@ -490,8 +456,7 @@ class PatientVerification {
         if (!verification) return null;
         
         return {
-            birthDate: verification.birthDate,
-            lastFourSSN: verification.lastFourSSN
+            birthDate: verification.birthDate
         };
     }
 
@@ -575,7 +540,6 @@ class PatientVerification {
             if (verifiedPatient) {
                 const headers = new Headers(options.headers || {});
                 headers.set('X-Patient-Birth-Date', verifiedPatient.birthDate);
-                headers.set('X-Patient-Last-Four-SSN', verifiedPatient.lastFourSSN);
                 options.headers = headers;
             }
             return fetch(url, options);
@@ -589,7 +553,6 @@ class PatientVerification {
                         // Add verification headers to the request
                         const headers = new Headers(options.headers || {});
                         headers.set('X-Patient-Birth-Date', patientData.birthDate);
-                        headers.set('X-Patient-Last-Four-SSN', patientData.lastFourSSN);
                         options.headers = headers;
                         
                         const response = await fetch(url, options);

@@ -3,6 +3,7 @@ parameters:
     mongodb_db: '%env(resolve:MONGODB_DB)%'
     mongodb_key_vault_namespace: '%env(resolve:MONGODB_KEY_VAULT_NAMESPACE)%'
     mongodb_encryption_key_path: '%env(resolve:MONGODB_ENCRYPTION_KEY_PATH)%'
+    mongodb_disabled: '%env(bool:MONGODB_DISABLED)%'
 
 services:
     _defaults:
@@ -15,6 +16,11 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            
+    # Import mock services when MongoDB is disabled
+    App\Repository\MockUserRepository:
+        arguments:
+            $logger: '@logger'
             
     # Use encrypted MongoDB client for HIPAA compliance
     MongoDB\Client:

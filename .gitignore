@@ -133,3 +133,4 @@ logs/
 ###< Cache ###
 CLAUDE.md
 .claude
+.env.bak

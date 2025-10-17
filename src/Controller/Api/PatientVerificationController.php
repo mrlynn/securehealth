@@ -46,10 +46,10 @@ class PatientVerificationController extends AbstractController
         }
 
         // Validate required fields
-        if (!isset($data['birthDate']) || !isset($data['lastFourSSN'])) {
+        if (!isset($data['birthDate'])) {
             return $this->json([
-                'message' => 'Birth date and last 4 digits of SSN are required',
-                'requiredFields' => ['birthDate', 'lastFourSSN']
+                'message' => 'Birth date is required',
+                'requiredFields' => ['birthDate']
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -61,19 +61,11 @@ class PatientVerificationController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        // Validate last 4 SSN format
-        $lastFourSSN = $data['lastFourSSN'];
-        if (!preg_match('/^\d{4}$/', $lastFourSSN)) {
-            return $this->json([
-                'message' => 'Last 4 digits of SSN must be exactly 4 digits'
-            ], Response::HTTP_BAD_REQUEST);
-        }
 
         // Perform verification
         $result = $this->verificationService->verifyPatientIdentity(
             $patientId,
             $birthDate,
-            $lastFourSSN,
             $user
         );
 
