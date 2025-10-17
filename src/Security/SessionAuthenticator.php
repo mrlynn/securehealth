@@ -35,7 +35,8 @@ class SessionAuthenticator extends AbstractAuthenticator implements Authenticati
         }
         
         // Don't authenticate public endpoints
-        if (str_starts_with($path, '/api/patient-portal/register') || 
+        if (str_starts_with($path, '/api/health') ||
+            str_starts_with($path, '/api/patient-portal/register') || 
             str_starts_with($path, '/api/patient-portal/health')) {
             error_log("SessionAuthenticator::supports - Skipping public endpoint");
             return false;

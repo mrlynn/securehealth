@@ -11,7 +11,7 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         public_api:
-            pattern: ^/api/(patient-portal/register|patient-portal/health)
+            pattern: ^/api/(health|patient-portal/register|patient-portal/health)
             security: false
         # Add a dedicated login firewall with no entry_point to avoid redirect
         login_api:
@@ -39,6 +39,7 @@ security:
         - { path: ^/docs, roles: PUBLIC_ACCESS }
         # API Access Control
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/health, roles: PUBLIC_ACCESS }
         # Patient Portal API access control - specific routes first
         - { path: ^/api/patient-portal/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/patient-portal/health, roles: PUBLIC_ACCESS }
