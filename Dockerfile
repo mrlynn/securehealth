@@ -45,4 +45,4 @@ RUN mkdir -p var/cache var/log var/cache/sessions \
 EXPOSE 9000
 
 # Start PHP built-in server with router script to serve index.html by default
-CMD ["php", "-S", "0.0.0.0:9000", "-t", "public", "public/router.php"]# Railway deployment trigger
+CMD ["php", "-S", "0.0.0.0:9000", "-t", "public", "public/router.php"]
