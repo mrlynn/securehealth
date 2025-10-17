@@ -53,6 +53,12 @@ class MongoDBEncryptionService
             $this->logger->info('MongoDB disabled status (from env): ' . ($this->mongodbDisabled ? 'true' : 'false'));
         }
         
+        // Check for encryption disabled flag (useful for Railway deployment)
+        if (!$this->mongodbDisabled && isset($_ENV['DISABLE_ENCRYPTION']) && filter_var($_ENV['DISABLE_ENCRYPTION'], FILTER_VALIDATE_BOOLEAN)) {
+            $this->mongodbDisabled = true;
+            $this->logger->info('Encryption disabled via DISABLE_ENCRYPTION environment variable');
+        }
+        
         // Respect configuration; do not force-disable encryption
         
         // Always set up the key vault namespace for auto encryption
@@ -123,6 +129,10 @@ class MongoDBEncryptionService
         if (!$this->mongodbDisabled) {
             // Create client encryption using the masterKey already loaded
             $this->clientEncryption = $this->createClientEncryption();
+            if ($this->clientEncryption === null) {
+                $this->logger->warning('Client encryption setup failed. Running with encryption disabled.');
+                $this->mongodbDisabled = true; // Fall back to disabled mode
+            }
         }
         
         // Configure encrypted fields
@@ -194,17 +204,31 @@ class MongoDBEncryptionService
         return $this->mongodbDisabled;
     }
     
-    private function createClientEncryption(): ClientEncryption
+    /**
+     * Check if encryption is properly configured and available
+     */
+    public function isEncryptionAvailable(): bool
     {
-        // Set up client encryption options
-        $clientEncryptionOpts = [
-            'keyVaultNamespace' => $this->keyVaultNamespace,
-            'kmsProviders' => [
-                'local' => ['key' => new Binary($this->masterKey, Binary::TYPE_GENERIC)]
-            ]
-        ];
-        
-        return $this->client->createClientEncryption($clientEncryptionOpts);
+        return !$this->mongodbDisabled && isset($this->clientEncryption);
+    }
+    
+    private function createClientEncryption(): ?ClientEncryption
+    {
+        try {
+            // Set up client encryption options
+            $clientEncryptionOpts = [
+                'keyVaultNamespace' => $this->keyVaultNamespace,
+                'kmsProviders' => [
+                    'local' => ['key' => new Binary($this->masterKey, Binary::TYPE_GENERIC)]
+                ]
+            ];
+            
+            return $this->client->createClientEncryption($clientEncryptionOpts);
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to create client encryption: ' . $e->getMessage());
+            $this->logger->warning('Encryption will be disabled. Data will be stored unencrypted.');
+            return null;
+        }
     }
     
     /**
@@ -353,13 +377,24 @@ class MongoDBEncryptionService
      */
     public function decrypt($value)
     {
-        // If MongoDB encryption is disabled, return the value as-is
-        if (!isset($this->clientEncryption)) {
+        // If MongoDB encryption is disabled or not available, return the value as-is
+        if (!$this->isEncryptionAvailable()) {
+            $this->logger->debug('Encryption not available, returning value as-is');
             return $value;
         }
         
         if ($value instanceof Binary && $value->getType() === 6) { // Binary subtype 6 is for encrypted data
-            return $this->clientEncryption->decrypt($value);
+            try {
+                return $this->clientEncryption->decrypt($value);
+            } catch (\MongoDB\Driver\Exception\EncryptionException $e) {
+                $this->logger->error('Encryption decryption failed: ' . $e->getMessage());
+                // If decryption fails, try to return the raw value or handle gracefully
+                // This might happen if the encryption key is not available or configured differently
+                throw new \RuntimeException('Failed to decrypt encrypted data. Check encryption configuration: ' . $e->getMessage(), 0, $e);
+            } catch (\Exception $e) {
+                $this->logger->error('Unexpected error during decryption: ' . $e->getMessage());
+                throw new \RuntimeException('Decryption failed: ' . $e->getMessage(), 0, $e);
+            }
         }
         
         return $value;
