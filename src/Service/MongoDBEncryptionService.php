@@ -129,9 +129,12 @@ class MongoDBEncryptionService
         // We already initialized MongoDB above, so just create client encryption
         if (!$this->mongodbDisabled) {
             // Create client encryption using the masterKey already loaded
-            // This will throw an exception if encryption setup fails, which is what we want
-            // since we need encryption to work for the demonstration
+            // For Railway deployment, allow fallback to non-encrypted mode if encryption fails
             $this->clientEncryption = $this->createClientEncryption();
+            
+            if (!$this->clientEncryption) {
+                $this->logger->warning('Client encryption not available - running in non-encrypted mode for Railway deployment');
+            }
         }
         
         // Configure encrypted fields
@@ -230,8 +233,9 @@ class MongoDBEncryptionService
             return $this->client->createClientEncryption($clientEncryptionOpts);
         } catch (\Exception $e) {
             $this->logger->error('Failed to create client encryption: ' . $e->getMessage());
-            $this->logger->error('Encryption setup failed - this will break queryable encryption functionality');
-            throw new \RuntimeException('Failed to initialize MongoDB encryption. Queryable encryption requires proper crypt_shared library setup: ' . $e->getMessage(), 0, $e);
+            $this->logger->warning('Encryption setup failed - falling back to non-encrypted mode for Railway deployment');
+            // Don't throw exception - allow application to continue without encryption
+            return null;
         }
     }
     
@@ -383,16 +387,23 @@ class MongoDBEncryptionService
         }
         
         if ($value instanceof Binary && $value->getType() === 6) { // Binary subtype 6 is for encrypted data
+            if (!$this->clientEncryption) {
+                $this->logger->warning('Client encryption not available - returning raw binary data');
+                return $value;
+            }
+            
             try {
                 return $this->clientEncryption->decrypt($value);
             } catch (\MongoDB\Driver\Exception\EncryptionException $e) {
                 $this->logger->error('Encryption decryption failed: ' . $e->getMessage());
-                // If decryption fails, try to return the raw value or handle gracefully
-                // This might happen if the encryption key is not available or configured differently
-                throw new \RuntimeException('Failed to decrypt encrypted data. Check encryption configuration: ' . $e->getMessage(), 0, $e);
+                $this->logger->warning('Falling back to raw binary data due to decryption failure');
+                // Return the raw binary value instead of throwing exception
+                return $value;
             } catch (\Exception $e) {
                 $this->logger->error('Unexpected error during decryption: ' . $e->getMessage());
-                throw new \RuntimeException('Decryption failed: ' . $e->getMessage(), 0, $e);
+                $this->logger->warning('Falling back to raw binary data due to unexpected error');
+                // Return the raw binary value instead of throwing exception
+                return $value;
             }
         }
         
