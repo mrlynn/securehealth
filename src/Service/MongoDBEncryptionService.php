@@ -53,11 +53,7 @@ class MongoDBEncryptionService
             $this->logger->info('MongoDB disabled status (from env): ' . ($this->mongodbDisabled ? 'true' : 'false'));
         }
         
-        // Check for encryption disabled flag (useful for Railway deployment)
-        if (!$this->mongodbDisabled && isset($_ENV['DISABLE_ENCRYPTION']) && filter_var($_ENV['DISABLE_ENCRYPTION'], FILTER_VALIDATE_BOOLEAN)) {
-            $this->mongodbDisabled = true;
-            $this->logger->info('Encryption disabled via DISABLE_ENCRYPTION environment variable');
-        }
+        // Note: We do not support disabling encryption as it's required for queryable encryption demonstration
         
         // Respect configuration; do not force-disable encryption
         
@@ -68,6 +64,11 @@ class MongoDBEncryptionService
         $keyFile = $_ENV['MONGODB_ENCRYPTION_KEY_PATH'] ?? 'docker/encryption.key';
         if (!file_exists($keyFile)) {
             $this->logger->warning('Encryption key file not found, generating new key: ' . $keyFile);
+            // Ensure directory exists
+            $keyDir = dirname($keyFile);
+            if (!is_dir($keyDir)) {
+                mkdir($keyDir, 0755, true);
+            }
             file_put_contents($keyFile, random_bytes(96));
         } else {
             // Validate key length (96 bytes)
@@ -128,11 +129,9 @@ class MongoDBEncryptionService
         // We already initialized MongoDB above, so just create client encryption
         if (!$this->mongodbDisabled) {
             // Create client encryption using the masterKey already loaded
+            // This will throw an exception if encryption setup fails, which is what we want
+            // since we need encryption to work for the demonstration
             $this->clientEncryption = $this->createClientEncryption();
-            if ($this->clientEncryption === null) {
-                $this->logger->warning('Client encryption setup failed. Running with encryption disabled.');
-                $this->mongodbDisabled = true; // Fall back to disabled mode
-            }
         }
         
         // Configure encrypted fields
@@ -223,11 +222,20 @@ class MongoDBEncryptionService
                 ]
             ];
             
+            // Add crypt_shared library configuration if available
+            $encryptionOptions = $this->getEncryptionOptions();
+            if (isset($encryptionOptions['extraOptions']['cryptSharedLibPath'])) {
+                $clientEncryptionOpts['extraOptions'] = [
+                    'cryptSharedLibPath' => $encryptionOptions['extraOptions']['cryptSharedLibPath'],
+                    'cryptSharedLibRequired' => $encryptionOptions['extraOptions']['cryptSharedLibRequired']
+                ];
+            }
+            
             return $this->client->createClientEncryption($clientEncryptionOpts);
         } catch (\Exception $e) {
             $this->logger->error('Failed to create client encryption: ' . $e->getMessage());
-            $this->logger->warning('Encryption will be disabled. Data will be stored unencrypted.');
-            return null;
+            $this->logger->error('Encryption setup failed - this will break queryable encryption functionality');
+            throw new \RuntimeException('Failed to initialize MongoDB encryption. Queryable encryption requires proper crypt_shared library setup: ' . $e->getMessage(), 0, $e);
         }
     }
     
@@ -277,13 +285,32 @@ class MongoDBEncryptionService
         $extraOptions = [];
         
         // Allow overriding the shared lib path via env if needed
-        $sharedLibPath = $_ENV['MONGOCRYPT_SHARED_LIB_PATH'] ?? null;
-        if ($sharedLibPath && file_exists($sharedLibPath)) {
-            $extraOptions['cryptSharedLibPath'] = $sharedLibPath;
+        $sharedLibPath = $_ENV['MONGOCRYPT_SHARED_LIB_PATH'] ?? '/usr/local/lib/mongo_crypt_v1.so';
+        
+        // Check for crypt_shared library in common locations
+        $possiblePaths = [
+            $sharedLibPath,
+            '/usr/local/lib/mongo_crypt_v1.so',
+            '/usr/lib/x86_64-linux-gnu/libmongocrypt.so',
+            '/usr/lib/libmongocrypt.so'
+        ];
+        
+        $foundPath = null;
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path)) {
+                $foundPath = $path;
+                break;
+            }
+        }
+        
+        if ($foundPath) {
+            $extraOptions['cryptSharedLibPath'] = $foundPath;
             $extraOptions['cryptSharedLibRequired'] = true;
+            $this->logger->info('Using crypt_shared library at: ' . $foundPath);
         } else {
             // Don't require crypt_shared if not available - fall back to mongocryptd or manual encryption
             $extraOptions['cryptSharedLibRequired'] = false;
+            $this->logger->warning('crypt_shared library not found, encryption may not work properly');
         }
 
         // Note: For auto-encryption to work properly, encryption must be configured

@@ -12,7 +12,16 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     pkg-config \
     libcrypto++-dev \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Install MongoDB crypt_shared library for queryable encryption
+RUN wget -q https://downloads.mongodb.com/linux/mongo_crypt_shared_v1-ubuntu2004-6.0.3-1.0.0.tgz \
+    && tar -xzf mongo_crypt_shared_v1-ubuntu2004-6.0.3-1.0.0.tgz \
+    && mkdir -p /usr/local/lib \
+    && cp mongo_crypt_shared_v1-ubuntu2004-6.0.3-1.0.0/lib/mongo_crypt_v1.so /usr/local/lib/ \
+    && rm -rf mongo_crypt_shared_v1-ubuntu2004-6.0.3-1.0.0* \
+    && ldconfig
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath
