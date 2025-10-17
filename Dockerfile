@@ -16,11 +16,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install MongoDB crypt_shared library for queryable encryption
-RUN wget -q https://downloads.mongodb.com/linux/mongo_crypt_shared_v1-ubuntu2004-6.0.3-1.0.0.tgz \
-    && tar -xzf mongo_crypt_shared_v1-ubuntu2004-6.0.3-1.0.0.tgz \
-    && mkdir -p /usr/local/lib \
-    && cp mongo_crypt_shared_v1-ubuntu2004-6.0.3-1.0.0/lib/mongo_crypt_v1.so /usr/local/lib/ \
-    && rm -rf mongo_crypt_shared_v1-ubuntu2004-6.0.3-1.0.0* \
+# Use a simpler approach - download pre-built library
+RUN mkdir -p /usr/local/lib \
+    && wget -q https://downloads.mongodb.com/linux/mongo_crypt_shared_v1-ubuntu2204-7.0.5-1.0.0.tgz -O /tmp/crypt.tgz \
+    && tar -xzf /tmp/crypt.tgz -C /tmp/ \
+    && find /tmp -name "*.so" -exec cp {} /usr/local/lib/ \; \
+    && rm -rf /tmp/crypt.tgz /tmp/mongo_crypt_shared_v1-* \
     && ldconfig
 
 # Install PHP extensions

@@ -308,9 +308,9 @@ class MongoDBEncryptionService
             $extraOptions['cryptSharedLibRequired'] = true;
             $this->logger->info('Using crypt_shared library at: ' . $foundPath);
         } else {
-            // Don't require crypt_shared if not available - fall back to mongocryptd or manual encryption
+            // Don't require crypt_shared if not available - use mongocryptd fallback
             $extraOptions['cryptSharedLibRequired'] = false;
-            $this->logger->warning('crypt_shared library not found, encryption may not work properly');
+            $this->logger->info('crypt_shared library not found, using mongocryptd fallback for encryption');
         }
 
         // Note: For auto-encryption to work properly, encryption must be configured
