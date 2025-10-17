@@ -222,14 +222,10 @@ class MongoDBEncryptionService
                 ]
             ];
             
-            // Add crypt_shared library configuration if available
-            $encryptionOptions = $this->getEncryptionOptions();
-            if (isset($encryptionOptions['extraOptions']['cryptSharedLibPath'])) {
-                $clientEncryptionOpts['extraOptions'] = [
-                    'cryptSharedLibPath' => $encryptionOptions['extraOptions']['cryptSharedLibPath'],
-                    'cryptSharedLibRequired' => $encryptionOptions['extraOptions']['cryptSharedLibRequired']
-                ];
-            }
+            // Use mongocryptd fallback configuration for Railway
+            $clientEncryptionOpts['extraOptions'] = [
+                'cryptSharedLibRequired' => false
+            ];
             
             return $this->client->createClientEncryption($clientEncryptionOpts);
         } catch (\Exception $e) {
@@ -284,34 +280,10 @@ class MongoDBEncryptionService
     {
         $extraOptions = [];
         
-        // Allow overriding the shared lib path via env if needed
-        $sharedLibPath = $_ENV['MONGOCRYPT_SHARED_LIB_PATH'] ?? '/usr/local/lib/mongo_crypt_v1.so';
-        
-        // Check for crypt_shared library in common locations
-        $possiblePaths = [
-            $sharedLibPath,
-            '/usr/local/lib/mongo_crypt_v1.so',
-            '/usr/lib/x86_64-linux-gnu/libmongocrypt.so',
-            '/usr/lib/libmongocrypt.so'
-        ];
-        
-        $foundPath = null;
-        foreach ($possiblePaths as $path) {
-            if (file_exists($path)) {
-                $foundPath = $path;
-                break;
-            }
-        }
-        
-        if ($foundPath) {
-            $extraOptions['cryptSharedLibPath'] = $foundPath;
-            $extraOptions['cryptSharedLibRequired'] = true;
-            $this->logger->info('Using crypt_shared library at: ' . $foundPath);
-        } else {
-            // Don't require crypt_shared if not available - use mongocryptd fallback
-            $extraOptions['cryptSharedLibRequired'] = false;
-            $this->logger->info('crypt_shared library not found, using mongocryptd fallback for encryption');
-        }
+        // Use mongocryptd fallback for Railway deployment
+        // This enables queryable encryption without requiring crypt_shared library
+        $extraOptions['cryptSharedLibRequired'] = false;
+        $this->logger->info('Using mongocryptd fallback for encryption (Railway deployment)');
 
         // Note: For auto-encryption to work properly, encryption must be configured
         // at the MongoDB collection level using encrypted collections feature.

@@ -15,14 +15,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install MongoDB crypt_shared library for queryable encryption
-# Use a simpler approach - download pre-built library
-RUN mkdir -p /usr/local/lib \
-    && wget -q https://downloads.mongodb.com/linux/mongo_crypt_shared_v1-ubuntu2204-7.0.5-1.0.0.tgz -O /tmp/crypt.tgz \
-    && tar -xzf /tmp/crypt.tgz -C /tmp/ \
-    && find /tmp -name "*.so" -exec cp {} /usr/local/lib/ \; \
-    && rm -rf /tmp/crypt.tgz /tmp/mongo_crypt_shared_v1-* \
-    && ldconfig
+# Note: crypt_shared library installation removed due to download URL issues
+# MongoDB encryption will use mongocryptd fallback for queryable encryption
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath
