@@ -481,429 +481,430 @@
       }, 100);
     });
 
-      function initializeCalendar() {
-        // Initialize calendar with current date
-        const now = new Date();
-        currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Global variables
+    let currentDate = new Date();
+    let selectedDate = null;
+    let appointments = [];
+    let isListView = false;
+
+    function initializeCalendar() {
+      // Initialize calendar with current date
+      const now = new Date();
+      currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      renderCalendar();
+      loadAppointments();
+      setupEventListeners();
+    }
+
+    function setupEventListeners() {
+      // Calendar navigation
+      document.getElementById('prevMonth').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
         renderCalendar();
         loadAppointments();
-        setupEventListeners();
-      }
+      });
 
-      let currentDate = new Date();
-      let selectedDate = null;
-      let appointments = [];
-      let isListView = false;
-
-      function setupEventListeners() {
-        // Calendar navigation
-        document.getElementById('prevMonth').addEventListener('click', () => {
-          currentDate.setMonth(currentDate.getMonth() - 1);
-          renderCalendar();
-          loadAppointments();
-        });
-
-        document.getElementById('nextMonth').addEventListener('click', () => {
-          currentDate.setMonth(currentDate.getMonth() + 1);
-          renderCalendar();
-          loadAppointments();
-        });
-
-        document.getElementById('todayBtn').addEventListener('click', () => {
-          const today = new Date();
-          currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
-          renderCalendar();
-          loadAppointments();
-        });
-
-        // View toggle
-        document.getElementById('viewToggle').addEventListener('click', () => {
-          isListView = !isListView;
-          const btn = document.getElementById('viewToggle');
-          if (isListView) {
-            btn.innerHTML = '<i class="fas fa-calendar-alt me-1"></i>Calendar View';
-            renderListView();
-          } else {
-            btn.innerHTML = '<i class="fas fa-list me-1"></i>List View';
-            renderCalendar();
-          }
-        });
-
-        // Create appointment button
-        document.getElementById('createAppointmentBtn').addEventListener('click', () => {
-          const modal = new bootstrap.Modal(document.getElementById('createAppointmentModal'));
-          loadPatients();
-          modal.show();
-        });
-
-        // Save appointment
-        document.getElementById('saveAppointmentBtn').addEventListener('click', saveAppointment);
-        
-        // Update appointment
-        document.getElementById('updateAppointmentBtn').addEventListener('click', updateAppointment);
-      }
-
-      function renderCalendar() {
-        const calendarGrid = document.getElementById('calendarGrid');
-        const calendarTitle = document.getElementById('calendarTitle');
-        
-        // Set title
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'];
-        calendarTitle.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-
-        // Clear grid
-        calendarGrid.innerHTML = '';
-
-        // Add day headers
-        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        dayHeaders.forEach(day => {
-          const header = document.createElement('div');
-          header.className = 'calendar-day-header';
-          header.textContent = day;
-          calendarGrid.appendChild(header);
-        });
-
-        // Get first day of month and number of days
-        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-        const startDate = new Date(firstDay);
-        startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-        // Generate calendar days
-        for (let i = 0; i < 42; i++) {
-          const dayDate = new Date(startDate);
-          dayDate.setDate(startDate.getDate() + i);
-          
-          const dayElement = document.createElement('div');
-          dayElement.className = 'calendar-day';
-          
-          // Check if it's today
-          const today = new Date();
-          if (dayDate.toDateString() === today.toDateString()) {
-            dayElement.classList.add('today');
-          }
-          
-          // Check if it's selected date
-          if (selectedDate && dayDate.toDateString() === selectedDate.toDateString()) {
-            dayElement.classList.add('selected');
-          }
-          
-          // Check if it's current month
-          if (dayDate.getMonth() !== currentDate.getMonth()) {
-            dayElement.classList.add('other-month');
-          }
-
-          // Add day number
-          const dayNumber = document.createElement('div');
-          dayNumber.className = 'day-number';
-          dayNumber.textContent = dayDate.getDate();
-          dayElement.appendChild(dayNumber);
-
-          // Check for appointments on this day
-          const dayAppointments = getAppointmentsForDate(dayDate);
-          if (dayAppointments.length > 0) {
-            const indicator = document.createElement('div');
-            indicator.className = 'appointment-indicator';
-            indicator.title = `${dayAppointments.length} appointment(s)`;
-            dayElement.appendChild(indicator);
-          }
-
-          // Add click event
-          dayElement.addEventListener('click', () => {
-            selectDate(dayDate);
-          });
-
-          calendarGrid.appendChild(dayElement);
-        }
-      }
-
-      function renderListView() {
-        const calendarGrid = document.getElementById('calendarGrid');
-        const calendarTitle = document.getElementById('calendarTitle');
-        
-        calendarTitle.textContent = 'Appointment List';
-        calendarGrid.innerHTML = '';
-
-        // Create list container
-        const listContainer = document.createElement('div');
-        listContainer.className = 'col-12';
-        
-        // Sort appointments by date
-        const sortedAppointments = [...appointments].sort((a, b) => 
-          new Date(a.scheduledAt) - new Date(b.scheduledAt)
-        );
-
-        if (sortedAppointments.length === 0) {
-          listContainer.innerHTML = `
-            <div class="text-center py-5">
-              <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
-              <h5 class="text-muted">No appointments scheduled</h5>
-              <p class="text-muted">Click the + button to create your first appointment</p>
-            </div>
-          `;
-        } else {
-          sortedAppointments.forEach(appointment => {
-            const appointmentElement = document.createElement('div');
-            appointmentElement.className = 'appointment-item';
-            appointmentElement.innerHTML = `
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="appointment-time">${formatTime(appointment.scheduledAt)}</div>
-                  <div class="appointment-patient">${escapeHtml(appointment.patientFullName)}</div>
-                  ${appointment.notes ? `<div class="appointment-notes">${escapeHtml(appointment.notes)}</div>` : ''}
-                </div>
-                <small class="text-muted">${formatDate(appointment.scheduledAt)}</small>
-              </div>
-            `;
-            listContainer.appendChild(appointmentElement);
-          });
-        }
-
-        calendarGrid.appendChild(listContainer);
-      }
-
-      function selectDate(date) {
-        selectedDate = date;
+      document.getElementById('nextMonth').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
         renderCalendar();
-        showAppointmentsForDate(date);
-      }
+        loadAppointments();
+      });
 
-      function showAppointmentsForDate(date) {
-        const appointmentDateTitle = document.getElementById('appointmentDateTitle');
-        const appointmentDateSubtitle = document.getElementById('appointmentDateSubtitle');
-        const appointmentListContent = document.getElementById('appointmentListContent');
+      document.getElementById('todayBtn').addEventListener('click', () => {
+        const today = new Date();
+        currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        renderCalendar();
+        loadAppointments();
+      });
 
-        const dateStr = date.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+      // View toggle
+      document.getElementById('viewToggle').addEventListener('click', () => {
+        isListView = !isListView;
+        const btn = document.getElementById('viewToggle');
+        if (isListView) {
+          btn.innerHTML = '<i class="fas fa-calendar-alt me-1"></i>Calendar View';
+          renderListView();
+        } else {
+          btn.innerHTML = '<i class="fas fa-list me-1"></i>List View';
+          renderCalendar();
+        }
+      });
+
+      // Create appointment button
+      document.getElementById('createAppointmentBtn').addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('createAppointmentModal'));
+        loadPatients();
+        modal.show();
+      });
+
+      // Save appointment
+      document.getElementById('saveAppointmentBtn').addEventListener('click', saveAppointment);
+      
+      // Update appointment
+      document.getElementById('updateAppointmentBtn').addEventListener('click', updateAppointment);
+    }
+
+    function renderCalendar() {
+      const calendarGrid = document.getElementById('calendarGrid');
+      const calendarTitle = document.getElementById('calendarTitle');
+      
+      // Set title
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      calendarTitle.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+      // Clear grid
+      calendarGrid.innerHTML = '';
+
+      // Add day headers
+      const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      dayHeaders.forEach(day => {
+        const header = document.createElement('div');
+        header.className = 'calendar-day-header';
+        header.textContent = day;
+        calendarGrid.appendChild(header);
+      });
+
+      // Get first day of month and number of days
+      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const startDate = new Date(firstDay);
+      startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+      // Generate calendar days
+      for (let i = 0; i < 42; i++) {
+        const dayDate = new Date(startDate);
+        dayDate.setDate(startDate.getDate() + i);
+        
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day';
+        
+        // Check if it's today
+        const today = new Date();
+        if (dayDate.toDateString() === today.toDateString()) {
+          dayElement.classList.add('today');
+        }
+        
+        // Check if it's selected date
+        if (selectedDate && dayDate.toDateString() === selectedDate.toDateString()) {
+          dayElement.classList.add('selected');
+        }
+        
+        // Check if it's current month
+        if (dayDate.getMonth() !== currentDate.getMonth()) {
+          dayElement.classList.add('other-month');
+        }
+
+        // Add day number
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.textContent = dayDate.getDate();
+        dayElement.appendChild(dayNumber);
+
+        // Check for appointments on this day
+        const dayAppointments = getAppointmentsForDate(dayDate);
+        if (dayAppointments.length > 0) {
+          const indicator = document.createElement('div');
+          indicator.className = 'appointment-indicator';
+          indicator.title = `${dayAppointments.length} appointment(s)`;
+          dayElement.appendChild(indicator);
+        }
+
+        // Add click event
+        dayElement.addEventListener('click', () => {
+          selectDate(dayDate);
         });
 
-        appointmentDateTitle.textContent = dateStr;
-        appointmentDateSubtitle.textContent = 'Appointments for this date';
+        calendarGrid.appendChild(dayElement);
+      }
+    }
 
-        const dayAppointments = getAppointmentsForDate(date);
+    function renderListView() {
+      const calendarGrid = document.getElementById('calendarGrid');
+      const calendarTitle = document.getElementById('calendarTitle');
+      
+      calendarTitle.textContent = 'Appointment List';
+      calendarGrid.innerHTML = '';
 
-        if (dayAppointments.length === 0) {
-          appointmentListContent.innerHTML = `
-            <div class="no-appointments">
-              <i class="fas fa-calendar-plus"></i>
-              <p>No appointments scheduled for this date</p>
-              <button class="btn btn-primary btn-sm" onclick="document.getElementById('createAppointmentBtn').click()">
-                <i class="fas fa-plus me-1"></i>Create Appointment
-              </button>
+      // Create list container
+      const listContainer = document.createElement('div');
+      listContainer.className = 'col-12';
+      
+      // Sort appointments by date
+      const sortedAppointments = [...appointments].sort((a, b) => 
+        new Date(a.scheduledAt) - new Date(b.scheduledAt)
+      );
+
+      if (sortedAppointments.length === 0) {
+        listContainer.innerHTML = `
+          <div class="text-center py-5">
+            <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No appointments scheduled</h5>
+            <p class="text-muted">Click the + button to create your first appointment</p>
+          </div>
+        `;
+      } else {
+        sortedAppointments.forEach(appointment => {
+          const appointmentElement = document.createElement('div');
+          appointmentElement.className = 'appointment-item';
+          appointmentElement.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="appointment-time">${formatTime(appointment.scheduledAt)}</div>
+                <div class="appointment-patient">${escapeHtml(appointment.patientFullName)}</div>
+                ${appointment.notes ? `<div class="appointment-notes">${escapeHtml(appointment.notes)}</div>` : ''}
+              </div>
+              <small class="text-muted">${formatDate(appointment.scheduledAt)}</small>
             </div>
           `;
-        } else {
-          appointmentListContent.innerHTML = dayAppointments.map(appointment => `
-            <div class="appointment-item">
-              <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
-                  <div class="appointment-time">${formatTime(appointment.scheduledAt)}</div>
-                  <div class="appointment-patient">${escapeHtml(appointment.patientFullName)}</div>
-                  ${appointment.notes ? `<div class="appointment-notes">${escapeHtml(appointment.notes)}</div>` : ''}
-                  <small class="text-muted">Created by ${escapeHtml(appointment.createdBy)}</small>
-                </div>
-                <div class="dropdown">
-                  <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </button>
-                  <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#" onclick="editAppointment('${appointment.id}')">
-                      <i class="fas fa-edit me-2"></i>Edit
-                    </a></li>
-                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteAppointment('${appointment.id}')">
-                      <i class="fas fa-trash me-2"></i>Delete
-                    </a></li>
-                  </ul>
-                </div>
+          listContainer.appendChild(appointmentElement);
+        });
+      }
+
+      calendarGrid.appendChild(listContainer);
+    }
+
+    function selectDate(date) {
+      selectedDate = date;
+      renderCalendar();
+      showAppointmentsForDate(date);
+    }
+
+    function showAppointmentsForDate(date) {
+      const appointmentDateTitle = document.getElementById('appointmentDateTitle');
+      const appointmentDateSubtitle = document.getElementById('appointmentDateSubtitle');
+      const appointmentListContent = document.getElementById('appointmentListContent');
+
+      const dateStr = date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+
+      appointmentDateTitle.textContent = dateStr;
+      appointmentDateSubtitle.textContent = 'Appointments for this date';
+
+      const dayAppointments = getAppointmentsForDate(date);
+
+      if (dayAppointments.length === 0) {
+        appointmentListContent.innerHTML = `
+          <div class="no-appointments">
+            <i class="fas fa-calendar-plus"></i>
+            <p>No appointments scheduled for this date</p>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('createAppointmentBtn').click()">
+              <i class="fas fa-plus me-1"></i>Create Appointment
+            </button>
+          </div>
+        `;
+      } else {
+        appointmentListContent.innerHTML = dayAppointments.map(appointment => `
+          <div class="appointment-item">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <div class="appointment-time">${formatTime(appointment.scheduledAt)}</div>
+                <div class="appointment-patient">${escapeHtml(appointment.patientFullName)}</div>
+                ${appointment.notes ? `<div class="appointment-notes">${escapeHtml(appointment.notes)}</div>` : ''}
+                <small class="text-muted">Created by ${escapeHtml(appointment.createdBy)}</small>
+              </div>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="#" onclick="editAppointment('${appointment.id}')">
+                    <i class="fas fa-edit me-2"></i>Edit
+                  </a></li>
+                  <li><a class="dropdown-item text-danger" href="#" onclick="deleteAppointment('${appointment.id}')">
+                    <i class="fas fa-trash me-2"></i>Delete
+                  </a></li>
+                </ul>
               </div>
             </div>
-          `).join('');
+          </div>
+        `).join('');
+      }
+    }
+
+    function getAppointmentsForDate(date) {
+      const dateStr = date.toISOString().split('T')[0];
+      return appointments.filter(appointment => {
+        const appointmentDate = new Date(appointment.scheduledAt).toISOString().split('T')[0];
+        return appointmentDate === dateStr;
+      });
+    }
+
+    function loadAppointments() {
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const monthStr = month.toString().padStart(2, '0');
+      
+      fetch(`/api/appointments/calendar?month=${year}-${monthStr}`, {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to load appointments');
         }
-      }
-
-      function getAppointmentsForDate(date) {
-        const dateStr = date.toISOString().split('T')[0];
-        return appointments.filter(appointment => {
-          const appointmentDate = new Date(appointment.scheduledAt).toISOString().split('T')[0];
-          return appointmentDate === dateStr;
-        });
-      }
-
-      function loadAppointments() {
-        const month = currentDate.getMonth() + 1;
-        const year = currentDate.getFullYear();
-        const monthStr = month.toString().padStart(2, '0');
-        
-        fetch(`/api/appointments/calendar?month=${year}-${monthStr}`, {
-          method: 'GET',
-          credentials: 'include'
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Failed to load appointments');
-          }
-          return response.json();
-        })
-        .then(data => {
-          appointments = data.appointments || [];
-          if (isListView) {
-            renderListView();
-          } else {
-            renderCalendar();
-          }
-          if (selectedDate) {
-            showAppointmentsForDate(selectedDate);
-          }
-        })
-        .catch(error => {
-          console.error('Error loading appointments:', error);
-          showAlert('danger', 'Failed to load appointments');
-        });
-      }
-
-      function loadPatients() {
-        fetch('/api/patients?page=1&limit=100', {
-          method: 'GET',
-          credentials: 'include'
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Failed to load patients');
-          }
-          return response.json();
-        })
-        .then(data => {
-          const patientSelect = document.getElementById('patientSelect');
-          patientSelect.innerHTML = '<option value="" disabled selected>Select a patient</option>';
-          
-          const patients = data.patients || [];
-          patients.forEach(patient => {
-            const option = document.createElement('option');
-            option.value = patient.id;
-            option.textContent = `${patient.lastName || ''}, ${patient.firstName || ''}`.replace(/^,\s*|,\s*$/g, '') || patient.email || patient.id;
-            patientSelect.appendChild(option);
-          });
-        })
-        .catch(error => {
-          console.error('Error loading patients:', error);
-          showAlert('danger', 'Failed to load patients');
-        });
-      }
-
-      function saveAppointment() {
-        const form = document.getElementById('createAppointmentForm');
-        const formData = new FormData(form);
-        
-        const patientId = document.getElementById('patientSelect').value;
-        const date = document.getElementById('appointmentDate').value;
-        const time = document.getElementById('appointmentTime').value;
-        const notes = document.getElementById('appointmentNotes').value;
-
-        if (!patientId || !date || !time) {
-          showAlert('danger', 'Please fill in all required fields');
-          return;
+        return response.json();
+      })
+      .then(data => {
+        appointments = data.appointments || [];
+        if (isListView) {
+          renderListView();
+        } else {
+          renderCalendar();
         }
-
-        const scheduledAt = `${date}T${time}:00`;
-        
-        showAlert('info', 'Creating appointment...');
-
-        fetch('/api/appointments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            patientId: patientId,
-            scheduledAt: scheduledAt,
-            notes: notes || null
-          })
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw response;
-          }
-          return response.json();
-        })
-        .then(data => {
-          showAlert('success', 'Appointment created successfully');
-          form.reset();
-          loadAppointments();
-          bootstrap.Modal.getInstance(document.getElementById('createAppointmentModal')).hide();
-        })
-        .catch(error => {
-          console.error('Error creating appointment:', error);
-          showAlert('danger', 'Failed to create appointment');
-        });
-      }
-
-      function showAlert(type, message) {
-        const alertBox = document.getElementById('createAppointmentAlert');
-        if (!alertBox) return;
-
-        if (!type || !message) {
-          alertBox.classList.add('d-none');
-          alertBox.className = 'alert d-none';
-          alertBox.textContent = '';
-          return;
+        if (selectedDate) {
+          showAppointmentsForDate(selectedDate);
         }
+      })
+      .catch(error => {
+        console.error('Error loading appointments:', error);
+        showAlert('danger', 'Failed to load appointments');
+      });
+    }
 
-        alertBox.className = `alert alert-${type}`;
-        alertBox.textContent = message;
-        alertBox.classList.remove('d-none');
-      }
-
-      function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric'
+    function loadPatients() {
+      fetch('/api/patients?page=1&limit=100', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to load patients');
+        }
+        return response.json();
+      })
+      .then(data => {
+        const patientSelect = document.getElementById('patientSelect');
+        patientSelect.innerHTML = '<option value="" disabled selected>Select a patient</option>';
+        
+        const patients = data.patients || [];
+        patients.forEach(patient => {
+          const option = document.createElement('option');
+          option.value = patient.id;
+          option.textContent = `${patient.lastName || ''}, ${patient.firstName || ''}`.replace(/^,\s*|,\s*$/g, '') || patient.email || patient.id;
+          patientSelect.appendChild(option);
         });
+      })
+      .catch(error => {
+        console.error('Error loading patients:', error);
+        showAlert('danger', 'Failed to load patients');
+      });
+    }
+
+    function saveAppointment() {
+      const form = document.getElementById('createAppointmentForm');
+      const formData = new FormData(form);
+      
+      const patientId = document.getElementById('patientSelect').value;
+      const date = document.getElementById('appointmentDate').value;
+      const time = document.getElementById('appointmentTime').value;
+      const notes = document.getElementById('appointmentNotes').value;
+
+      if (!patientId || !date || !time) {
+        showAlert('danger', 'Please fill in all required fields');
+        return;
       }
 
-      function formatTime(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        });
+      const scheduledAt = `${date}T${time}:00`;
+      
+      showAlert('info', 'Creating appointment...');
+
+      fetch('/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          patientId: patientId,
+          scheduledAt: scheduledAt,
+          notes: notes || null
+        })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw response;
+        }
+        return response.json();
+      })
+      .then(data => {
+        showAlert('success', 'Appointment created successfully');
+        form.reset();
+        loadAppointments();
+        bootstrap.Modal.getInstance(document.getElementById('createAppointmentModal')).hide();
+      })
+      .catch(error => {
+        console.error('Error creating appointment:', error);
+        showAlert('danger', 'Failed to create appointment');
+      });
+    }
+
+    function showAlert(type, message) {
+      const alertBox = document.getElementById('createAppointmentAlert');
+      if (!alertBox) return;
+
+      if (!type || !message) {
+        alertBox.classList.add('d-none');
+        alertBox.className = 'alert d-none';
+        alertBox.textContent = '';
+        return;
       }
 
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
+      alertBox.className = `alert alert-${type}`;
+      alertBox.textContent = message;
+      alertBox.classList.remove('d-none');
+    }
 
-      // Global functions for appointment management
-      window.editAppointment = function(appointmentId) {
-        const appointment = appointments.find(apt => apt.id === appointmentId);
-        if (!appointment) return;
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
 
-        // Load patients for edit form
-        loadPatientsForEdit().then(() => {
-          // Populate edit form
-          document.getElementById('editAppointmentId').value = appointment.id;
-          document.getElementById('editPatientSelect').value = appointment.patientId;
-          
-          const appointmentDate = new Date(appointment.scheduledAt);
-          document.getElementById('editAppointmentDate').value = appointmentDate.toISOString().split('T')[0];
-          document.getElementById('editAppointmentTime').value = appointmentDate.toTimeString().slice(0, 5);
-          document.getElementById('editAppointmentNotes').value = appointment.notes || '';
+    function formatTime(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
 
-          // Show modal
-          const modal = new bootstrap.Modal(document.getElementById('editAppointmentModal'));
-          modal.show();
-        });
-      };
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Global functions for appointment management
+    window.editAppointment = function(appointmentId) {
+      const appointment = appointments.find(apt => apt.id === appointmentId);
+      if (!appointment) return;
+
+      // Load patients for edit form
+      loadPatientsForEdit().then(() => {
+        // Populate edit form
+        document.getElementById('editAppointmentId').value = appointment.id;
+        document.getElementById('editPatientSelect').value = appointment.patientId;
+        
+        const appointmentDate = new Date(appointment.scheduledAt);
+        document.getElementById('editAppointmentDate').value = appointmentDate.toISOString().split('T')[0];
+        document.getElementById('editAppointmentTime').value = appointmentDate.toTimeString().slice(0, 5);
+        document.getElementById('editAppointmentNotes').value = appointment.notes || '';
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('editAppointmentModal'));
+        modal.show();
+      });
+    };
 
     window.deleteAppointment = function(appointmentId) {
       if (!confirm('Are you sure you want to delete this appointment?')) {
@@ -948,131 +949,130 @@
       });
     };
 
-      function updateAppointment() {
-        const appointmentId = document.getElementById('editAppointmentId').value;
-        const patientId = document.getElementById('editPatientSelect').value;
-        const date = document.getElementById('editAppointmentDate').value;
-        const time = document.getElementById('editAppointmentTime').value;
-        const notes = document.getElementById('editAppointmentNotes').value;
+    function updateAppointment() {
+      const appointmentId = document.getElementById('editAppointmentId').value;
+      const patientId = document.getElementById('editPatientSelect').value;
+      const date = document.getElementById('editAppointmentDate').value;
+      const time = document.getElementById('editAppointmentTime').value;
+      const notes = document.getElementById('editAppointmentNotes').value;
 
-        if (!patientId || !date || !time) {
-          showAlert('danger', 'Please fill in all required fields', 'edit');
-          return;
+      if (!patientId || !date || !time) {
+        showAlert('danger', 'Please fill in all required fields', 'edit');
+        return;
+      }
+
+      const scheduledAt = `${date}T${time}:00`;
+      
+      showAlert('info', 'Updating appointment...', 'edit');
+
+      console.log('Sending appointment update request:', {
+        appointmentId,
+        patientId,
+        scheduledAt,
+        notes
+      });
+      
+      fetch(`/api/appointments/${appointmentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          patientId: patientId,
+          scheduledAt: scheduledAt,
+          notes: notes || null
+        })
+      })
+      .then(response => {
+        console.log('Appointment update response status:', response.status);
+        if (!response.ok) {
+          throw response;
         }
-
-        const scheduledAt = `${date}T${time}:00`;
+        return response.json();
+      })
+      .then(data => {
+        showAlert('success', 'Appointment updated successfully', 'edit');
+        loadAppointments();
+        bootstrap.Modal.getInstance(document.getElementById('editAppointmentModal')).hide();
+      })
+      .catch(async error => {
+        console.error('Error updating appointment:', error);
         
-        showAlert('info', 'Updating appointment...', 'edit');
-
-        console.log('Sending appointment update request:', {
-          appointmentId,
-          patientId,
-          scheduledAt,
-          notes
-        });
-        
-        fetch(`/api/appointments/${appointmentId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            patientId: patientId,
-            scheduledAt: scheduledAt,
-            notes: notes || null
-          })
-        })
-        .then(response => {
-          console.log('Appointment update response status:', response.status);
-          if (!response.ok) {
-            throw response;
-          }
-          return response.json();
-        })
-              .then(data => {
-                showAlert('success', 'Appointment updated successfully', 'edit');
-                loadAppointments();
-                bootstrap.Modal.getInstance(document.getElementById('editAppointmentModal')).hide();
-              })
-        .catch(async error => {
-          console.error('Error updating appointment:', error);
-          
-          // Try to get detailed error message from response
-          let errorMessage = 'Failed to update appointment';
-          try {
-            if (error.response) {
-              const errorData = await error.response.json();
-              errorMessage = errorData.message || errorData.error || errorMessage;
-              
-              // Handle specific error types
-              if (error.response.status === 401) {
-                errorMessage = 'Authentication required. Please log in again.';
-              } else if (error.response.status === 403) {
-                errorMessage = 'You do not have permission to update appointments.';
-              } else if (error.response.status === 500) {
-                errorMessage = 'Server error occurred. Please try again or contact support.';
-              }
+        // Try to get detailed error message from response
+        let errorMessage = 'Failed to update appointment';
+        try {
+          if (error.response) {
+            const errorData = await error.response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+            
+            // Handle specific error types
+            if (error.response.status === 401) {
+              errorMessage = 'Authentication required. Please log in again.';
+            } else if (error.response.status === 403) {
+              errorMessage = 'You do not have permission to update appointments.';
+            } else if (error.response.status === 500) {
+              errorMessage = 'Server error occurred. Please try again or contact support.';
             }
-          } catch (e) {
-            console.log('Could not parse error response:', e);
           }
-          
-          showAlert('danger', errorMessage, 'edit');
-        });
-      }
-
-      function loadPatientsForEdit() {
-        return fetch('/api/patients?page=1&limit=100', {
-          method: 'GET',
-          credentials: 'include'
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Failed to load patients');
-          }
-          return response.json();
-        })
-        .then(data => {
-          const patientSelect = document.getElementById('editPatientSelect');
-          patientSelect.innerHTML = '<option value="" disabled selected>Select a patient</option>';
-          
-          const patients = data.patients || [];
-          patients.forEach(patient => {
-            const option = document.createElement('option');
-            option.value = patient.id;
-            option.textContent = `${patient.lastName || ''}, ${patient.firstName || ''}`.replace(/^,\s*|,\s*$/g, '') || patient.email || patient.id;
-            patientSelect.appendChild(option);
-          });
-        })
-        .catch(error => {
-          console.error('Error loading patients:', error);
-          showAlert('danger', 'Failed to load patients', 'edit');
-        });
-      }
-
-      function showAlert(type, message, modal = 'create') {
-        const alertBox = document.getElementById(`${modal}AppointmentAlert`);
-        if (!alertBox) return;
-
-        if (!type || !message) {
-          alertBox.classList.add('d-none');
-          alertBox.className = 'alert d-none';
-          alertBox.textContent = '';
-          return;
+        } catch (e) {
+          console.log('Could not parse error response:', e);
         }
+        
+        showAlert('danger', errorMessage, 'edit');
+      });
+    }
 
-        alertBox.className = `alert alert-${type}`;
-        alertBox.textContent = message;
-        alertBox.classList.remove('d-none');
+    function loadPatientsForEdit() {
+      return fetch('/api/patients?page=1&limit=100', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to load patients');
+        }
+        return response.json();
+      })
+      .then(data => {
+        const patientSelect = document.getElementById('editPatientSelect');
+        patientSelect.innerHTML = '<option value="" disabled selected>Select a patient</option>';
+        
+        const patients = data.patients || [];
+        patients.forEach(patient => {
+          const option = document.createElement('option');
+          option.value = patient.id;
+          option.textContent = `${patient.lastName || ''}, ${patient.firstName || ''}`.replace(/^,\s*|,\s*$/g, '') || patient.email || patient.id;
+          patientSelect.appendChild(option);
+        });
+      })
+      .catch(error => {
+        console.error('Error loading patients:', error);
+        showAlert('danger', 'Failed to load patients', 'edit');
+      });
+    }
+
+    function showAlert(type, message, modal = 'create') {
+      const alertBox = document.getElementById(`${modal}AppointmentAlert`);
+      if (!alertBox) return;
+
+      if (!type || !message) {
+        alertBox.classList.add('d-none');
+        alertBox.className = 'alert d-none';
+        alertBox.textContent = '';
+        return;
       }
 
-      // Initialize with today's date selected
-      setTimeout(() => {
-        const today = new Date();
-        selectDate(today);
-      }, 500);
-    });
+      alertBox.className = `alert alert-${type}`;
+      alertBox.textContent = message;
+      alertBox.classList.remove('d-none');
+    }
+
+    // Initialize with today's date selected
+    setTimeout(() => {
+      const today = new Date();
+      selectDate(today);
+    }, 500);
   </script>
 </body>
 </html>

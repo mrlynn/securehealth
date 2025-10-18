@@ -116,7 +116,7 @@ class SecureHealthNavbar {
         return `
             <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
                 <div class="container">
-                    <a class="navbar-brand fw-bold fs-3" href="/index.html">
+                    <a class="navbar-brand fw-bold fs-3" href="/dashboard.html">
                         <i class="fas fa-shield-alt me-2"></i>SecureHealth
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -140,7 +140,7 @@ class SecureHealthNavbar {
     getPublicNavItems(currentPage) {
         return `
             <li class="nav-item">
-                <a class="nav-link ${currentPage === '/index.html' ? 'active' : ''}" href="/index.html">Home</a>
+                <a class="nav-link ${currentPage === '/dashboard.html' ? 'active' : ''}" href="/dashboard.html">Dashboard</a>
             </li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle ${currentPage === '/documentation.html' || currentPage.includes('/docs/') ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">

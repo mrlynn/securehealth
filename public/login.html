@@ -361,10 +361,13 @@
         localStorage: localStorage.getItem('securehealth_user')
       });
       
-      // If we have user data but still ended up here, something went wrong
+      // If we have user data but still ended up here, redirect to dashboard
       const userData = localStorage.getItem('securehealth_user');
       if (userData) {
-        console.log("WARNING: Already logged in but back at login page!", JSON.parse(userData));
+        console.log("WARNING: Already logged in but back at login page! Redirecting to dashboard...", JSON.parse(userData));
+        // Redirect to dashboard instead of staying on login page
+        window.location.href = 'dashboard.html';
+        return;
       }
       
       // Add click handlers to role buttons
@@ -462,7 +465,7 @@
               window.location.href = 'patient-portal';
             } else {
               debugLog("Redirecting to patients dashboard");
-              window.location.href = 'patients.html';
+              window.location.href = 'dashboard.html';
             }
           }, 500);
         } else {

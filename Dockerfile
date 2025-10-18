@@ -41,8 +41,9 @@ RUN mkdir -p var/cache var/log var/cache/sessions \
     && chmod -R 755 var \
     && chmod -R 755 public
 
-# Expose port
-EXPOSE 9000
+# Expose port (Railway will set PORT environment variable)
+EXPOSE 8080
 
 # Start PHP built-in server with router script to serve index.html by default
-CMD ["php", "-S", "0.0.0.0:9000", "-t", "public", "public/router.php"]
+# Railway will override this with the startCommand from railway.json
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "public", "public/router.php"]
