@@ -17,7 +17,7 @@
         <server name="MONGODB_DB" value="securehealth_test" />
 
         <!-- ###+ symfony/framework-bundle ### -->
-        <env name="APP_ENV" value="dev"/>
+        <env name="APP_ENV" value="test"/>
         <env name="APP_SECRET" value="efadf48a29a57cf0063bf90991923f2b"/>
         <!-- ###- symfony/framework-bundle ### -->
     </php>
@@ -37,7 +37,4 @@
     <listeners>
         <listener class="Symfony\Bridge\PhpUnit\SymfonyTestsListener" />
     </listeners>
-
-    <extensions>
-    </extensions>
 </phpunit>

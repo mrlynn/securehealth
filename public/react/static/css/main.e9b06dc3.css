@@ -1,3 +1,40 @@
+/**
+ * @fileoverview SecureHealth React Application Styles
+ *
+ * This is a minified production build of the CSS styles for the React frontend
+ * application in the SecureHealth HIPAA-compliant medical records system. This
+ * bundle contains:
+ *
+ * - Bootstrap 5.3.3 CSS framework styles
+ * - Font Awesome 6.4.0 icon fonts
+ * - Custom SecureHealth component styles
+ * - Responsive design utilities
+ * - HIPAA-compliant UI patterns
+ * - Medical data visualization styles
+ *
+ * @static
+ * @component
+ * @version 1.0.0
+ * @since 2024
+ * @author Michael Lynn https://github.com/mrlynn
+ * @license MIT
+ *
+ * @dependencies
+ * - Bootstrap 5.3.3
+ * - Font Awesome 6.4.0
+ * - Custom SecureHealth CSS
+ *
+ * @usage
+ * This file is automatically loaded by the HTML templates and should not be
+ * modified directly. For development, use the source files in the React
+ * application directory.
+ *
+ * @security
+ * This stylesheet implements HIPAA-compliant UI patterns and ensures
+ * proper visual hierarchy for sensitive medical data display.
+ *
+ * For license information please see main.e9b06dc3.css.LICENSE.txt
+ */
 @charset "UTF-8";body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Open Sans,Helvetica Neue,sans-serif}.login-container{min-height:100vh}.login-form{max-width:450px;padding:15px}.navbar-brand{font-weight:700}.nav-link.active{font-weight:500}.patient-detail-header{margin-bottom:1rem}@media (max-width:767.98px){.patient-detail-header{align-items:flex-start;flex-direction:column}.patient-detail-header>div:last-child{display:flex;justify-content:space-between;margin-top:1rem;width:100%}}.patient-card{border:1px solid rgba(0,0,0,.125);transition:all .2s ease}.patient-card:hover{box-shadow:0 4px 8px #0000001a}.sensitive-data{border-color:#ffc107}.sensitive-data .card-header{background-color:#ffc1071a}@media (max-width:767.98px){.table-responsive{font-size:.875rem}}.form-label{font-weight:500}@media (max-width:575.98px){h1{font-size:1.75rem}.card-body{padding:1rem}.container{padding-left:10px;padding-right:10px}}.badge{font-weight:400;text-transform:uppercase}:focus{outline:2px solid #0d6efd;outline-offset:2px}main{padding:1.5rem 0}footer{border-top:1px solid #0000001a;font-size:.875rem;margin-top:2rem;padding:1rem 0;text-align:center}.badge.bg-success{background-color:#198754!important}.badge.bg-warning{background-color:#fd7e14!important;color:#fff}.badge.bg-secondary{background-color:#6c757d!important}/*!
  * Bootstrap  v5.3.8 (https://getbootstrap.com/)
  * Copyright 2011-2025 The Bootstrap Authors

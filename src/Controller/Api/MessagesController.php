@@ -69,21 +69,16 @@ class MessagesController extends AbstractController
     public function markRead(string $id, UserInterface $user): JsonResponse
     {
         try {
-            $objectId = new ObjectId($id);
+            $message = $this->messageRepository->findById($id);
+            if (!$message) {
+                return $this->json(['success' => false, 'message' => 'Message not found'], Response::HTTP_NOT_FOUND);
+            }
+
+            $this->messageRepository->markReadByStaff($message, true, true);
+            return $this->json(['success' => true]);
         } catch (\Exception $e) {
-            return $this->json(['success' => false, 'message' => 'Invalid message ID'], Response::HTTP_BAD_REQUEST);
+            return $this->json(['success' => false, 'message' => 'Failed to mark message as read: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $message = $this->messageRepository
-            ->findByPatient(new ObjectId('000000000000000000000000'));
-        // Quick fetch via DocumentManager repository
-        $doc = $this->getDoctrine()->getManager()->getRepository(\App\Document\Message::class)->find($objectId);
-        if (!$doc) {
-            return $this->json(['success' => false, 'message' => 'Message not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $this->messageRepository->markReadByStaff($doc, true, true);
-        return $this->json(['success' => true]);
     }
     /**
      * Staff: List messages for a specific patient

@@ -1,4 +1,73 @@
 <?php
+/**
+ * @fileoverview Range Encrypted Search API Endpoint
+ *
+ * This API endpoint provides range-based search functionality for encrypted patient data
+ * in the SecureHealth HIPAA-compliant medical records system. It uses range encryption
+ * to enable comparison operations on date and age fields while maintaining data security.
+ *
+ * @api
+ * @endpoint POST /api_encrypted_search_range.php
+ * @version 1.0.0
+ * @since 2024
+ * @author Michael Lynn https://github.com/mrlynn
+ * @license MIT
+ *
+ * @features
+ * - Date range searches using range encryption
+ * - Age range filtering (minAge, maxAge)
+ * - Birth date range filtering (birthDateFrom, birthDateTo)
+ * - Input validation and sanitization
+ * - Mock data implementation for demonstration
+ * - CORS support for cross-origin requests
+ *
+ * @searchCriteria
+ * - birthDateFrom: Start date for birth date range (YYYY-MM-DD format)
+ * - birthDateTo: End date for birth date range (YYYY-MM-DD format)
+ * - minAge: Minimum age filter (0-120 years)
+ * - maxAge: Maximum age filter (0-120 years)
+ *
+ * @encryptionType
+ * - range: Enables comparison operations on encrypted data
+ *   Allows range queries while maintaining data security
+ *
+ * @request
+ * POST with JSON body containing search criteria:
+ * {
+ *   "birthDateFrom": "1980-01-01",
+ *   "birthDateTo": "1990-12-31",
+ *   "minAge": 30,
+ *   "maxAge": 50
+ * }
+ *
+ * @response
+ * {
+ *   "success": true,
+ *   "searchType": "range",
+ *   "criteria": {...},
+ *   "results": [...],
+ *   "totalResults": 3,
+ *   "searchTime": 55,
+ *   "encryptedFields": ["birthDate"],
+ *   "encryptionType": "range",
+ *   "message": "Range search completed on encrypted data"
+ * }
+ *
+ * @validation
+ * - Age values: Must be between 0 and 120 years
+ * - Date format: Must be valid YYYY-MM-DD format
+ * - At least one range criteria is required
+ *
+ * @security
+ * This endpoint handles sensitive patient data and should be protected with
+ * proper authentication and authorization. Currently uses mock data for
+ * demonstration purposes.
+ *
+ * @cors
+ * Supports CORS with wildcard origin for development. Should be restricted
+ * in production environments.
+ */
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');

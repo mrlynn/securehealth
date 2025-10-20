@@ -16,7 +16,7 @@ class PatientControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = static::createClient();
-        $this->documentManager = static::getContainer()->get('doctrine_mongodb.odm.document_manager');
+        $this->documentManager = $this->client->getContainer()->get('doctrine_mongodb.odm.document_manager');
         
         // Clear the database before each test
         $this->documentManager->getSchemaManager()->dropDocumentCollection(Patient::class);

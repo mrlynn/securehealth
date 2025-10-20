@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Inactivity Timer (Quick Test)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Quick Inactivity Timer Test</h1>
+        <div class="status warning">
+            <strong>⚠️ TEST MODE:</strong> This uses shorter timeouts for quick testing (30 seconds total, 10 seconds warning)
+        </div>
+        
+        <p>You should see:</p>
+        <ul>
+            <li>A blue timer in the bottom-right corner showing countdown</li>
+            <li>A warning modal after 20 seconds of inactivity</li>
+            <li>Automatic logout after 30 seconds of inactivity</li>
+        </ul>
+        
+        <div id="status" class="status info">
+            <strong>Status:</strong> Loading timer...
+        </div>
+        
+        <div id="instructions" class="status info">
+            <strong>Instructions:</strong>
+            <ol>
+                <li>Wait 20 seconds without moving mouse or typing</li>
+                <li>You should see a warning modal</li>
+                <li>Click "Stay signed in" to reset the timer</li>
+                <li>Or wait another 10 seconds to be logged out</li>
+            </ol>
+        </div>
+        
+        <div id="console-output" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+            <strong>Console Output:</strong><br>
+            <div id="console-logs"></div>
+        </div>
+        
+        <div class="status info">
+            <strong>Test Controls:</strong><br>
+            <button onclick="simulateActivity()" style="padding: 8px 16px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Simulate Activity (Reset Timer)
+            </button>
+            <button onclick="checkTimerStatus()" style="padding: 8px 16px; margin: 5px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Check Timer Status
+            </button>
+        </div>
+    </div>
+
+    <!-- Include the test version of auth-fix.js -->
+    <script src="/auth-fix-test.js"></script>
+    
+    <script>
+        // Override console.log to capture output
+        const originalLog = console.log;
+        const consoleDiv = document.getElementById('console-logs');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const logEntry = document.createElement('div');
+            logEntry.textContent = new Date().toLocaleTimeString() + ': ' + args.join(' ');
+            consoleDiv.appendChild(logEntry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        };
+        
+        // Check if timer elements exist
+        setTimeout(() => {
+            const statusDiv = document.getElementById('status');
+            const ticker = document.getElementById('inactivityTicker');
+            const modal = document.getElementById('inactivityModal');
+            
+            if (ticker) {
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '<strong>Status:</strong> ✅ Timer is working! You should see a blue timer in the bottom-right corner.';
+            } else {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '<strong>Status:</strong> ❌ Timer not found. Check console for errors.';
+            }
+            
+            console.log('Timer check complete. Ticker found:', !!ticker, 'Modal found:', !!modal);
+        }, 1000);
+        
+        // Test functions
+        function simulateActivity() {
+            // Trigger a mousemove event to simulate activity
+            const event = new MouseEvent('mousemove', {
+                clientX: Math.random() * window.innerWidth,
+                clientY: Math.random() * window.innerHeight
+            });
+            window.dispatchEvent(event);
+            console.log('Simulated activity - timer should reset');
+        }
+        
+        function checkTimerStatus() {
+            const ticker = document.getElementById('inactivityTicker');
+            const modal = document.getElementById('inactivityModal');
+            
+            console.log('Timer Status Check:');
+            console.log('- Ticker element:', ticker ? 'Found' : 'Not found');
+            console.log('- Modal element:', modal ? 'Found' : 'Not found');
+            console.log('- Ticker visible:', ticker ? ticker.style.display !== 'none' : 'N/A');
+            console.log('- Modal visible:', modal ? modal.style.display !== 'none' : 'N/A');
+            
+            if (ticker) {
+                console.log('- Ticker text:', ticker.textContent);
+            }
+        }
+        
+        // Log when script loads
+        console.log('Test page loaded');
+        
+        // Auto-check every 5 seconds
+        setInterval(checkTimerStatus, 5000);
+    </script>
+</body>
+</html>

@@ -1,4 +1,72 @@
 <?php
+/**
+ * @fileoverview Equality Encrypted Search API Endpoint
+ *
+ * This API endpoint provides exact match search functionality for encrypted patient data
+ * in the SecureHealth HIPAA-compliant medical records system. It uses deterministic
+ * encryption to enable precise searches on specific patient fields.
+ *
+ * @api
+ * @endpoint POST /api_encrypted_search_equality.php
+ * @version 1.0.0
+ * @since 2024
+ * @author Michael Lynn https://github.com/mrlynn
+ * @license MIT
+ *
+ * @features
+ * - Exact match searches using deterministic encryption
+ * - Support for firstName, lastName, email, and phone fields
+ * - Input validation and sanitization
+ * - Mock data implementation for demonstration
+ * - CORS support for cross-origin requests
+ *
+ * @searchCriteria
+ * - lastName: Exact match search (case-insensitive)
+ * - firstName: Exact match search (case-insensitive)
+ * - email: Exact match search with email validation
+ * - phone: Exact match search with phone format validation (XXX-XXX-XXXX)
+ *
+ * @encryptionType
+ * - deterministic: Same input always produces same encrypted output
+ *   Enables exact match searches while maintaining data security
+ *
+ * @request
+ * POST with JSON body containing search criteria:
+ * {
+ *   "lastName": "Smith",
+ *   "firstName": "John",
+ *   "email": "john.smith@example.com",
+ *   "phone": "555-123-4567"
+ * }
+ *
+ * @response
+ * {
+ *   "success": true,
+ *   "searchType": "equality",
+ *   "criteria": {...},
+ *   "results": [...],
+ *   "totalResults": 1,
+ *   "searchTime": 35,
+ *   "encryptedFields": ["lastName", "firstName", "email", "phoneNumber"],
+ *   "encryptionType": "deterministic",
+ *   "message": "Equality search completed on encrypted data"
+ * }
+ *
+ * @validation
+ * - Email: Must be valid email format
+ * - Phone: Must match XXX-XXX-XXXX pattern
+ * - At least one search criteria is required
+ *
+ * @security
+ * This endpoint handles sensitive patient data and should be protected with
+ * proper authentication and authorization. Currently uses mock data for
+ * demonstration purposes.
+ *
+ * @cors
+ * Supports CORS with wildcard origin for development. Should be restricted
+ * in production environments.
+ */
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');

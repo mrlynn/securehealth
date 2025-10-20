@@ -1,3 +1,24 @@
+/**
+ * @fileoverview Third-Party License Information for SecureHealth React Bundle
+ *
+ * This file contains the license information for all third-party libraries
+ * bundled in main.d0f2ebcf.js. This includes:
+ *
+ * - React 18.x (MIT License) - Facebook, Inc.
+ * - React DOM (MIT License) - Facebook, Inc.
+ * - React Router DOM 6.30.1 (MIT License) - Remix Software Inc.
+ * - classnames (MIT License) - Jed Watson
+ *
+ * @static
+ * @component
+ * @version 1.0.0
+ * @since 2024
+ * @license MIT (Various - See below for individual library licenses)
+ *
+ * All libraries are used in accordance with their respective MIT licenses.
+ * For full license texts, please refer to the individual library repositories.
+ */
+
 /*!
 	Copyright (c) 2018 Jed Watson.
 	Licensed under the MIT License (MIT), see

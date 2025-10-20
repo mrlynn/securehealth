@@ -1,4 +1,82 @@
 <?php
+/**
+ * @fileoverview MongoDB Patients List API Endpoint
+ *
+ * This API endpoint retrieves a list of all patient records from MongoDB with decryption
+ * for the SecureHealth HIPAA-compliant medical records system. It includes sample data
+ * creation functionality and role-based access control for patient information.
+ *
+ * @api
+ * @endpoint GET /api_mongo_patients.php
+ * @version 1.0.0
+ * @since 2024
+ * @author Michael Lynn https://github.com/mrlynn
+ * @license MIT
+ *
+ * @features
+ * - Retrieves all patient records from MongoDB
+ * - Decrypts sensitive fields based on user role
+ * - Creates sample data if collection is empty
+ * - Role-based access control
+ * - Audit logging for compliance
+ * - Sorted by last name for easy browsing
+ *
+ * @encryption
+ * - Uses MongoDBEncryptionService for field-level decryption
+ * - Supports deterministic, range, and random encryption types
+ * - Decrypts fields based on user role permissions
+ * - Maintains data security while enabling list access
+ *
+ * @sampleData
+ * - Creates sample patients if collection is empty
+ * - Includes realistic medical data for testing
+ * - Uses proper encryption for all sensitive fields
+ * - Logs sample data creation events
+ *
+ * @response
+ * Returns array of decrypted patient data based on user role:
+ * [
+ *   {
+ *     "id": "68dbf20ae69980a1de028e22",
+ *     "firstName": "John",
+ *     "lastName": "Doe",
+ *     "birthDate": "1980-05-15T00:00:00.000Z",
+ *     "email": "john.doe@example.com",
+ *     "phoneNumber": "555-123-4567",
+ *     "ssn": "***-**-6789", // Masked based on role
+ *     "diagnosis": [...], // Available based on role
+ *     "medications": [...], // Available based on role
+ *     // ... other fields based on user permissions
+ *   }
+ * ]
+ *
+ * @roleBasedAccess
+ * - ROLE_DOCTOR: Full access to all patient data
+ * - ROLE_NURSE: Limited access to medical information
+ * - ROLE_RECEPTIONIST: Basic demographic information only
+ * - Field visibility determined by user role
+ *
+ * @auditLogging
+ * - Logs patient list access events
+ * - Records user ID, IP address, and action details
+ * - Stores timestamp and entity information
+ * - Enables compliance tracking
+ *
+ * @security
+ * - Requires proper authentication in production
+ * - Uses role-based access control
+ * - Decrypts data based on user permissions
+ * - Implements audit logging for compliance
+ * - Creates encrypted sample data
+ *
+ * @dependencies
+ * - MongoDB PHP Driver
+ * - App\Document\Patient
+ * - App\Service\MongoDBEncryptionService
+ * - App\Service\AuditLogService
+ * - Symfony\Component\DependencyInjection\ParameterBag\ParameterBag
+ */
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use App\Document\Patient;

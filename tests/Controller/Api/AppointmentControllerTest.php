@@ -17,7 +17,7 @@ class AppointmentControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = static::createClient();
-        $this->documentManager = static::getContainer()->get('doctrine_mongodb.odm.document_manager');
+        $this->documentManager = $this->client->getContainer()->get('doctrine_mongodb.odm.document_manager');
 
         $schemaManager = $this->documentManager->getSchemaManager();
         $schemaManager->dropDocumentCollection(Appointment::class);

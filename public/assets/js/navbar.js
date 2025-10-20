@@ -64,7 +64,7 @@ class SecureHealthNavbar {
                       email.includes('admin') || 
                       username.includes('admin');
 
-        // Check for doctor
+        // Check for doctor // super hacky to get around the fact that the user role is not set in the database
         this.isDoctor = roles.includes('ROLE_DOCTOR') ||
                        email.includes('doctor') || 
                        username.includes('doctor');
@@ -147,8 +147,11 @@ class SecureHealthNavbar {
                     Resources
                 </a>
                 <ul class="dropdown-menu">
+                    <li><a class="dropdown-item ${currentPage === '/role-documentation.html' ? 'active' : ''}" href="/role-documentation.html">
+                        <i class="fas fa-user-md me-1"></i>My Documentation
+                    </a></li>
                     <li><a class="dropdown-item ${currentPage === '/documentation.html' ? 'active' : ''}" href="/documentation.html">
-                        <i class="fas fa-book me-1"></i>Documentation
+                        <i class="fas fa-book me-1"></i>Developer Docs
                     </a></li>
                     <li><a class="dropdown-item" href="/index.html#features">
                         <i class="fas fa-star me-1"></i>Features

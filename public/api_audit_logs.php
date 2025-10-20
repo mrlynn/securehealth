@@ -1,4 +1,51 @@
 <?php
+/**
+ * @fileoverview Audit Logs API Endpoint
+ *
+ * This API endpoint provides access to audit logs for the SecureHealth HIPAA-compliant
+ * medical records system. It retrieves audit trail information from MongoDB and supports
+ * filtering by action type, entity type, and time range.
+ *
+ * @api
+ * @endpoint GET /api_audit_logs.php
+ * @version 1.0.0
+ * @since 2024
+ * @author Michael Lynn https://github.com/mrlynn
+ * @license MIT
+ *
+ * @features
+ * - Retrieve audit logs with pagination (limit: 1-500, default: 50)
+ * - Filter by action type (create|read|update|delete)
+ * - Filter by entity type (patient|user)
+ * - Filter by timestamp (since parameter in milliseconds)
+ * - Basic metrics for dashboard (total count, last 24h count)
+ * - MongoDB integration with proper error handling
+ *
+ * @parameters
+ * - limit: Maximum number of logs to return (1-500, default: 50)
+ * - action: Filter by action type (optional)
+ * - entityType: Filter by entity type (optional)
+ * - since: Filter by timestamp in milliseconds since epoch (optional)
+ *
+ * @response
+ * {
+ *   "logs": [...], // Array of audit log entries
+ *   "metrics": {
+ *     "total": 1234, // Total number of audit logs
+ *     "last24h": 56  // Number of logs in last 24 hours
+ *   }
+ * }
+ *
+ * @security
+ * This endpoint handles sensitive audit information and should be protected
+ * with proper authentication and authorization in production environments.
+ *
+ * @dependencies
+ * - MongoDB PHP Driver
+ * - MongoDB\Client
+ * - MongoDB\BSON\UTCDateTime
+ */
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use MongoDB\Client;

@@ -360,6 +360,7 @@
           
           const patient = await response.json();
           console.log("Patient data loaded:", patient);
+          console.log("Patient birthDate:", patient.birthDate, typeof patient.birthDate);
           
           // Set global patient data
           patientData = patient;
@@ -534,9 +535,23 @@
         if (!dateString) return '';
         
         try {
+          // Handle YYYY-MM-DD format specifically to avoid timezone issues
+          if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString; // Already in correct format
+          }
+          
           const date = new Date(dateString);
-          return date.toISOString().split('T')[0];
+          if (isNaN(date.getTime())) {
+            return dateString; // If not a valid date, return the original string
+          }
+          
+          // Use UTC methods to avoid timezone issues
+          const year = date.getUTCFullYear();
+          const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(date.getUTCDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
         } catch (e) {
+          console.error('Error formatting date for input:', e);
           return dateString;
         }
       }

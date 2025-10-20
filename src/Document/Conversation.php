@@ -223,6 +223,86 @@ class Conversation
         return $this;
     }
 
+    /**
+     * Convert Conversation to encrypted MongoDB document for storage
+     * This method applies proper encryption to sensitive fields for HIPAA compliance
+     */
+    public function toDocument(\App\Service\MongoDBEncryptionService $encryptionService): array
+    {
+        $document = [];
+
+        if ($this->id) {
+            $document['_id'] = $this->id;
+        }
+
+        // Manual encryption for HIPAA compliance - encrypt sensitive conversation data
+        $document['patientId'] = $encryptionService->encrypt('conversation', 'patientId', $this->patientId);
+        $document['subject'] = $encryptionService->encrypt('conversation', 'subject', $this->subject);
+        
+        // Handle arrays by converting to JSON string for encryption
+        $document['participants'] = $encryptionService->encrypt('conversation', 'participants', json_encode($this->participants));
+        $document['status'] = $encryptionService->encrypt('conversation', 'status', $this->status);
+        
+        if ($this->lastMessagePreview) {
+            $document['lastMessagePreview'] = $encryptionService->encrypt('conversation', 'lastMessagePreview', $this->lastMessagePreview);
+        }
+        
+        $document['createdAt'] = $this->createdAt;
+        
+        if ($this->lastMessageAt) {
+            $document['lastMessageAt'] = $this->lastMessageAt;
+        }
+        
+        $document['messageCount'] = $this->messageCount;
+        $document['hasUnreadForPatient'] = $this->hasUnreadForPatient;
+        $document['hasUnreadForStaff'] = $this->hasUnreadForStaff;
+
+        return $document;
+    }
+
+    /**
+     * Create Conversation from encrypted MongoDB document
+     * This method decrypts sensitive fields when reading from storage
+     */
+    public static function fromDocument(array $document, \App\Service\MongoDBEncryptionService $encryptionService): self
+    {
+        $conversation = new self();
+        
+        if (isset($document['_id'])) {
+            $conversation->id = $document['_id'];
+        }
+        
+        // Decrypt sensitive fields
+        $conversation->patientId = $encryptionService->decrypt($document['patientId'] ?? null);
+        $conversation->subject = $encryptionService->decrypt($document['subject'] ?? '');
+        
+        // Handle arrays by decrypting JSON strings
+        $participantsJson = $encryptionService->decrypt($document['participants'] ?? '[]');
+        
+        // Handle both old data (arrays) and new data (JSON strings)
+        if (is_array($participantsJson)) {
+            // Old data format - already an array
+            $conversation->participants = $participantsJson;
+        } elseif (is_string($participantsJson)) {
+            // New data format - JSON string that needs decoding
+            $conversation->participants = json_decode($participantsJson, true) ?? [];
+        } else {
+            // Fallback for unexpected data types
+            $conversation->participants = [];
+        }
+        
+        $conversation->status = $encryptionService->decrypt($document['status'] ?? 'active');
+        $conversation->lastMessagePreview = $encryptionService->decrypt($document['lastMessagePreview'] ?? null);
+        
+        $conversation->createdAt = $document['createdAt'] ?? new \MongoDB\BSON\UTCDateTime();
+        $conversation->lastMessageAt = $document['lastMessageAt'] ?? null;
+        $conversation->messageCount = $document['messageCount'] ?? 0;
+        $conversation->hasUnreadForPatient = $document['hasUnreadForPatient'] ?? false;
+        $conversation->hasUnreadForStaff = $document['hasUnreadForStaff'] ?? false;
+        
+        return $conversation;
+    }
+
     public function toArray(): array
     {
         $createdAt = $this->getCreatedAt();

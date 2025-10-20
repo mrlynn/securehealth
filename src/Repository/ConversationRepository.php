@@ -24,19 +24,42 @@ class ConversationRepository
 
     public function save(Conversation $conversation, bool $flush = true): void
     {
-        // MongoDB auto-encryption handles encryption automatically
-        // Manual encryption is disabled to prevent double-encryption
+        // Apply manual encryption for HIPAA compliance
+        $document = $conversation->toDocument($this->encryptionService);
         
-        $this->documentManager->persist($conversation);
-        if ($flush) {
-            $this->documentManager->flush();
+        if ($conversation->getId()) {
+            // Update existing document
+            $this->documentManager
+                ->getDocumentCollection(Conversation::class)
+                ->replaceOne(
+                    ['_id' => $conversation->getId()],
+                    $document
+                );
+        } else {
+            // Insert new document
+            $result = $this->documentManager
+                ->getDocumentCollection(Conversation::class)
+                ->insertOne($document);
+            
+            if ($result->getInsertedId()) {
+                $conversation->setId($result->getInsertedId());
+            }
         }
     }
 
     public function findById(string $id): ?Conversation
     {
         try {
-            return $this->repository->find($id);
+            $objectId = new ObjectId($id);
+            $document = $this->documentManager
+                ->getDocumentCollection(Conversation::class)
+                ->findOne(['_id' => $objectId]);
+            
+            if (!$document) {
+                return null;
+            }
+            
+            return Conversation::fromDocument((array) $document, $this->encryptionService);
         } catch (\Exception $e) {
             return null;
         }
@@ -44,29 +67,54 @@ class ConversationRepository
 
     public function findByPatient(ObjectId $patientId, int $limit = 50, int $skip = 0): array
     {
-        return $this->documentManager
-            ->createQueryBuilder(Conversation::class)
-            ->field('patientId')->equals($patientId)
-            ->sort('lastMessageAt', 'desc')
-            ->limit($limit)
-            ->skip($skip)
-            ->getQuery()
-            ->execute()
-            ->toArray(false);
+        // Encrypt the patientId for searching
+        $encryptedPatientId = $this->encryptionService->encrypt('conversation', 'patientId', $patientId);
+        
+        $cursor = $this->documentManager
+            ->getDocumentCollection(Conversation::class)
+            ->find(
+                ['patientId' => $encryptedPatientId],
+                [
+                    'sort' => ['lastMessageAt' => -1],
+                    'limit' => $limit,
+                    'skip' => $skip
+                ]
+            );
+        
+        $conversations = [];
+        foreach ($cursor as $document) {
+            $conversations[] = Conversation::fromDocument((array) $document, $this->encryptionService);
+        }
+        
+        return $conversations;
     }
 
     public function findForStaff(array $staffRoles, int $limit = 50, int $skip = 0): array
     {
         try {
-            $qb = $this->documentManager->createQueryBuilder(Conversation::class)
-                ->sort('lastMessageAt', 'desc')
-                ->limit($limit)
-                ->skip($skip);
-
-            // Find conversations where any of the staff roles are participants
-            $qb->field('participants')->in($staffRoles);
-
-            return $qb->getQuery()->execute()->toArray(false);
+            // Encrypt the staff roles for searching
+            $encryptedStaffRoles = [];
+            foreach ($staffRoles as $role) {
+                $encryptedStaffRoles[] = $this->encryptionService->encrypt('conversation', 'participants', json_encode([$role]));
+            }
+            
+            $cursor = $this->documentManager
+                ->getDocumentCollection(Conversation::class)
+                ->find(
+                    ['participants' => ['$in' => $encryptedStaffRoles]],
+                    [
+                        'sort' => ['lastMessageAt' => -1],
+                        'limit' => $limit,
+                        'skip' => $skip
+                    ]
+                );
+            
+            $conversations = [];
+            foreach ($cursor as $document) {
+                $conversations[] = Conversation::fromDocument((array) $document, $this->encryptionService);
+            }
+            
+            return $conversations;
         } catch (\Exception $e) {
             // If there's an error, return empty array
             return [];
@@ -76,12 +124,18 @@ class ConversationRepository
     public function countUnreadForStaff(array $staffRoles): int
     {
         try {
-            return $this->documentManager->createQueryBuilder(Conversation::class)
-                ->field('participants')->in($staffRoles)
-                ->field('hasUnreadForStaff')->equals(true)
-                ->getQuery()
-                ->execute()
-                ->count();
+            // Encrypt the staff roles for searching
+            $encryptedStaffRoles = [];
+            foreach ($staffRoles as $role) {
+                $encryptedStaffRoles[] = $this->encryptionService->encrypt('conversation', 'participants', json_encode([$role]));
+            }
+            
+            return $this->documentManager
+                ->getDocumentCollection(Conversation::class)
+                ->countDocuments([
+                    'participants' => ['$in' => $encryptedStaffRoles],
+                    'hasUnreadForStaff' => true
+                ]);
         } catch (\Exception $e) {
             // If there's an error, return 0
             return 0;
@@ -90,12 +144,15 @@ class ConversationRepository
 
     public function countUnreadForPatient(ObjectId $patientId): int
     {
-        return $this->documentManager->createQueryBuilder(Conversation::class)
-            ->field('patientId')->equals($patientId)
-            ->field('hasUnreadForPatient')->equals(true)
-            ->getQuery()
-            ->execute()
-            ->count();
+        // Encrypt the patientId for searching
+        $encryptedPatientId = $this->encryptionService->encrypt('conversation', 'patientId', $patientId);
+        
+        return $this->documentManager
+            ->getDocumentCollection(Conversation::class)
+            ->countDocuments([
+                'patientId' => $encryptedPatientId,
+                'hasUnreadForPatient' => true
+            ]);
     }
 
     public function markAsReadByStaff(string $conversationId): ?Conversation

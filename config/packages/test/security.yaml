@@ -1,0 +1,69 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        app_user_provider:
+            id: App\Security\SessionUserProvider
+        document_user_provider:
+            id: App\Security\DocumentUserProvider
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        public_api:
+            pattern: ^/api/(health|patient-portal/register|patient-portal/health)
+            security: false
+        # Add a dedicated login firewall with no entry_point to avoid redirect
+        login_api:
+            pattern: ^/api/login$
+            security: true
+            stateless: false
+            provider: app_user_provider
+            custom_authenticators:
+                - App\Security\JsonLoginAuthenticator
+        main:
+            pattern: ^/
+            lazy: false
+            stateless: false
+            provider: document_user_provider
+            custom_authenticators:
+                - App\Security\SessionAuthenticator
+            logout:
+                path: /api/logout
+                target: /login.html
+            entry_point: App\Security\SessionAuthenticator
+
+    # Configure access control based on paths and roles
+    access_control:
+        # Documentation Access Control
+        - { path: ^/docs, roles: PUBLIC_ACCESS }
+        # API Access Control
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/health, roles: PUBLIC_ACCESS }
+        # Patient Portal API access control - specific routes first
+        - { path: ^/api/patient-portal/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/patient-portal/health, roles: PUBLIC_ACCESS }
+        - { path: ^/api/patient-portal/appointments, roles: ROLE_PATIENT }
+        - { path: ^/api/patient-portal, roles: ROLE_PATIENT }
+        # Create operations allowed for healthcare staff
+        - { path: ^/api/patients$, methods: [POST], roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
+        - { path: '^/api/patients/[a-f0-9]{24}$', methods: [PUT, DELETE], roles: ROLE_DOCTOR }
+        # Read operations allowed for all authenticated healthcare staff
+        - { path: ^/api/patients, methods: [GET], roles: [IS_AUTHENTICATED_FULLY, ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST, ROLE_ADMIN] }
+        # Admin API access control
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
+        # Appointments API access control - allow healthcare staff
+        - { path: ^/api/appointments, roles: [ROLE_RECEPTIONIST, ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
+        # Role-specific documentation API access control
+        - { path: ^/api/role-documentation, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/role-features, roles: IS_AUTHENTICATED_FULLY }
+
+    role_hierarchy:
+        # Doctor has all permissions
+        ROLE_DOCTOR: [ROLE_NURSE, ROLE_RECEPTIONIST]
+        # Nurse has more permissions than receptionist
+        ROLE_NURSE: [ROLE_RECEPTIONIST]
+        # Patients have their own separate role hierarchy
+        ROLE_PATIENT: [ROLE_USER]

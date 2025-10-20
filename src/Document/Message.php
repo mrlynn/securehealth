@@ -283,6 +283,129 @@ class Message
         return $this;
     }
 
+    /**
+     * Convert Message to encrypted MongoDB document for storage
+     * This method applies proper encryption to sensitive fields for HIPAA compliance
+     */
+    public function toDocument(\App\Service\MongoDBEncryptionService $encryptionService): array
+    {
+        $document = [];
+
+        if ($this->id) {
+            $document['_id'] = $this->id;
+        }
+
+        // Manual encryption for HIPAA compliance - encrypt sensitive message data
+        $document['patientId'] = $encryptionService->encrypt('message', 'patientId', $this->patientId);
+        
+        if ($this->senderUserId) {
+            $document['senderUserId'] = $encryptionService->encrypt('message', 'senderUserId', $this->senderUserId);
+        }
+        
+        $document['senderName'] = $encryptionService->encrypt('message', 'senderName', $this->senderName);
+        
+        // Handle arrays by converting to JSON string for encryption
+        $document['senderRoles'] = $encryptionService->encrypt('message', 'senderRoles', json_encode($this->senderRoles));
+        $document['direction'] = $encryptionService->encrypt('message', 'direction', $this->direction);
+        
+        if ($this->recipientRoles) {
+            $document['recipientRoles'] = $encryptionService->encrypt('message', 'recipientRoles', json_encode($this->recipientRoles));
+        }
+        
+        if ($this->subject) {
+            $document['subject'] = $encryptionService->encrypt('message', 'subject', $this->subject);
+        }
+        
+        // Body contains sensitive medical information - use RANDOM encryption
+        $document['body'] = $encryptionService->encrypt('message', 'body', $this->body);
+        
+        $document['createdAt'] = $this->createdAt;
+        
+        if ($this->updatedAt) {
+            $document['updatedAt'] = $this->updatedAt;
+        }
+        
+        $document['readByPatient'] = $this->readByPatient;
+        $document['readByStaff'] = $this->readByStaff;
+        
+        if ($this->conversationId) {
+            $document['conversationId'] = $encryptionService->encrypt('message', 'conversationId', $this->conversationId);
+        }
+        
+        if ($this->parentMessageId) {
+            $document['parentMessageId'] = $encryptionService->encrypt('message', 'parentMessageId', $this->parentMessageId);
+        }
+        
+        $document['threadLevel'] = $this->threadLevel;
+
+        return $document;
+    }
+
+    /**
+     * Create Message from encrypted MongoDB document
+     * This method decrypts sensitive fields when reading from storage
+     */
+    public static function fromDocument(array $document, \App\Service\MongoDBEncryptionService $encryptionService): self
+    {
+        $message = new self();
+        
+        if (isset($document['_id'])) {
+            $message->id = $document['_id'];
+        }
+        
+        // Decrypt sensitive fields
+        $message->patientId = $encryptionService->decrypt($document['patientId'] ?? null);
+        $message->senderUserId = $encryptionService->decrypt($document['senderUserId'] ?? null);
+        $message->senderName = $encryptionService->decrypt($document['senderName'] ?? '');
+        
+        // Handle arrays by decrypting JSON strings
+        $senderRolesJson = $encryptionService->decrypt($document['senderRoles'] ?? '[]');
+        
+        // Handle both old data (arrays) and new data (JSON strings)
+        if (is_array($senderRolesJson)) {
+            // Old data format - already an array
+            $message->senderRoles = $senderRolesJson;
+        } elseif (is_string($senderRolesJson)) {
+            // New data format - JSON string that needs decoding
+            $message->senderRoles = json_decode($senderRolesJson, true) ?? [];
+        } else {
+            // Fallback for unexpected data types
+            $message->senderRoles = [];
+        }
+        
+        $message->direction = $encryptionService->decrypt($document['direction'] ?? '');
+        
+        $recipientRolesJson = $encryptionService->decrypt($document['recipientRoles'] ?? null);
+        
+        // Handle both old data (arrays) and new data (JSON strings)
+        if ($recipientRolesJson === null) {
+            $message->recipientRoles = null;
+        } elseif (is_array($recipientRolesJson)) {
+            // Old data format - already an array
+            $message->recipientRoles = $recipientRolesJson;
+        } elseif (is_string($recipientRolesJson)) {
+            // New data format - JSON string that needs decoding
+            $message->recipientRoles = json_decode($recipientRolesJson, true);
+        } else {
+            // Fallback for unexpected data types
+            $message->recipientRoles = null;
+        }
+        
+        $message->subject = $encryptionService->decrypt($document['subject'] ?? null);
+        $message->body = $encryptionService->decrypt($document['body'] ?? '');
+        
+        $message->createdAt = $document['createdAt'] ?? new \MongoDB\BSON\UTCDateTime();
+        $message->updatedAt = $document['updatedAt'] ?? null;
+        $message->readByPatient = $document['readByPatient'] ?? false;
+        $message->readByStaff = $document['readByStaff'] ?? false;
+        
+        $message->conversationId = $encryptionService->decrypt($document['conversationId'] ?? null);
+        $message->parentMessageId = $encryptionService->decrypt($document['parentMessageId'] ?? null);
+        $message->threadLevel = $document['threadLevel'] ?? 0;
+        
+        return $message;
+    }
+
     public function toArray(): array
     {
         $createdAt = $this->getCreatedAt();

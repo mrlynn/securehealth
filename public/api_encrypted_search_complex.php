@@ -1,4 +1,71 @@
 <?php
+/**
+ * @fileoverview Complex Encrypted Search API Endpoint
+ *
+ * This API endpoint provides complex search functionality for encrypted patient data
+ * in the SecureHealth HIPAA-compliant medical records system. It supports multi-field
+ * searches combining different encryption types for comprehensive patient queries.
+ *
+ * @api
+ * @endpoint POST /api_encrypted_search_complex.php
+ * @version 1.0.0
+ * @since 2024
+ * @author Michael Lynn https://github.com/mrlynn
+ * @license MIT
+ *
+ * @features
+ * - Multi-field search capabilities
+ * - Partial matching for lastName and email fields
+ * - Age range filtering (minAge parameter)
+ * - Phone number prefix matching
+ * - Birth year filtering
+ * - Mock data implementation for demonstration
+ * - CORS support for cross-origin requests
+ *
+ * @searchCriteria
+ * - lastName: Partial match search (case-insensitive)
+ * - email: Partial match search (case-insensitive)
+ * - minAge: Minimum age filter (0-120 years)
+ * - phonePrefix: 3-digit phone number prefix
+ * - birthYear: Exact birth year match (1900-current year)
+ *
+ * @encryptionTypes
+ * - deterministic: Used for lastName, email, phoneNumber
+ * - range: Used for birthDate calculations
+ *
+ * @request
+ * POST with JSON body containing search criteria:
+ * {
+ *   "lastName": "Smith",
+ *   "email": "john",
+ *   "minAge": 30,
+ *   "phonePrefix": "555",
+ *   "birthYear": 1985
+ * }
+ *
+ * @response
+ * {
+ *   "success": true,
+ *   "searchType": "complex",
+ *   "criteria": {...},
+ *   "results": [...],
+ *   "totalResults": 5,
+ *   "searchTime": 45,
+ *   "encryptedFields": ["lastName", "email", "birthDate", "phoneNumber"],
+ *   "encryptionTypes": ["deterministic", "range"],
+ *   "message": "Complex search completed on encrypted data"
+ * }
+ *
+ * @security
+ * This endpoint handles sensitive patient data and should be protected with
+ * proper authentication and authorization. Currently uses mock data for
+ * demonstration purposes.
+ *
+ * @cors
+ * Supports CORS with wildcard origin for development. Should be restricted
+ * in production environments.
+ */
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');

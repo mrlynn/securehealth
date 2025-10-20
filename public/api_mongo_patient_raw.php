@@ -1,4 +1,64 @@
 <?php
+/**
+ * @fileoverview MongoDB Raw Patient Data API Endpoint
+ *
+ * This API endpoint retrieves raw patient data from MongoDB without decryption
+ * for the SecureHealth HIPAA-compliant medical records system. It returns the
+ * encrypted BSON document structure for debugging and analysis purposes.
+ *
+ * @api
+ * @endpoint GET /api_mongo_patient_raw.php?id={patientId}
+ * @version 1.0.0
+ * @since 2024
+ * @author Michael Lynn https://github.com/mrlynn
+ * @license MIT
+ *
+ * @features
+ * - Retrieves raw encrypted patient data from MongoDB
+ * - Returns BSON document structure
+ * - Shows encrypted fields as Binary data
+ * - Useful for debugging encryption implementation
+ * - Validates ObjectId format
+ *
+ * @parameters
+ * - id: MongoDB ObjectId of the patient (required)
+ *
+ * @response
+ * Returns raw BSON document with encrypted fields visible as Binary data:
+ * {
+ *   "_id": {"$oid": "68dbf20ae69980a1de028e22"},
+ *   "firstName": "encrypted_binary_data",
+ *   "lastName": "encrypted_binary_data",
+ *   "ssn": "encrypted_binary_data",
+ *   "diagnosis": "encrypted_binary_data",
+ *   // ... other encrypted fields
+ * }
+ *
+ * @useCases
+ * - Debugging encryption implementation
+ * - Verifying data storage structure
+ * - Analyzing encrypted field formats
+ * - Development and testing purposes
+ * - Security audit verification
+ *
+ * @security
+ * - Returns raw encrypted data - should be used carefully
+ * - Requires proper authentication in production
+ * - Useful for debugging but not for normal operations
+ * - Shows actual encrypted field structure
+ *
+ * @validation
+ * - Validates ObjectId format
+ * - Returns 400 error for invalid ID format
+ * - Returns 404 error if patient not found
+ * - Handles MongoDB connection errors
+ *
+ * @dependencies
+ * - MongoDB PHP Driver
+ * - MongoDB\Client
+ * - MongoDB\BSON\ObjectId
+ */
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use MongoDB\Client;

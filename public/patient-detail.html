@@ -204,6 +204,7 @@
         }
         
         console.log("Patient data mapped for UI:", patient);
+        console.log("Patient birthDate:", patient.birthDate, typeof patient.birthDate);
         
         // Render patient detail
         renderPatientDetail(patient, userRole);
@@ -558,6 +559,13 @@
         if (!dateString) return '';
         
         try {
+          // Handle YYYY-MM-DD format specifically to avoid timezone issues
+          if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            const [year, month, day] = dateString.split('-');
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            return date.toLocaleDateString();
+          }
+          
           const date = new Date(dateString);
           if (isNaN(date.getTime())) {
             return dateString; // If not a valid date, return the original string

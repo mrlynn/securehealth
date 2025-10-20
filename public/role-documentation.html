@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureHealth - Role-Specific Documentation</title>
+    <meta name="description" content="Personalized documentation for SecureHealth users based on their role and permissions.">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Shared navbar styles -->
+    <link href="/assets/css/navbar.css" rel="stylesheet">
+    
+    <!-- Role-aware navbar script -->
+    <script src="/assets/js/navbar.js"></script>
+    
+    <!-- Authentication guard -->
+    <script src="/assets/js/auth-guard.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c5aa0;
+            --secondary-color: #1e3a5f;
+            --accent-color: #4a90e2;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-text);
+            padding-top: 80px; /* Account for fixed navbar */
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 60px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+        
+        .role-admin {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .role-doctor {
+            background: #0d6efd;
+            color: white;
+        }
+        
+        .role-nurse {
+            background: #0dcaf0;
+            color: white;
+        }
+        
+        .role-receptionist {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .role-patient {
+            background: #198754;
+            color: white;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border-left: 5px solid var(--accent-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+        
+        .capability-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .capability-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .capability-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .capability-list i {
+            color: var(--success-color);
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        .quick-start-card {
+            background: var(--light-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .quick-start-card h6 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .quick-start-card ol {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .quick-start-card li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .alert-role {
+            border-left: 4px solid var(--accent-color);
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .alert-role h6 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .navigation-guide {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .navigation-guide h5 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(44, 90, 160, 0.1);
+        }
+        
+        .nav-item:last-child {
+            border-bottom: none;
+        }
+        
+        .nav-item i {
+            color: var(--accent-color);
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        .nav-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .nav-item a:hover {
+            text-decoration: underline;
+        }
+        
+        .footer {
+            background: var(--secondary-color);
+            color: white;
+            padding: 60px 0 30px;
+            margin-top: 4rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .content-section {
+            display: none;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Role-aware navbar will be inserted here -->
+    <div id="navbar-container"></div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading your personalized documentation...</p>
+    </div>
+
+    <!-- Main Content Container -->
+    <div id="main-content" style="display: none;">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-8 hero-content">
+                        <h1 class="display-5 fw-bold mb-4">
+                            <i class="fas fa-user-md me-3"></i>
+                            Your Personalized Documentation
+                        </h1>
+                        <p class="lead mb-4">
+                            Welcome to your role-specific SecureHealth documentation. This guide is tailored to your specific role and permissions, showing you exactly what features and capabilities are available to you.
+                        </p>
+                        <div class="d-flex flex-wrap gap-3 align-items-center">
+                            <span id="user-role-badge" class="role-badge"></span>
+                            <span id="user-welcome" class="text-light"></span>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="container">
+            <!-- Admin Documentation -->
+            <div id="admin-docs" class="content-section">
+                <div class="feature-card">
+                    <h2><i class="fas fa-user-shield me-2"></i>Administrator Documentation</h2>
+                    <p class="lead">Complete system administration guide for SecureHealth administrators.</p>
+                    
+                    <div class="alert-role">
+                        <h6><i class="fas fa-info-circle me-2"></i>Your Role: System Administrator</h6>
+                        <p>As an administrator, you have full system access including audit logs, demo data management, encryption configuration, and user management capabilities.</p>
+                    </div>
+
+                    <div class="navigation-guide">
+                        <h5><i class="fas fa-compass me-2"></i>Quick Navigation Guide</h5>
+                        <div class="nav-item">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <a href="/admin.html">Admin Dashboard</a> - System overview and audit logs
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-database"></i>
+                            <a href="/admin-demo-data.html">Demo Data Management</a> - Generate and manage test data
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-brain"></i>
+                            <a href="/medical-knowledge-search.html">Medical Knowledge Base</a> - AI-powered medical information
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-lock"></i>
+                            <a href="/queryable-encryption-search.html">Encryption Search</a> - Test MongoDB encryption capabilities
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-users"></i>
+                            <a href="/patients.html">Patient Management</a> - View and manage patient records
+                        </div>
+                    </div>
+
+                    <h3><i class="fas fa-cogs me-2"></i>System Management Capabilities</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-chart-line me-2 text-primary"></i>Audit & Monitoring</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>View comprehensive audit logs</li>
+                                <li><i class="fas fa-check"></i>Monitor system performance</li>
+                                <li><i class="fas fa-check"></i>Track user access patterns</li>
+                                <li><i class="fas fa-check"></i>Generate compliance reports</li>
+                                <li><i class="fas fa-check"></i>Monitor encryption status</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-database me-2 text-success"></i>Data Management</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>Generate demo patient data</li>
+                                <li><i class="fas fa-check"></i>Manage medical knowledge base</li>
+                                <li><i class="fas fa-check"></i>Configure encryption settings</li>
+                                <li><i class="fas fa-check"></i>Export system data</li>
+                                <li><i class="fas fa-check"></i>Backup and restore operations</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="quick-start-card">
+                        <h6><i class="fas fa-rocket me-2"></i>Quick Start Guide</h6>
+                        <ol>
+                            <li>Access the <strong>Admin Dashboard</strong> to view system overview and audit logs</li>
+                            <li>Use <strong>Demo Data Management</strong> to generate test patients and medical records</li>
+                            <li>Explore the <strong>Medical Knowledge Base</strong> for AI-powered clinical decision support</li>
+                            <li>Test <strong>Encryption Search</strong> capabilities to understand MongoDB Queryable Encryption</li>
+                            <li>Monitor <strong>Patient Management</strong> to understand healthcare workflows</li>
+                        </ol>
+                    </div>
+
+                    <h3><i class="fas fa-shield-alt me-2"></i>Security & Compliance</h3>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>HIPAA Compliance:</strong> As an administrator, you have access to sensitive audit logs and system configuration. Ensure you follow proper security protocols and maintain the confidentiality of audit information.
+                    </div>
+                    
+                    <ul class="capability-list">
+                        <li><i class="fas fa-check"></i>View all system audit logs for compliance monitoring</li>
+                        <li><i class="fas fa-check"></i>Access encryption configuration and status</li>
+                        <li><i class="fas fa-check"></i>Monitor user access patterns and security events</li>
+                        <li><i class="fas fa-check"></i>Generate compliance reports for regulatory requirements</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Doctor Documentation -->
+            <div id="doctor-docs" class="content-section">
+                <div class="feature-card">
+                    <h2><i class="fas fa-user-md me-2"></i>Doctor Documentation</h2>
+                    <p class="lead">Complete clinical workflow guide for healthcare providers.</p>
+                    
+                    <div class="alert-role">
+                        <h6><i class="fas fa-info-circle me-2"></i>Your Role: Healthcare Provider</h6>
+                        <p>As a doctor, you have full access to patient medical records, clinical tools, medical knowledge base, and audit logs for patient care activities.</p>
+                    </div>
+
+                    <div class="navigation-guide">
+                        <h5><i class="fas fa-compass me-2"></i>Clinical Workflow Navigation</h5>
+                        <div class="nav-item">
+                            <i class="fas fa-users"></i>
+                            <a href="/patients.html">Patient Management</a> - Access all patient records and medical data
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <a href="/calendar.html">Appointment Calendar</a> - Manage patient appointments and schedules
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-brain"></i>
+                            <a href="/medical-knowledge-search.html">Medical Knowledge</a> - AI-powered clinical decision support
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-chart-line"></i>
+                            <a href="/admin.html">Audit Logs</a> - View patient access and care activity logs
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-user-plus"></i>
+                            <a href="/patient-add.html">Add New Patient</a> - Register new patients to the system
+                        </div>
+                    </div>
+
+                    <h3><i class="fas fa-stethoscope me-2"></i>Clinical Capabilities</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-user-injured me-2 text-primary"></i>Patient Care</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>View complete patient medical records</li>
+                                <li><i class="fas fa-check"></i>Access encrypted diagnosis and medications</li>
+                                <li><i class="fas fa-check"></i>View patient SSN and insurance information</li>
+                                <li><i class="fas fa-check"></i>Create and update patient records</li>
+                                <li><i class="fas fa-check"></i>Delete patient records when necessary</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-clipboard-list me-2 text-success"></i>Clinical Tools</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>AI-powered medical knowledge search</li>
+                                <li><i class="fas fa-check"></i>Drug interaction checking</li>
+                                <li><i class="fas fa-check"></i>Clinical decision support</li>
+                                <li><i class="fas fa-check"></i>Patient messaging system</li>
+                                <li><i class="fas fa-check"></i>Audit trail for all clinical activities</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="quick-start-card">
+                        <h6><i class="fas fa-rocket me-2"></i>Daily Workflow</h6>
+                        <ol>
+                            <li>Check your <strong>Appointment Calendar</strong> for the day's patients</li>
+                            <li>Review patient records in <strong>Patient Management</strong> before appointments</li>
+                            <li>Use <strong>Medical Knowledge Search</strong> for clinical decision support</li>
+                            <li>Update patient records with new diagnoses, medications, or notes</li>
+                            <li>Communicate with patients through the messaging system</li>
+                        </ol>
+                    </div>
+
+                    <h3><i class="fas fa-shield-alt me-2"></i>HIPAA Compliance & Security</h3>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Data Access:</strong> You have full access to Protected Health Information (PHI) as required for medical treatment. All your access is logged for HIPAA compliance.
+                    </div>
+                    
+                    <ul class="capability-list">
+                        <li><i class="fas fa-check"></i>Full access to patient PHI for medical treatment purposes</li>
+                        <li><i class="fas fa-check"></i>All patient data access is encrypted and logged</li>
+                        <li><i class="fas fa-check"></i>Audit trail maintained for all clinical activities</li>
+                        <li><i class="fas fa-check"></i>Secure messaging system for patient communication</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Nurse Documentation -->
+            <div id="nurse-docs" class="content-section">
+                <div class="feature-card">
+                    <h2><i class="fas fa-user-nurse me-2"></i>Nurse Documentation</h2>
+                    <p class="lead">Patient care workflow guide for nursing staff.</p>
+                    
+                    <div class="alert-role">
+                        <h6><i class="fas fa-info-circle me-2"></i>Your Role: Nursing Staff</h6>
+                        <p>As a nurse, you have access to patient medical information needed for patient care, including diagnosis, medications, and basic patient information, but not SSN or insurance details.</p>
+                    </div>
+
+                    <div class="navigation-guide">
+                        <h5><i class="fas fa-compass me-2"></i>Patient Care Navigation</h5>
+                        <div class="nav-item">
+                            <i class="fas fa-users"></i>
+                            <a href="/patients.html">Patient Records</a> - View patient medical information
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <a href="/calendar.html">Appointment Calendar</a> - View patient schedules
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-brain"></i>
+                            <a href="/medical-knowledge-search.html">Medical Knowledge</a> - Clinical decision support
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-user-plus"></i>
+                            <a href="/patient-add.html">Add New Patient</a> - Register new patients
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-comments"></i>
+                            <a href="/messages.html">Staff Messaging</a> - Communicate with doctors and staff
+                        </div>
+                    </div>
+
+                    <h3><i class="fas fa-heartbeat me-2"></i>Patient Care Capabilities</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-user-injured me-2 text-primary"></i>Patient Information</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>View patient basic information</li>
+                                <li><i class="fas fa-check"></i>Access patient diagnosis and medical history</li>
+                                <li><i class="fas fa-check"></i>View current medications and dosages</li>
+                                <li><i class="fas fa-check"></i>Read clinical notes and care instructions</li>
+                                <li><i class="fas fa-check"></i>Update patient care notes</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-pills me-2 text-success"></i>Medication Management</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>View patient medication lists</li>
+                                <li><i class="fas fa-check"></i>Check for drug interactions</li>
+                                <li><i class="fas fa-check"></i>Access medication administration records</li>
+                                <li><i class="fas fa-check"></i>Update medication compliance notes</li>
+                                <li><i class="fas fa-check"></i>Report medication-related concerns</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="quick-start-card">
+                        <h6><i class="fas fa-rocket me-2"></i>Daily Patient Care Workflow</h6>
+                        <ol>
+                            <li>Review your <strong>Appointment Calendar</strong> for scheduled patients</li>
+                            <li>Access patient records to review medical history and current medications</li>
+                            <li>Use <strong>Medical Knowledge Search</strong> for drug interaction checks</li>
+                            <li>Update patient care notes and medication administration records</li>
+                            <li>Communicate with doctors through the messaging system</li>
+                        </ol>
+                    </div>
+
+                    <h3><i class="fas fa-exclamation-triangle me-2"></i>Access Limitations</h3>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-lock me-2"></i>
+                        <strong>Restricted Access:</strong> As a nurse, you do not have access to patient SSN information or detailed insurance information to maintain HIPAA compliance and principle of least privilege.
+                    </div>
+                    
+                    <ul class="capability-list">
+                        <li><i class="fas fa-times text-danger"></i>No access to patient SSN information</li>
+                        <li><i class="fas fa-times text-danger"></i>No access to detailed insurance information</li>
+                        <li><i class="fas fa-times text-danger"></i>Cannot delete patient records</li>
+                        <li><i class="fas fa-check"></i>Can view and update medical care information</li>
+                        <li><i class="fas fa-check"></i>Can access medication and diagnosis information</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Receptionist Documentation -->
+            <div id="receptionist-docs" class="content-section">
+                <div class="feature-card">
+                    <h2><i class="fas fa-user-tie me-2"></i>Receptionist Documentation</h2>
+                    <p class="lead">Administrative workflow guide for front desk staff.</p>
+                    
+                    <div class="alert-role">
+                        <h6><i class="fas fa-info-circle me-2"></i>Your Role: Administrative Staff</h6>
+                        <p>As a receptionist, you have access to basic patient information, scheduling, and insurance details needed for administrative tasks, but no access to medical information.</p>
+                    </div>
+
+                    <div class="navigation-guide">
+                        <h5><i class="fas fa-compass me-2"></i>Administrative Navigation</h5>
+                        <div class="nav-item">
+                            <i class="fas fa-users"></i>
+                            <a href="/patients.html">Patient Directory</a> - View basic patient information
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <a href="/calendar.html">Appointment Scheduling</a> - Manage patient appointments
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-user-plus"></i>
+                            <a href="/patient-add.html">Patient Registration</a> - Register new patients
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-credit-card"></i>
+                            <a href="/patients.html">Insurance Management</a> - View and update insurance information
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-phone"></i>
+                            <a href="/messages.html">Patient Communication</a> - Send appointment reminders
+                        </div>
+                    </div>
+
+                    <h3><i class="fas fa-clipboard-list me-2"></i>Administrative Capabilities</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-calendar-check me-2 text-primary"></i>Scheduling & Appointments</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>Schedule new patient appointments</li>
+                                <li><i class="fas fa-check"></i>Reschedule existing appointments</li>
+                                <li><i class="fas fa-check"></i>View doctor availability</li>
+                                <li><i class="fas fa-check"></i>Send appointment reminders</li>
+                                <li><i class="fas fa-check"></i>Manage appointment cancellations</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-user-plus me-2 text-success"></i>Patient Registration</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>Register new patients</li>
+                                <li><i class="fas fa-check"></i>Update patient contact information</li>
+                                <li><i class="fas fa-check"></i>Manage insurance information</li>
+                                <li><i class="fas fa-check"></i>Verify patient demographics</li>
+                                <li><i class="fas fa-check"></i>Process patient check-ins</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="quick-start-card">
+                        <h6><i class="fas fa-rocket me-2"></i>Daily Administrative Workflow</h6>
+                        <ol>
+                            <li>Check the <strong>Appointment Calendar</strong> for the day's schedule</li>
+                            <li>Process patient check-ins and verify information</li>
+                            <li>Update patient insurance information as needed</li>
+                            <li>Schedule new appointments and manage cancellations</li>
+                            <li>Send appointment reminders and follow-up communications</li>
+                        </ol>
+                    </div>
+
+                    <h3><i class="fas fa-exclamation-triangle me-2"></i>Access Limitations</h3>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-lock me-2"></i>
+                        <strong>Medical Information Access:</strong> As receptionist staff, you do not have access to patient medical information, diagnosis, or medications to maintain HIPAA compliance.
+                    </div>
+                    
+                    <ul class="capability-list">
+                        <li><i class="fas fa-times text-danger"></i>No access to patient medical records</li>
+                        <li><i class="fas fa-times text-danger"></i>No access to diagnosis or medication information</li>
+                        <li><i class="fas fa-times text-danger"></i>No access to clinical notes</li>
+                        <li><i class="fas fa-check"></i>Can view basic patient demographics</li>
+                        <li><i class="fas fa-check"></i>Can access insurance and billing information</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Patient Documentation -->
+            <div id="patient-docs" class="content-section">
+                <div class="feature-card">
+                    <h2><i class="fas fa-user me-2"></i>Patient Portal Documentation</h2>
+                    <p class="lead">Self-service guide for patients using the SecureHealth portal.</p>
+                    
+                    <div class="alert-role">
+                        <h6><i class="fas fa-info-circle me-2"></i>Your Role: Patient</h6>
+                        <p>As a patient, you have access to your own medical records, appointment management, and secure messaging with your healthcare providers.</p>
+                    </div>
+
+                    <div class="navigation-guide">
+                        <h5><i class="fas fa-compass me-2"></i>Patient Portal Navigation</h5>
+                        <div class="nav-item">
+                            <i class="fas fa-user"></i>
+                            <a href="/patient-portal.html">My Profile</a> - View and update your personal information
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <a href="/patient-portal/appointments.html">My Appointments</a> - Schedule and manage appointments
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-file-medical"></i>
+                            <a href="/patient-portal/records.html">My Medical Records</a> - View your health information
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-comments"></i>
+                            <a href="/patient-portal/messages.html">Messages</a> - Secure communication with your care team
+                        </div>
+                        <div class="nav-item">
+                            <i class="fas fa-bell"></i>
+                            <a href="/patient-portal/notifications.html">Notifications</a> - Appointment reminders and updates
+                        </div>
+                    </div>
+
+                    <h3><i class="fas fa-user-circle me-2"></i>Patient Portal Capabilities</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-calendar-alt me-2 text-primary"></i>Appointment Management</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>View upcoming appointments</li>
+                                <li><i class="fas fa-check"></i>Schedule new appointments</li>
+                                <li><i class="fas fa-check"></i>Reschedule existing appointments</li>
+                                <li><i class="fas fa-check"></i>Cancel appointments</li>
+                                <li><i class="fas fa-check"></i>Receive appointment reminders</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-file-medical me-2 text-success"></i>Medical Records Access</h5>
+                            <ul class="capability-list">
+                                <li><i class="fas fa-check"></i>View your medical history</li>
+                                <li><i class="fas fa-check"></i>Access lab results and test reports</li>
+                                <li><i class="fas fa-check"></i>View current medications</li>
+                                <li><i class="fas fa-check"></i>Download medical records</li>
+                                <li><i class="fas fa-check"></i>Track health metrics over time</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="quick-start-card">
+                        <h6><i class="fas fa-rocket me-2"></i>Getting Started with the Patient Portal</h6>
+                        <ol>
+                            <li>Access your <strong>My Profile</strong> to ensure your information is up to date</li>
+                            <li>Check <strong>My Appointments</strong> to see your upcoming visits</li>
+                            <li>Review <strong>My Medical Records</strong> to stay informed about your health</li>
+                            <li>Use the <strong>Messages</strong> feature to communicate with your care team</li>
+                            <li>Set up <strong>Notifications</strong> to receive appointment reminders</li>
+                        </ol>
+                    </div>
+
+                    <h3><i class="fas fa-shield-alt me-2"></i>Privacy & Security</h3>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Your Privacy:</strong> All your medical information is encrypted and protected. You can only access your own records, and all access is logged for security purposes.
+                    </div>
+                    
+                    <ul class="capability-list">
+                        <li><i class="fas fa-check"></i>Your medical records are encrypted and secure</li>
+                        <li><i class="fas fa-check"></i>Only you and your authorized healthcare providers can access your information</li>
+                        <li><i class="fas fa-check"></i>All portal access is logged for security monitoring</li>
+                        <li><i class="fas fa-check"></i>Secure messaging with your healthcare team</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- General Help Section -->
+            <div class="feature-card">
+                <h2><i class="fas fa-question-circle me-2"></i>Additional Help & Support</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-book me-2 text-primary"></i>Documentation Resources</h5>
+                        <ul class="capability-list">
+                            <li><i class="fas fa-external-link-alt"></i><a href="/documentation.html">Developer Documentation</a> - Technical system documentation</li>
+                            <li><i class="fas fa-external-link-alt"></i><a href="/docs/">User Guides</a> - Detailed feature guides</li>
+                            <li><i class="fas fa-external-link-alt"></i><a href="/help/">Help Center</a> - Troubleshooting and FAQs</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-headset me-2 text-success"></i>Support Options</h5>
+                        <ul class="capability-list">
+                            <li><i class="fas fa-envelope"></i>Contact your system administrator for technical issues</li>
+                            <li><i class="fas fa-phone"></i>Call your healthcare provider for medical questions</li>
+                            <li><i class="fas fa-comments"></i>Use the messaging system for non-urgent communications</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                    </h5>
+                    <p class="text-light">
+                        HIPAA-compliant medical records management with role-specific documentation and training.
+                    </p>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="/index.html" class="text-light text-decoration-none">Home</a></li>
+                        <li><a href="/login.html" class="text-light text-decoration-none">Login</a></li>
+                        <li><a href="/documentation.html" class="text-light text-decoration-none">Developer Docs</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Support</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light text-decoration-none">Help Center</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Contact Support</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Training</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <h6 class="fw-bold mb-3">Technology</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-light text-dark">MongoDB</span>
+                        <span class="badge bg-light text-dark">HIPAA Compliant</span>
+                        <span class="badge bg-light text-dark">Role-Based Access</span>
+                        <span class="badge bg-light text-dark">Encrypted</span>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-light">
+                        &copy; 2024 SecureHealth. Role-specific documentation system.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-light">
+                        <i class="fas fa-user-shield me-1"></i>
+                        Personalized Documentation • HIPAA Compliant • Secure Access
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    
+    <!-- Role-specific documentation script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Show loading spinner
+                document.getElementById('loading-spinner').style.display = 'block';
+                
+                // Wait for navbar to initialize
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Check authentication
+                await requireAuth();
+                
+                // Get current user information
+                const response = await fetch('/api/user');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error('Failed to get user information');
+                }
+                
+                const user = data.user;
+                const roles = user.roles;
+                
+                // Hide loading spinner
+                document.getElementById('loading-spinner').style.display = 'none';
+                
+                // Show main content
+                document.getElementById('main-content').style.display = 'block';
+                
+                // Determine primary role and show appropriate documentation
+                let primaryRole = 'ROLE_USER';
+                let roleBadgeClass = 'role-user';
+                let roleDisplayName = 'User';
+                let welcomeMessage = 'Welcome to SecureHealth!';
+                
+                if (roles.includes('ROLE_ADMIN')) {
+                    primaryRole = 'ROLE_ADMIN';
+                    roleBadgeClass = 'role-admin';
+                    roleDisplayName = 'System Administrator';
+                    welcomeMessage = 'Welcome, Administrator! You have full system access.';
+                    document.getElementById('admin-docs').classList.add('active');
+                } else if (roles.includes('ROLE_DOCTOR')) {
+                    primaryRole = 'ROLE_DOCTOR';
+                    roleBadgeClass = 'role-doctor';
+                    roleDisplayName = 'Healthcare Provider';
+                    welcomeMessage = 'Welcome, Doctor! Access your clinical tools and patient records.';
+                    document.getElementById('doctor-docs').classList.add('active');
+                } else if (roles.includes('ROLE_NURSE')) {
+                    primaryRole = 'ROLE_NURSE';
+                    roleBadgeClass = 'role-nurse';
+                    roleDisplayName = 'Nursing Staff';
+                    welcomeMessage = 'Welcome! Access patient care information and clinical tools.';
+                    document.getElementById('nurse-docs').classList.add('active');
+                } else if (roles.includes('ROLE_RECEPTIONIST')) {
+                    primaryRole = 'ROLE_RECEPTIONIST';
+                    roleBadgeClass = 'role-receptionist';
+                    roleDisplayName = 'Administrative Staff';
+                    welcomeMessage = 'Welcome! Manage appointments and patient registration.';
+                    document.getElementById('receptionist-docs').classList.add('active');
+                } else if (roles.includes('ROLE_PATIENT')) {
+                    primaryRole = 'ROLE_PATIENT';
+                    roleBadgeClass = 'role-patient';
+                    roleDisplayName = 'Patient';
+                    welcomeMessage = 'Welcome to your patient portal! Manage your health information.';
+                    document.getElementById('patient-docs').classList.add('active');
+                } else {
+                    // Default fallback
+                    document.getElementById('admin-docs').classList.add('active');
+                }
+                
+                // Update UI with user information
+                const roleBadge = document.getElementById('user-role-badge');
+                roleBadge.textContent = roleDisplayName;
+                roleBadge.className = `role-badge ${roleBadgeClass}`;
+                
+                document.getElementById('user-welcome').textContent = welcomeMessage;
+                
+            } catch (error) {
+                console.error('Error loading role-specific documentation:', error);
+                document.getElementById('loading-spinner').innerHTML = 
+                    '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error loading documentation. Please try refreshing the page.</div>';
+            }
+        });
+    </script>
+</body>
+</html>

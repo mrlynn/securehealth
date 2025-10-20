@@ -1,4 +1,57 @@
 <?php
+/**
+ * @fileoverview Mock Patients List API Endpoint
+ *
+ * This API endpoint provides mock patient list data for the SecureHealth HIPAA-compliant
+ * medical records system. It returns an array of patient records with basic information
+ * and medical data, used for demonstration and testing purposes.
+ *
+ * @api
+ * @endpoint GET /api_mock_patients.php
+ * @version 1.0.0
+ * @since 2024
+ * @author Michael Lynn https://github.com/mrlynn
+ * @license MIT
+ *
+ * @features
+ * - Returns array of mock patient records
+ * - JSON response format
+ * - Cache control headers
+ * - Development/testing purposes only
+ * - Includes medical information and roles
+ *
+ * @response
+ * Returns array of patient objects containing:
+ * - Basic information (id, name, birth date, contact)
+ * - Medical information (diagnosis, medications)
+ * - User role information
+ * - Masked SSN for security
+ *
+ * @dataStructure
+ * [
+ *   {
+ *     "id": "patient_id",
+ *     "firstName": "string",
+ *     "lastName": "string",
+ *     "birthDate": "ISO_date_string",
+ *     "email": "email_address",
+ *     "phone": "phone_number",
+ *     "ssn": "masked_ssn",
+ *     "diagnosis": ["array_of_diagnoses"],
+ *     "medications": ["array_of_medications"],
+ *     "role": "user_role"
+ *   }
+ * ]
+ *
+ * @security
+ * This endpoint returns mock data for development/testing only.
+ * In production, this would be replaced with encrypted MongoDB queries
+ * and proper authentication/authorization. SSNs are masked for security.
+ *
+ * @cache
+ * Disables caching to ensure fresh data for testing purposes.
+ */
+
 // Set the content type to JSON
 header('Content-Type: application/json');
 

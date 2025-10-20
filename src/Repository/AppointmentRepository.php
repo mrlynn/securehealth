@@ -97,4 +97,20 @@ class AppointmentRepository
             ->execute()
             ->toArray(false);
     }
+
+    /**
+     * Count appointments
+     */
+    public function count(array $criteria = []): int
+    {
+        $qb = $this->documentManager->createQueryBuilder(Appointment::class);
+        
+        if (!empty($criteria)) {
+            foreach ($criteria as $field => $value) {
+                $qb->field($field)->equals($value);
+            }
+        }
+        
+        return $qb->getQuery()->execute()->count();
+    }
 }

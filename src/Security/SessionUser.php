@@ -55,4 +55,9 @@ class SessionUser implements UserInterface
     {
         return $this->patientId;
     }
+
+    public function getId(): string
+    {
+        return $this->email;
+    }
 }

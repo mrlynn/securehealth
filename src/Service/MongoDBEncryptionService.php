@@ -249,7 +249,7 @@ class MongoDBEncryptionService
     {
         // If MongoDB is disabled, return a dummy key
         if (!isset($this->keyVaultCollection) || !isset($this->clientEncryption)) {
-            return new Binary('dummy-key-for-documentation-mode', 4);
+            return new Binary(random_bytes(16), 4); // Generate a proper 16-byte UUID
         }
         
         // Check if the key already exists

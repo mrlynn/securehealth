@@ -2,6 +2,120 @@
  * Dashboard JavaScript - Role-based dashboard content
  */
 
+/**
+ * API Utility Functions
+ * Provides consistent API calling with proper error handling and authentication
+ */
+class ApiUtils {
+    static async makeApiCall(url, options = {}) {
+        const defaultOptions = {
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        const finalOptions = { ...defaultOptions, ...options };
+        
+        try {
+            const response = await fetch(url, finalOptions);
+            
+            // Handle authentication errors
+            if (response.status === 401) {
+                console.log('ApiUtils: 401 error detected, triggering auth check...');
+                
+                // Let the AuthSessionManager handle this
+                if (window.authSessionManager) {
+                    window.authSessionManager.forceSessionCheck();
+                }
+                
+                throw new Error('Authentication required. Please log in again.');
+            }
+            
+            // Handle other HTTP errors
+            if (!response.ok) {
+                let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                
+                try {
+                    const errorData = await response.json();
+                    if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (e) {
+                    // If response is not JSON, try to get text
+                    try {
+                        const errorText = await response.text();
+                        if (errorText && errorText !== response.statusText) {
+                            errorMessage = errorText;
+                        }
+                    } catch (e2) {
+                        // Ignore text parsing errors
+                    }
+                }
+                
+                throw new Error(errorMessage);
+            }
+            
+            // Try to parse as JSON, but handle non-JSON responses gracefully
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            } else {
+                // Return response object for non-JSON responses
+                return {
+                    success: true,
+                    data: await response.text(),
+                    status: response.status
+                };
+            }
+            
+        } catch (error) {
+            console.error('ApiUtils: API call failed:', error);
+            
+            // Re-throw with more context
+            if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+                throw new Error('Invalid response format from server');
+            }
+            
+            throw error;
+        }
+    }
+    
+    static async get(url, options = {}) {
+        return this.makeApiCall(url, { ...options, method: 'GET' });
+    }
+    
+    static async post(url, data = null, options = {}) {
+        const postOptions = {
+            ...options,
+            method: 'POST'
+        };
+        
+        if (data) {
+            postOptions.body = JSON.stringify(data);
+        }
+        
+        return this.makeApiCall(url, postOptions);
+    }
+    
+    static async put(url, data = null, options = {}) {
+        const putOptions = {
+            ...options,
+            method: 'PUT'
+        };
+        
+        if (data) {
+            putOptions.body = JSON.stringify(data);
+        }
+        
+        return this.makeApiCall(url, putOptions);
+    }
+    
+    static async delete(url, options = {}) {
+        return this.makeApiCall(url, { ...options, method: 'DELETE' });
+    }
+}
+
 class DashboardManager {
     constructor() {
         this.user = null;
@@ -53,12 +167,7 @@ class DashboardManager {
     }
 
     async loadUserInfo() {
-        // Update user info in navbar
-        document.getElementById('userName').textContent = this.user.username || this.user.email;
-        document.getElementById('userRole').textContent = this.role.toUpperCase();
-        document.getElementById('roleBadge').textContent = this.role.toUpperCase();
-        
-        // Set welcome message
+        // Set welcome message (navbar handles user info display)
         const welcomeMessages = {
             admin: 'Welcome to the SecureHealth Administration Dashboard',
             doctor: 'Welcome to your Clinical Dashboard',
@@ -178,6 +287,14 @@ class DashboardManager {
                                         <div class="card-body">
                                             <i class="fas fa-lock fa-2x text-warning mb-2"></i>
                                             <h6>Encryption Demo</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card dashboard-card quick-action" onclick="window.location.href='role-documentation.html'">
+                                        <div class="card-body">
+                                            <i class="fas fa-user-md fa-2x text-secondary mb-2"></i>
+                                            <h6>My Documentation</h6>
                                         </div>
                                     </div>
                                 </div>
@@ -495,7 +612,7 @@ class DashboardManager {
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <div class="card dashboard-card quick-action" onclick="window.location.href='patients.html?action=add'">
+                                    <div class="card dashboard-card quick-action" onclick="window.location.href='patient-add.html?action=add'">
                                         <div class="card-body">
                                             <i class="fas fa-user-plus fa-2x text-warning mb-2"></i>
                                             <h6>Add Patient</h6>
@@ -626,7 +743,7 @@ class DashboardManager {
                     <div class="alert alert-danger">
                         <h4><i class="fas fa-exclamation-triangle me-2"></i>Access Error</h4>
                         <p>Unable to determine your role. Please contact your administrator.</p>
-                        <button class="btn btn-danger" onclick="logout()">Logout</button>
+                        <button class="btn btn-danger" onclick="window.location.href='/login.html'">Go to Login</button>
                     </div>
                 </div>
             </div>
@@ -658,10 +775,7 @@ class DashboardManager {
 
     async loadDoctorData() {
         try {
-            const response = await fetch('/api/dashboard/data', {
-                credentials: 'include'
-            });
-            const data = await response.json();
+            const data = await ApiUtils.get('/api/dashboard/data');
             
             if (data.success) {
                 const stats = data.data.stats;
@@ -675,6 +789,7 @@ class DashboardManager {
             }
         } catch (error) {
             console.error('Error loading doctor data:', error);
+            this.showErrorMessage('Failed to load dashboard data: ' + error.message);
         }
     }
 
@@ -930,6 +1045,34 @@ class DashboardManager {
             </div>
         `;
     }
+
+    showErrorMessage(message) {
+        // Create error message element
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger';
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            max-width: 500px;
+            margin: 0;
+        `;
+        errorDiv.innerHTML = `
+            <strong>Error:</strong> ${message}
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 1.2em;">&times;</button>
+        `;
+        
+        document.body.appendChild(errorDiv);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 10000);
+    }
 }
 
 // Initialize dashboard when page loads
@@ -938,7 +1081,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Logout function
-function logout() {
-    localStorage.removeItem('securehealth_user');
-    window.location.href = 'login.html';
-}
+// Logout function is now handled by the navbar system

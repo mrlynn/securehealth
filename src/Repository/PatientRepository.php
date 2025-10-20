@@ -86,6 +86,59 @@ class PatientRepository
     }
 
     /**
+     * Find all patients
+     */
+    public function findAll(): array
+    {
+        $cursor = $this->collection->find([]);
+        
+        $patients = [];
+        foreach ($cursor as $document) {
+            $patients[] = Patient::fromDocument((array) $document, $this->encryptionService);
+        }
+        
+        return $patients;
+    }
+
+    /**
+     * Find patients by date range (created between dates)
+     */
+    public function findByDateRange(\DateTime $startDate, \DateTime $endDate): array
+    {
+        $startDateUtc = new \MongoDB\BSON\UTCDateTime($startDate);
+        $endDateUtc = new \MongoDB\BSON\UTCDateTime($endDate);
+        
+        $cursor = $this->collection->find([
+            'createdAt' => [
+                '$gte' => $startDateUtc,
+                '$lte' => $endDateUtc
+            ]
+        ]);
+        
+        $patients = [];
+        foreach ($cursor as $document) {
+            $patients[] = Patient::fromDocument((array) $document, $this->encryptionService);
+        }
+        
+        return $patients;
+    }
+
+    /**
+     * Find patients by criteria (simple version)
+     */
+    public function findBy(array $criteria): array
+    {
+        $cursor = $this->collection->find($criteria);
+        
+        $patients = [];
+        foreach ($cursor as $document) {
+            $patients[] = Patient::fromDocument((array) $document, $this->encryptionService);
+        }
+        
+        return $patients;
+    }
+
+    /**
      * Find patients by criteria with pagination
      */
     public function findByCriteria(array $criteria, int $page = 1, int $limit = 20): array
@@ -111,6 +164,14 @@ class PatientRepository
      * Count patients matching criteria
      */
     public function countByCriteria(array $criteria): int
+    {
+        return $this->collection->countDocuments($criteria);
+    }
+
+    /**
+     * Count all patients
+     */
+    public function count(array $criteria = []): int
     {
         return $this->collection->countDocuments($criteria);
     }

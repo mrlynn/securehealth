@@ -35,4 +35,9 @@ class UserRepository
     {
         return $this->repository->findAll();
     }
+
+    public function count(array $criteria = []): int
+    {
+        return $this->repository->count($criteria);
+    }
 }

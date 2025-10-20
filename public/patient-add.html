@@ -25,6 +25,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f8f9fa;
       color: #2c3e50;
+      padding-bottom: 2rem;
     }
     .container {
       max-width: 1000px;
@@ -59,6 +60,9 @@
       display: flex;
       gap: 1rem;
       margin-top: 2rem;
+      padding-bottom: 2rem;
+      position: relative;
+      z-index: 10;
     }
     
     .btn {
@@ -373,7 +377,7 @@
               <!-- Tags will be added here -->
             </div>
             <div class="tag-input">
-              <input type="text" id="allergyInput" class="form-control" placeholder="Add allergy...">
+              <input type="text" id="allergiesInput" class="form-control" placeholder="Add allergy...">
               <button type="button" onclick="addItem('allergies')">Add</button>
             </div>
           </div>
@@ -395,7 +399,7 @@
               <!-- Tags will be added here -->
             </div>
             <div class="tag-input">
-              <input type="text" id="medicationInput" class="form-control" placeholder="Add medication...">
+              <input type="text" id="medicationsInput" class="form-control" placeholder="Add medication...">
               <button type="button" onclick="addItem('medications')">Add</button>
             </div>
           </div>
@@ -454,11 +458,11 @@
         
         console.log("User authenticated:", user.username || user.email);
         
-        // Check if user has permission to add patients (doctors only)
+        // Check if user has permission to add patients (healthcare staff)
         const userRole = window.secureHealthNavbar.getCurrentUserRole();
-        if (userRole !== 'DOCTOR') {
+        if (!['DOCTOR', 'NURSE', 'RECEPTIONIST'].includes(userRole)) {
           console.log("User does not have permission to add patients");
-          window.showStatus('Only doctors can add new patients.', 'error');
+          window.showStatus('Only healthcare staff can add new patients.', 'error');
           setTimeout(() => {
             window.location.href = '/patients.html';
           }, 2000);

@@ -5,6 +5,8 @@ security:
     providers:
         app_user_provider:
             id: App\Security\SessionUserProvider
+        document_user_provider:
+            id: App\Security\DocumentUserProvider
 
     firewalls:
         dev:
@@ -45,8 +47,8 @@ security:
         - { path: ^/api/patient-portal/health, roles: PUBLIC_ACCESS }
         - { path: ^/api/patient-portal/appointments, roles: ROLE_PATIENT }
         - { path: ^/api/patient-portal, roles: ROLE_PATIENT }
-        # Create, update, delete operations restricted to doctors
-        - { path: ^/api/patients$, methods: [POST], roles: ROLE_DOCTOR }
+        # Create operations allowed for healthcare staff
+        - { path: ^/api/patients$, methods: [POST], roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
         - { path: '^/api/patients/[a-f0-9]{24}$', methods: [PUT, DELETE], roles: ROLE_DOCTOR }
         # Read operations allowed for all authenticated healthcare staff
         - { path: ^/api/patients, methods: [GET], roles: [IS_AUTHENTICATED_FULLY, ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST, ROLE_ADMIN] }
@@ -54,6 +56,9 @@ security:
         - { path: ^/api/admin, roles: ROLE_ADMIN }
         # Appointments API access control - allow healthcare staff
         - { path: ^/api/appointments, roles: [ROLE_RECEPTIONIST, ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
+        # Role-specific documentation API access control
+        - { path: ^/api/role-documentation, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/role-features, roles: IS_AUTHENTICATED_FULLY }
 
     role_hierarchy:
         # Doctor has all permissions

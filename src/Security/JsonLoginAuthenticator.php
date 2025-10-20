@@ -65,10 +65,17 @@ class JsonLoginAuthenticator extends AbstractAuthenticator
         // Always try to parse JSON first, as our frontend uses JSON
         try {
             $jsonData = json_decode($request->getContent(), true);
-            if (isset($jsonData['_username']) && isset($jsonData['_password'])) {
-                $email = $jsonData['_username'];
-                $password = $jsonData['_password'];
-                return $this->createPassport($email, $password);
+            if ($jsonData) {
+                // Try both email/password and _username/_password formats
+                if (isset($jsonData['email']) && isset($jsonData['password'])) {
+                    $email = $jsonData['email'];
+                    $password = $jsonData['password'];
+                    return $this->createPassport($email, $password);
+                } elseif (isset($jsonData['_username']) && isset($jsonData['_password'])) {
+                    $email = $jsonData['_username'];
+                    $password = $jsonData['_password'];
+                    return $this->createPassport($email, $password);
+                }
             }
         } catch (\Exception $e) {
             // If JSON parsing fails, continue to try other methods

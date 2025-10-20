@@ -110,8 +110,14 @@ class DashboardController extends AbstractController
     private function getDoctorDashboardData(UserInterface $user): JsonResponse
     {
         try {
+            // Find the actual User document from the database
+            $userDocument = $this->userRepository->findOneByEmail($user->getEmail());
+            if (!$userDocument) {
+                throw new \Exception('User document not found in database');
+            }
+            
             // Get doctor's patients
-            $patients = $this->patientRepository->findBy(['primaryDoctorId' => new ObjectId($user->getId())]);
+            $patients = $this->patientRepository->findBy(['primaryDoctorId' => $userDocument->getId()]);
             $patientCount = count($patients);
 
             // Get today's appointments
@@ -124,7 +130,7 @@ class DashboardController extends AbstractController
             $todayAppointmentCount = count($todayAppointments);
 
             // Get unread messages
-            $unreadMessages = $this->messageRepository->findUnreadByUser($user->getId());
+            $unreadMessages = $this->messageRepository->findUnreadByUser($userDocument->getId());
             $unreadMessageCount = count($unreadMessages);
 
             // Get recent patients (last 5)
@@ -165,6 +171,12 @@ class DashboardController extends AbstractController
     private function getNurseDashboardData(UserInterface $user): JsonResponse
     {
         try {
+            // Find the actual User document from the database
+            $userDocument = $this->userRepository->findOneByEmail($user->getEmail());
+            if (!$userDocument) {
+                throw new \Exception('User document not found in database');
+            }
+            
             // Get assigned patients (nurses can see all patients)
             $allPatients = $this->patientRepository->findAll();
             $assignedPatientCount = count($allPatients);
@@ -179,7 +191,7 @@ class DashboardController extends AbstractController
             $todayTaskCount = count($todayAppointments);
 
             // Get unread messages
-            $unreadMessages = $this->messageRepository->findUnreadByUser($user->getId());
+            $unreadMessages = $this->messageRepository->findUnreadByUser($userDocument->getId());
             $unreadMessageCount = count($unreadMessages);
 
             return $this->json([

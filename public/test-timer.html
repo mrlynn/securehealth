@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Inactivity Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .timer-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Inactivity Timer Test</h1>
+        <p>This page tests the inactivity timer functionality. You should see:</p>
+        <ul>
+            <li>A blue timer in the top-right corner showing countdown</li>
+            <li>A warning modal after 4 minutes of inactivity</li>
+            <li>Automatic logout after 5 minutes of inactivity</li>
+        </ul>
+        
+        <div id="status" class="status info">
+            <strong>Status:</strong> Loading timer...
+        </div>
+        
+        <div id="instructions" class="status info">
+            <strong>Instructions:</strong>
+            <ol>
+                <li>Wait 4 minutes without moving mouse or typing</li>
+                <li>You should see a warning modal</li>
+                <li>Click "Stay signed in" to reset the timer</li>
+                <li>Or wait another minute to be logged out</li>
+            </ol>
+        </div>
+        
+        <div id="console-output" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+            <strong>Console Output:</strong><br>
+            <div id="console-logs"></div>
+        </div>
+    </div>
+
+    <!-- Include the auth-fix.js script -->
+    <script src="/auth-fix.js"></script>
+    
+    <script>
+        // Override console.log to capture output
+        const originalLog = console.log;
+        const consoleDiv = document.getElementById('console-logs');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const logEntry = document.createElement('div');
+            logEntry.textContent = new Date().toLocaleTimeString() + ': ' + args.join(' ');
+            consoleDiv.appendChild(logEntry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        };
+        
+        // Check if timer elements exist
+        setTimeout(() => {
+            const statusDiv = document.getElementById('status');
+            const ticker = document.getElementById('inactivityTicker');
+            const modal = document.getElementById('inactivityModal');
+            
+            if (ticker) {
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '<strong>Status:</strong> ✅ Timer is working! You should see a blue timer in the top-right corner.';
+            } else {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '<strong>Status:</strong> ❌ Timer not found. Check console for errors.';
+            }
+            
+            console.log('Timer check complete. Ticker found:', !!ticker, 'Modal found:', !!modal);
+        }, 1000);
+        
+        // Log when script loads
+        console.log('Test page loaded');
+    </script>
+</body>
+</html>

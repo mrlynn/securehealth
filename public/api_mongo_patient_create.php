@@ -1,4 +1,80 @@
 <?php
+/**
+ * @fileoverview MongoDB Patient Creation API Endpoint
+ *
+ * This API endpoint handles the creation of new patient records in the SecureHealth
+ * HIPAA-compliant medical records system. It integrates with MongoDB using field-level
+ * encryption to ensure sensitive patient data is protected at rest.
+ *
+ * @api
+ * @endpoint POST /api_mongo_patient_create.php
+ * @version 1.0.0
+ * @since 2024
+ * @author Michael Lynn https://github.com/mrlynn
+ * @license MIT
+ *
+ * @features
+ * - Creates new patient records in MongoDB
+ * - Field-level encryption for sensitive data
+ * - Audit logging for compliance
+ * - Role-based access control
+ * - CORS support for cross-origin requests
+ * - Comprehensive error handling
+ *
+ * @encryption
+ * - Uses MongoDBEncryptionService for field-level encryption
+ * - Supports deterministic, range, and random encryption types
+ * - Encrypts sensitive fields like SSN, diagnosis, medications
+ * - Maintains searchability for non-sensitive fields
+ *
+ * @request
+ * POST with JSON body containing patient data:
+ * {
+ *   "firstName": "John",
+ *   "lastName": "Doe",
+ *   "birthDate": "1980-05-15T00:00:00.000Z",
+ *   "email": "john.doe@example.com",
+ *   "phoneNumber": "555-123-4567",
+ *   "ssn": "123-45-6789",
+ *   "insuranceDetails": {...},
+ *   "diagnosis": [...],
+ *   "medications": [...],
+ *   "notes": "Clinical notes"
+ * }
+ *
+ * @response
+ * {
+ *   "success": true,
+ *   "message": "Patient created successfully",
+ *   "patient": {
+ *     "id": "generated_object_id",
+ *     "firstName": "John",
+ *     "lastName": "Doe",
+ *     // ... other patient fields based on user role
+ *   }
+ * }
+ *
+ * @auditLogging
+ * - Logs patient creation events
+ * - Records user ID, IP address, and action details
+ * - Stores timestamp and entity information
+ * - Enables compliance tracking
+ *
+ * @security
+ * - Requires proper authentication in production
+ * - Uses role-based access control
+ * - Encrypts sensitive data at rest
+ * - Implements audit logging for compliance
+ * - Validates input data
+ *
+ * @dependencies
+ * - MongoDB PHP Driver
+ * - App\Document\Patient
+ * - App\Service\MongoDBEncryptionService
+ * - App\Service\AuditLogService
+ * - Symfony\Component\DependencyInjection\ParameterBag\ParameterBag
+ */
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use App\Document\Patient;

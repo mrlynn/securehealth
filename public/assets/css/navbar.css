@@ -26,6 +26,27 @@
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+/* Navbar logo styling */
+.navbar-logo {
+  height: 32px;
+  width: auto;
+  margin-right: 8px;
+  vertical-align: middle;
+  filter: brightness(0) invert(1); /* Makes logo white to match navbar text */
+  transition: filter 0.3s ease;
+}
+
+.navbar-brand:hover .navbar-logo {
+  filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(160deg); /* Teal color on hover */
+}
+
+/* Main page logo styling */
+.main-logo {
+  max-width: 120px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
 .navbar-custom .navbar-brand,
 .navbar-custom .nav-link {
   color: var(--navbar-text) !important;

@@ -2,21 +2,46 @@
 
 namespace App\Document;
 
+use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
+
+#[ODM\Document(collection: "audit_logs")]
 class AuditLog
 {
+    #[ODM\Id]
     private ?ObjectId $id = null;
+    #[ODM\Field(type: "string")]
     private string $username;
+    
+    #[ODM\Field(type: "string")]
     private string $actionType;
+    
+    #[ODM\Field(type: "string")]
     private string $description;
+    
+    #[ODM\Field(type: "string", nullable: true)]
     private ?string $ipAddress = null;
+    
+    #[ODM\Field(type: "date")]
     private UTCDateTime $timestamp;
+    
+    #[ODM\Field(type: "string", nullable: true)]
     private ?string $entityId = null;
+    
+    #[ODM\Field(type: "string", nullable: true)]
     private ?string $entityType = null;
+    
+    #[ODM\Field(type: "hash")]
     private array $metadata = [];
+    
+    #[ODM\Field(type: "string", nullable: true)]
     private ?string $userId = null;
+    
+    #[ODM\Field(type: "string", nullable: true)]
     private ?string $sessionId = null;
+    
+    #[ODM\Field(type: "string", nullable: true)]
     private ?string $status = null;
     private ?string $requestMethod = null;
     private ?string $requestUrl = null;

@@ -348,12 +348,19 @@ class Patient
         }
 
         if (isset($document['notesHistory'])) {
+            // Handle arrays by decrypting JSON strings
             $decryptedNotesHistory = $encryptionService->decrypt($document['notesHistory']);
-            if ($decryptedNotesHistory instanceof \MongoDB\Model\BSONArray) {
-                $patient->notesHistory = iterator_to_array($decryptedNotesHistory);
-            } elseif (is_array($decryptedNotesHistory)) {
-                $patient->notesHistory = $decryptedNotesHistory;
+            
+            // Handle both old data (arrays) and new data (JSON strings)
+            if (is_array($decryptedNotesHistory)) {
+                // Old data format - already an array, convert dates if needed
+                $patient->notesHistory = self::convertNoteDatesToUTCDateTime($decryptedNotesHistory);
+            } elseif (is_string($decryptedNotesHistory)) {
+                // New data format - JSON string that needs decoding
+                $notesArray = json_decode($decryptedNotesHistory, true) ?? [];
+                $patient->notesHistory = self::convertNoteDatesToUTCDateTime($notesArray);
             } else {
+                // Fallback for unexpected data types
                 $patient->notesHistory = [];
             }
         }
@@ -416,7 +423,21 @@ class Patient
         }
         
         if (!empty($this->notesHistory)) {
-            $document['notesHistory'] = $encryptionService->encrypt('patient', 'notesHistory', $this->notesHistory);
+            // Convert UTCDateTime objects to strings for JSON encoding
+            $notesHistoryForJson = [];
+            foreach ($this->notesHistory as $note) {
+                $noteForJson = $note;
+                if (isset($note['createdAt']) && $note['createdAt'] instanceof UTCDateTime) {
+                    $noteForJson['createdAt'] = $note['createdAt']->toDateTime()->format('Y-m-d H:i:s');
+                }
+                if (isset($note['updatedAt']) && $note['updatedAt'] instanceof UTCDateTime) {
+                    $noteForJson['updatedAt'] = $note['updatedAt']->toDateTime()->format('Y-m-d H:i:s');
+                }
+                $notesHistoryForJson[] = $noteForJson;
+            }
+            
+            // Handle arrays by converting to JSON string for encryption
+            $document['notesHistory'] = $encryptionService->encrypt('patient', 'notesHistory', json_encode($notesHistoryForJson));
         }
         
         $document['createdAt'] = $this->createdAt;
@@ -743,5 +764,43 @@ class Patient
         }
         
         return null;
+    }
+    
+    /**
+     * Convert date strings in notes array back to UTCDateTime objects
+     */
+    private static function convertNoteDatesToUTCDateTime(array $notes): array
+    {
+        foreach ($notes as &$note) {
+            // Ensure $note is an array
+            if (!is_array($note)) {
+                continue;
+            }
+            
+            if (isset($note['createdAt'])) {
+                if (is_string($note['createdAt'])) {
+                    try {
+                        $note['createdAt'] = new UTCDateTime(new \DateTime($note['createdAt']));
+                    } catch (\Exception $e) {
+                        // If date parsing fails, keep as string
+                    }
+                } elseif ($note['createdAt'] instanceof UTCDateTime) {
+                    // Already a UTCDateTime, keep as is
+                }
+            }
+            
+            if (isset($note['updatedAt'])) {
+                if (is_string($note['updatedAt'])) {
+                    try {
+                        $note['updatedAt'] = new UTCDateTime(new \DateTime($note['updatedAt']));
+                    } catch (\Exception $e) {
+                        // If date parsing fails, keep as string
+                    }
+                } elseif ($note['updatedAt'] instanceof UTCDateTime) {
+                    // Already a UTCDateTime, keep as is
+                }
+            }
+        }
+        return $notes;
     }
 }

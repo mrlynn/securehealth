@@ -58,10 +58,16 @@ class PatientNotesController extends AbstractController
         
         // Convert UTCDateTime objects to strings for JSON serialization
         foreach ($notesHistory as &$note) {
-            if ($note['createdAt'] instanceof UTCDateTime) {
+            // Ensure note is an array
+            if (is_object($note)) {
+                $note = (array) $note;
+            }
+            
+            // Convert UTCDateTime objects to strings
+            if (isset($note['createdAt']) && $note['createdAt'] instanceof UTCDateTime) {
                 $note['createdAt'] = $note['createdAt']->toDateTime()->format('Y-m-d H:i:s');
             }
-            if ($note['updatedAt'] instanceof UTCDateTime) {
+            if (isset($note['updatedAt']) && $note['updatedAt'] instanceof UTCDateTime) {
                 $note['updatedAt'] = $note['updatedAt']->toDateTime()->format('Y-m-d H:i:s');
             }
         }
@@ -181,7 +187,13 @@ class PatientNotesController extends AbstractController
         $patient->setUpdatedAt(new UTCDateTime());
 
         // Save the patient
-        $this->patientRepository->save($patient);
+        try {
+            $this->patientRepository->save($patient);
+        } catch (\Exception $e) {
+            error_log("Error saving patient in updateNote: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->json(['message' => 'Failed to save patient: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         // Log the action
         $this->auditLogService->log(
