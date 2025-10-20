@@ -1,0 +1,24 @@
+{
+    auto_https off
+    admin off
+}
+
+:9000 {
+    root * public
+    
+    # Handle PHP files
+    php_fastcgi unix//var/run/php/php-fpm.sock
+    
+    # Try files in order
+    try_files {path} {path}/ /index.html
+    
+    # Static file server
+    file_server
+    
+    # Log errors
+    log {
+        output stderr
+        format console
+        level ERROR
+    }
+}
