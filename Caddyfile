@@ -6,8 +6,7 @@
 :9000 {
     root * public
     
-    # Handle PHP files
-    php_fastcgi unix//var/run/php/php-fpm.sock
+    # FrankenPHP has built-in PHP support, no need for php_fastcgi
     
     # Try files in order
     try_files {path} {path}/ /index.html
