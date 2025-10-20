@@ -14,8 +14,4 @@ main_routes:
     type: attribute
 
 # Security routes are handled by SecurityController.php with attributes
-
-app_health:
-    path: /api/health
-    controller: App\Controller\HealthCheckController::index
-    methods: GET
+# Health endpoint is handled by Api\HealthController at /api/health
