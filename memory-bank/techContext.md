@@ -229,14 +229,34 @@ Created via `php bin/console app:create-users`:
 ## Deployment
 
 ### Production Environment
-- Platform: Railway.app (configured)
-- Database: MongoDB Atlas (production cluster)
-- Domain: Custom domain with SSL
-- Environment: Production mode with error logging
+- **Platform**: Railway.app ✅ **FULLY FUNCTIONAL**
+- **Runtime**: FrankenPHP with Caddy configuration
+- **Database**: MongoDB Atlas (production cluster)
+- **Domain**: securehealth.dev with SSL
+- **Environment**: Production mode with error logging
+- **Status**: ✅ **DEPLOYED AND WORKING**
+
+### Railway Configuration
+- **Caddyfile**: Configured for FrankenPHP with proper PHP processing
+- **Port**: 9000 (Railway auto-detected)
+- **PHP Processing**: `php_server` directive for native PHP support
+- **API Routing**: Rewrite rules for Symfony integration
+- **Session Storage**: `/tmp/sessions` directory
 
 ### Deployment Files
-- `railway.json` - Railway configuration
-- `nixpacks.toml` - Build configuration
-- `Dockerfile` - Container definition
-- `.env.production` - Production environment variables
+- `Caddyfile` - FrankenPHP configuration (active)
+- `restore-working-state.sh` - Backup/restore script
+- `WORKING_STATE.md` - Comprehensive working state documentation
+- **Git Tag**: `v1.0-working-state` - Restore point
+- **Backup Branch**: `backup-working-state` - Alternative restore method
+
+### Session Configuration
+```yaml
+session:
+    save_path: '/tmp/sessions'
+    cookie_lifetime: 86400  # 24 hours
+    gc_maxlifetime: 86400
+    cookie_httponly: true
+    cookie_samesite: lax
+```
 
