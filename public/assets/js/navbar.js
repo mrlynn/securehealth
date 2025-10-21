@@ -467,11 +467,20 @@ class SecureHealthNavbar {
      * Initialize Bootstrap dropdowns
      */
     initializeDropdowns() {
+        // Wait for Bootstrap to be available
+        if (typeof bootstrap === 'undefined') {
+            console.warn('Bootstrap not loaded yet, retrying in 100ms...');
+            setTimeout(() => this.initializeDropdowns(), 100);
+            return;
+        }
+
         // Initialize all dropdowns
         const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
         dropdownElementList.map(function (dropdownToggleEl) {
             return new bootstrap.Dropdown(dropdownToggleEl);
         });
+        
+        console.log(`Initialized ${dropdownElementList.length} dropdowns`);
     }
 }
 
