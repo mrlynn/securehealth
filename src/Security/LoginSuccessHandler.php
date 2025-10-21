@@ -21,9 +21,19 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token): Response
     {
+        $user = $token->getUser();
+        
+        // Store user data in session for future requests
+        $session = $request->getSession();
+        $session->set('user', [
+            'email' => $user->getUserIdentifier(),
+            'username' => $user->getUserIdentifier(),
+            'roles' => $user->getRoles(),
+            'isAdmin' => in_array('ROLE_ADMIN', $user->getRoles())
+        ]);
+        
         // For API requests, return a JSON response instead of redirecting
         if (str_starts_with($request->getPathInfo(), '/api/')) {
-            $user = $token->getUser();
             return new JsonResponse([
                 'success' => true,
                 'user' => [
