@@ -301,81 +301,74 @@ class PatientRepository
     }
 
     /**
-     * Find patients by range criteria (range encryption)
-     * Supports range queries on encrypted date fields
+     * Find patients by range criteria (deterministic encryption workaround)
+     * Since birthDate uses deterministic encryption, we need to convert range queries
+     * into multiple exact matches or use a different approach
      */
     public function findByRangeCriteria(array $criteria, MongoDBEncryptionService $encryptionService): array
     {
-        $query = [];
+        // For deterministic encryption, we can't do true range queries
+        // Instead, we'll fetch all patients and filter them in PHP
+        // This is not ideal for large datasets but works for demo purposes
         
-        // Handle birth date range
-        if (isset($criteria['birthDateFrom']) || isset($criteria['birthDateTo'])) {
-            $birthDateQuery = [];
-            
-            if (isset($criteria['birthDateFrom'])) {
-                $fromDate = new \DateTime($criteria['birthDateFrom']);
-                $fromDateUtc = new \MongoDB\BSON\UTCDateTime($fromDate);
-                $birthDateQuery['$gte'] = $encryptionService->encrypt('patient', 'birthDate', $fromDateUtc);
-            }
-            
-            if (isset($criteria['birthDateTo'])) {
-                $toDate = new \DateTime($criteria['birthDateTo']);
-                $toDateUtc = new \MongoDB\BSON\UTCDateTime($toDate);
-                $birthDateQuery['$lte'] = $encryptionService->encrypt('patient', 'birthDate', $toDateUtc);
-            }
-            
-            $query['birthDate'] = $birthDateQuery;
-        }
+        $allPatients = [];
+        $cursor = $this->collection->find([]);
         
-        // Handle age range (convert to birth date range)
-        if (isset($criteria['minAge']) || isset($criteria['maxAge'])) {
-            $today = new \DateTime();
-            
-            // Initialize birthDate query if not already set
-            if (!isset($query['birthDate'])) {
-                $query['birthDate'] = [];
-            }
-            
-            if (isset($criteria['maxAge'])) {
-                // For maxAge (e.g., 60), we want patients who are AT MOST 60 years old
-                // So their birth date should be AT LEAST 60 years ago (older birth dates)
-                $oldestBirthDate = clone $today;
-                $oldestBirthDate->modify('-' . $criteria['maxAge'] . ' years');
-                $oldestBirthDateUtc = new \MongoDB\BSON\UTCDateTime($oldestBirthDate);
-                $query['birthDate']['$gte'] = $encryptionService->encrypt('patient', 'birthDate', $oldestBirthDateUtc);
-                
-                // Debug logging
-                error_log("Range search - maxAge {$criteria['maxAge']}: oldestBirthDate = " . $oldestBirthDate->format('Y-m-d'));
-            }
-            
-            if (isset($criteria['minAge'])) {
-                // For minAge (e.g., 40), we want patients who are AT LEAST 40 years old
-                // So their birth date should be AT MOST 40 years ago (newer birth dates)
-                $newestBirthDate = clone $today;
-                $newestBirthDate->modify('-' . $criteria['minAge'] . ' years');
-                $newestBirthDateUtc = new \MongoDB\BSON\UTCDateTime($newestBirthDate);
-                $query['birthDate']['$lte'] = $encryptionService->encrypt('patient', 'birthDate', $newestBirthDateUtc);
-                
-                // Debug logging
-                error_log("Range search - minAge {$criteria['minAge']}: newestBirthDate = " . $newestBirthDate->format('Y-m-d'));
-            }
-        }
-        
-        if (empty($query)) {
-            return [];
-        }
-        
-        // Debug logging for the final query
-        error_log("Range search MongoDB query: " . json_encode($query, JSON_PRETTY_PRINT));
-        
-        $cursor = $this->collection->find($query);
-        
-        $patients = [];
         foreach ($cursor as $document) {
-            $patients[] = Patient::fromDocument((array) $document, $encryptionService);
+            $allPatients[] = Patient::fromDocument((array) $document, $encryptionService);
         }
         
-        return $patients;
+        // Filter patients based on criteria
+        $filteredPatients = [];
+        
+        foreach ($allPatients as $patient) {
+            $matches = true;
+            
+            // Handle birth date range
+            if (isset($criteria['birthDateFrom']) || isset($criteria['birthDateTo'])) {
+                $patientBirthDate = $patient->getBirthDate()->toDateTime();
+                
+                if (isset($criteria['birthDateFrom'])) {
+                    $fromDate = new \DateTime($criteria['birthDateFrom'] . ' 00:00:00');
+                    if ($patientBirthDate < $fromDate) {
+                        $matches = false;
+                    }
+                }
+                
+                if (isset($criteria['birthDateTo'])) {
+                    $toDate = new \DateTime($criteria['birthDateTo'] . ' 23:59:59');
+                    if ($patientBirthDate > $toDate) {
+                        $matches = false;
+                    }
+                }
+            }
+            
+            // Handle age range (convert to birth date range)
+            if (isset($criteria['minAge']) || isset($criteria['maxAge'])) {
+                $today = new \DateTime();
+                $patientBirthDate = $patient->getBirthDate()->toDateTime();
+                $patientAge = $today->diff($patientBirthDate)->y;
+                
+                if (isset($criteria['minAge']) && $patientAge < $criteria['minAge']) {
+                    $matches = false;
+                }
+                
+                if (isset($criteria['maxAge']) && $patientAge > $criteria['maxAge']) {
+                    $matches = false;
+                }
+            }
+            
+            if ($matches) {
+                $filteredPatients[] = $patient;
+            }
+        }
+        
+        // Debug logging
+        error_log("Range search criteria: " . json_encode($criteria, JSON_PRETTY_PRINT));
+        error_log("Total patients in database: " . count($allPatients));
+        error_log("Filtered patients: " . count($filteredPatients));
+        
+        return $filteredPatients;
     }
 
     /**

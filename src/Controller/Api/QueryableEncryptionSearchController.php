@@ -143,8 +143,9 @@ class QueryableEncryptionSearchController extends AbstractController
                 'totalResults' => count($patients),
                 'searchTime' => $searchTime,
                 'encryptedFields' => ['birthDate'],
-                'encryptionType' => 'range',
-                'message' => 'Range search completed on encrypted data'
+                'encryptionType' => 'deterministic', // Note: Using deterministic encryption workaround
+                'message' => 'Range search completed using deterministic encryption workaround',
+                'note' => 'Range queries are implemented using client-side filtering due to deterministic encryption limitations'
             ]);
 
         } catch (\Exception $e) {
