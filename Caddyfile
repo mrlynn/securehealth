@@ -6,10 +6,12 @@
 :9000 {
     root * public
     
-    # Enable PHP processing
-    php_fastcgi localhost:9000
+    # FrankenPHP has built-in PHP support
+    # Route API requests to Symfony
+    rewrite /api/* /index.php
+    rewrite /staff/* /index.php
     
-    # Handle all requests
+    # Handle all other requests
     try_files {path} {path}/ /index.html
     file_server
 }
