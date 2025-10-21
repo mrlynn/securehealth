@@ -16,16 +16,9 @@
         try_files {BasePath} /index.php
     }
     
-    # Handle PHP files
-    handle *.php {
-        try_files {path} /index.php
-    }
-    
-    # Static files
-    handle {
-        try_files {path} {path}/ /index.html
-        file_server
-    }
+    # Static files and fallback to index.html
+    try_files {path} {path}/ /index.html
+    file_server
     
     # Log errors
     log {
