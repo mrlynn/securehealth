@@ -104,6 +104,9 @@ class SecureHealthNavbar {
         }
 
         navbarContainer.innerHTML = this.getNavbarHTML();
+        
+        // Initialize Bootstrap dropdowns after rendering
+        this.initializeDropdowns();
     }
 
     /**
@@ -458,6 +461,17 @@ class SecureHealthNavbar {
      */
     getCurrentUserRole() {
         return this.userRole;
+    }
+
+    /**
+     * Initialize Bootstrap dropdowns
+     */
+    initializeDropdowns() {
+        // Initialize all dropdowns
+        const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+        dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl);
+        });
     }
 }
 
