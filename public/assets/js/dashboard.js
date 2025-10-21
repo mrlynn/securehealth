@@ -176,6 +176,19 @@ class DashboardManager {
             patient: 'Welcome to your Patient Portal'
         };
         document.getElementById('welcomeMessage').textContent = welcomeMessages[this.role] || 'Welcome to your dashboard';
+        
+        // Update role badge
+        const roleBadge = document.getElementById('roleBadge');
+        if (roleBadge) {
+            const roleLabels = {
+                admin: 'Administrator',
+                doctor: 'Doctor',
+                nurse: 'Nurse',
+                receptionist: 'Receptionist',
+                patient: 'Patient'
+            };
+            roleBadge.textContent = roleLabels[this.role] || this.role;
+        }
     }
 
     async loadDashboardContent() {
