@@ -6,13 +6,26 @@
 :9000 {
     root * public
     
-    # FrankenPHP has built-in PHP support, no need for php_fastcgi
+    # Route API requests to Symfony
+    handle /api/* {
+        try_files {BasePath} /index.php
+    }
     
-    # Try files in order
-    try_files {path} {path}/ /index.html
+    # Route staff requests to Symfony
+    handle /staff/* {
+        try_files {BasePath} /index.php
+    }
     
-    # Static file server
-    file_server
+    # Handle PHP files
+    handle *.php {
+        try_files {path} /index.php
+    }
+    
+    # Static files
+    handle {
+        try_files {path} {path}/ /index.html
+        file_server
+    }
     
     # Log errors
     log {
