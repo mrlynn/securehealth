@@ -6,20 +6,10 @@
 :9000 {
     root * public
     
-    # Route API and staff requests to Symfony index.php
-    rewrite /api/* /index.php
-    rewrite /staff/* /index.php
+    # Enable PHP processing
+    php_fastcgi localhost:9000
     
-    # Try files in order: exact file, directory with index, then index.html
+    # Handle all requests
     try_files {path} {path}/ /index.html
-    
-    # Serve static files
     file_server
-    
-    # Log errors
-    log {
-        output stderr
-        format console
-        level ERROR
-    }
 }
