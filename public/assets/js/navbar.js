@@ -160,7 +160,7 @@ class SecureHealthNavbar {
                         <i class="fas fa-star me-1"></i>Features
                     </a></li>
                     <li><a class="dropdown-item" href="/index.html#security">
-                        <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">Security
+                        <i class="fas fa-shield me-1"></i>Security
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item ${currentPage === '/queryable-encryption-search.html' ? 'active' : ''}" href="/queryable-encryption-search.html">

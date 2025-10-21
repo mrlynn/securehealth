@@ -6,20 +6,33 @@
     <title>Patient Portal Login - SecureHealth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --mongodb-green: #00ED64;
+            --mongodb-dark-green: #13AA52;
+            --mongodb-black: #001E2B;
+            --mongodb-gray: #6B7280;
+            --mongodb-light-gray: #F7FAFC;
+            --mongodb-white: #FFFFFF;
+            --mongodb-border: #E5E7EB;
+        }
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--mongodb-light-gray) 0%, var(--mongodb-white) 100%);
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--mongodb-black);
         }
         
         .login-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            background: var(--mongodb-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             padding: 2rem;
             margin-top: 5rem;
             margin-bottom: 2rem;
+            border: 1px solid var(--mongodb-border);
         }
         
         .header-section {
@@ -28,51 +41,67 @@
         }
         
         .header-section h1 {
-            color: #2c3e50;
+            color: var(--mongodb-black);
             font-weight: 700;
             margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
         }
         
         .header-section p {
-            color: #6c757d;
+            color: var(--mongodb-gray);
             margin-bottom: 0;
+            font-weight: 400;
         }
         
         .form-label {
             font-weight: 600;
-            color: #495057;
+            color: var(--mongodb-black);
         }
         
         .form-control {
             border-radius: 8px;
-            border: 2px solid #e9ecef;
+            border: 1px solid var(--mongodb-border);
             padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            background: var(--mongodb-white);
         }
         
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: var(--mongodb-green);
+            box-shadow: 0 0 0 0.2rem rgba(0, 237, 100, 0.25);
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
+            background: var(--mongodb-green);
+            border: 1px solid var(--mongodb-green);
+            color: var(--mongodb-black);
             border-radius: 8px;
             padding: 0.75rem 2rem;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            background: var(--mongodb-dark-green);
+            border-color: var(--mongodb-dark-green);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 237, 100, 0.3);
         }
         
         .btn-outline-primary {
+            border: 1px solid var(--mongodb-green);
+            color: var(--mongodb-green);
+            background: transparent;
             border-radius: 8px;
             padding: 0.75rem 2rem;
             font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--mongodb-green);
+            border-color: var(--mongodb-green);
+            color: var(--mongodb-black);
         }
         
         .alert {
@@ -84,43 +113,45 @@
             text-align: center;
             margin-top: 1.5rem;
             padding-top: 1.5rem;
-            border-top: 1px solid #e9ecef;
+            border-top: 1px solid var(--mongodb-border);
         }
         
         .registration-link a {
-            color: #667eea;
+            color: var(--mongodb-green);
             text-decoration: none;
             font-weight: 600;
         }
         
         .registration-link a:hover {
+            color: var(--mongodb-dark-green);
             text-decoration: underline;
         }
         
         .security-info {
-            background: #f8f9fa;
+            background: var(--mongodb-light-gray);
             border-radius: 8px;
             padding: 1rem;
             margin-bottom: 1.5rem;
-            border-left: 4px solid #28a745;
+            border-left: 4px solid var(--mongodb-green);
         }
         
         .security-info h6 {
-            color: #28a745;
+            color: var(--mongodb-black);
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
         
         .security-info p {
             margin-bottom: 0;
-            font-size: 0.9rem;
-            color: #6c757d;
+            font-size: 0.875rem;
+            color: var(--mongodb-gray);
         }
         
         .input-group-text {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
+            background: var(--mongodb-light-gray);
+            border: 1px solid var(--mongodb-border);
             border-right: none;
+            color: var(--mongodb-gray);
         }
         
         .input-group .form-control {
@@ -128,7 +159,7 @@
         }
         
         .input-group:focus-within .input-group-text {
-            border-color: #667eea;
+            border-color: var(--mongodb-green);
         }
     </style>
 </head>
@@ -144,7 +175,7 @@
                     
                     <div class="security-info">
                         <h6><img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">Secure Login</h6>
-                        <p>Your information is protected with bank-level encryption and HIPAA compliance.</p>
+                        <p>Your information is protected with enterprise-grade encryption and HIPAA compliance.</p>
                     </div>
                     
                     <div id="alertContainer"></div>

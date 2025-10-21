@@ -6,20 +6,33 @@
     <title>Patient Portal - SecureHealth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --mongodb-green: #00ED64;
+            --mongodb-dark-green: #13AA52;
+            --mongodb-black: #001E2B;
+            --mongodb-gray: #6B7280;
+            --mongodb-light-gray: #F7FAFC;
+            --mongodb-white: #FFFFFF;
+            --mongodb-border: #E5E7EB;
+        }
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--mongodb-light-gray) 0%, var(--mongodb-white) 100%);
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--mongodb-black);
         }
         
         .portal-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            background: var(--mongodb-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             padding: 3rem;
             margin-top: 3rem;
             margin-bottom: 3rem;
+            border: 1px solid var(--mongodb-border);
         }
         
         .header-section {
@@ -27,99 +40,141 @@
             margin-bottom: 3rem;
         }
         
+        .mongodb-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 1rem;
+        }
+        
         .header-section h1 {
-            color: #2c3e50;
-            font-weight: 800;
+            color: var(--mongodb-black);
+            font-weight: 700;
             margin-bottom: 1rem;
             font-size: 2.5rem;
+            letter-spacing: -0.025em;
         }
         
         .header-section p {
-            color: #6c757d;
-            font-size: 1.1rem;
+            color: var(--mongodb-gray);
+            font-size: 1.125rem;
             margin-bottom: 0;
+            font-weight: 400;
         }
         
         .feature-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 3rem;
         }
         
         .feature-card {
-            background: #f8f9fa;
-            border-radius: 15px;
+            background: var(--mongodb-white);
+            border-radius: 12px;
             padding: 2rem;
             text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: none;
+            transition: all 0.2s ease;
+            border: 1px solid var(--mongodb-border);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--mongodb-green);
+            transform: scaleX(0);
+            transition: transform 0.2s ease;
         }
         
         .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: var(--mongodb-green);
+        }
+        
+        .feature-card:hover::before {
+            transform: scaleX(1);
         }
         
         .feature-icon {
-            font-size: 3rem;
-            color: #667eea;
+            font-size: 2.5rem;
+            color: var(--mongodb-green);
             margin-bottom: 1rem;
+            transition: color 0.2s ease;
+        }
+        
+        .feature-card:hover .feature-icon {
+            color: var(--mongodb-dark-green);
         }
         
         .feature-card h5 {
-            color: #2c3e50;
+            color: var(--mongodb-black);
             font-weight: 600;
             margin-bottom: 1rem;
+            font-size: 1.125rem;
         }
         
         .feature-card p {
-            color: #6c757d;
+            color: var(--mongodb-gray);
             margin-bottom: 0;
+            font-size: 0.875rem;
+            line-height: 1.5;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 12px;
-            padding: 1rem 2rem;
+            background: var(--mongodb-green);
+            border: 1px solid var(--mongodb-green);
+            color: var(--mongodb-black);
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
             font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
+            font-size: 1rem;
+            transition: all 0.2s ease;
             margin: 0.5rem;
         }
         
         .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            background: var(--mongodb-dark-green);
+            border-color: var(--mongodb-dark-green);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 237, 100, 0.3);
         }
         
         .btn-outline-primary {
-            border: 2px solid #667eea;
-            color: #667eea;
-            border-radius: 12px;
-            padding: 1rem 2rem;
+            border: 1px solid var(--mongodb-green);
+            color: var(--mongodb-green);
+            background: transparent;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
             font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
+            font-size: 1rem;
+            transition: all 0.2s ease;
             margin: 0.5rem;
         }
         
         .btn-outline-primary:hover {
-            background: #667eea;
-            border-color: #667eea;
-            transform: translateY(-3px);
+            background: var(--mongodb-green);
+            border-color: var(--mongodb-green);
+            color: var(--mongodb-black);
+            transform: translateY(-1px);
         }
         
         .security-badge {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
+            background: var(--mongodb-green);
+            color: var(--mongodb-black);
             padding: 0.5rem 1rem;
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             font-weight: 600;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
             margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 237, 100, 0.2);
         }
         
         .action-buttons {
@@ -128,22 +183,38 @@
         }
         
         .info-section {
-            background: #e3f2fd;
-            border-radius: 15px;
+            background: var(--mongodb-light-gray);
+            border-radius: 12px;
             padding: 2rem;
             margin-top: 2rem;
-            border-left: 5px solid #2196f3;
+            border-left: 4px solid var(--mongodb-green);
         }
         
         .info-section h6 {
-            color: #1976d2;
+            color: var(--mongodb-black);
             font-weight: 600;
             margin-bottom: 1rem;
+            font-size: 1.125rem;
         }
         
         .info-section p {
-            color: #424242;
+            color: var(--mongodb-gray);
             margin-bottom: 0;
+            line-height: 1.6;
+        }
+        
+        .mongodb-powered {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--mongodb-gray);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .mongodb-logo-small {
+            width: 20px;
+            height: 20px;
         }
     </style>
 </head>
@@ -156,7 +227,7 @@
                         <div class="security-badge">
                             <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">HIPAA Compliant & Secure
                         </div>
-                        <h1><i class="fas fa-heartbeat me-3"></i>Patient Portal</h1>
+                        <h1><i class="fas fa-heartbeat me-3" style="color: var(--mongodb-green);"></i>Patient Portal</h1>
                         <p>Access your medical records, manage appointments, and communicate with your healthcare team securely</p>
                     </div>
                     
@@ -211,7 +282,7 @@
                     </div>
                     
                     <div class="action-buttons">
-                        <h5 class="mb-3">Get Started</h5>
+                        <h5 class="mb-3" style="color: var(--mongodb-black);">Get Started</h5>
                         <a href="login.html" class="btn btn-primary btn-lg">
                             <i class="fas fa-sign-in-alt me-2"></i>Sign In
                         </a>
@@ -221,15 +292,16 @@
                     </div>
                     
                     <div class="info-section">
-                        <h6><i class="fas fa-info-circle me-2"></i>About SecureHealth Patient Portal</h6>
-                        <p>The SecureHealth Patient Portal provides secure, HIPAA-compliant access to your medical information. All data is encrypted and protected with bank-level security. Your privacy and the confidentiality of your medical information are our top priorities.</p>
+                        <h6><i class="fas fa-info-circle me-2" style="color: var(--mongodb-green);"></i>About SecureHealth Patient Portal</h6>
+                        <p>The SecureHealth Patient Portal provides secure, HIPAA-compliant access to your medical information. All data is encrypted and protected with enterprise-grade security. Your privacy and the confidentiality of your medical information are our top priorities.</p>
                     </div>
                     
                     <div class="text-center mt-4">
-                        <p class="text-muted">
+                        <div class="mongodb-powered">
                             <i class="fas fa-lock me-2"></i>
                             All communications are encrypted and secure
-                        </p>
+                            <span class="ms-3">Powered by MongoDB</span>
+                        </div>
                     </div>
                 </div>
             </div>
