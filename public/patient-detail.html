@@ -144,7 +144,7 @@
         
         try {
           // Fetch patient data from API using verification system
-          const response = await window.patientVerification.fetchWithVerification(`/api/patients/${id}`, {
+          const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/patients/${id}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -598,7 +598,7 @@
       
       try {
         // Fetch appointments for this patient using verification system
-        const response = await window.patientVerification.fetchWithVerification(`/api/appointments/patient/${patientId}`, {
+        const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/appointments/patient/${patientId}`, {
           credentials: 'include'
         });
         
@@ -760,7 +760,7 @@
       
       try {
         // Fetch notes using verification system
-        const response = await window.patientVerification.fetchWithVerification(`/api/patients/${patientId}/notes`, {
+        const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/patients/${patientId}/notes`, {
           credentials: 'include'
         });
         
@@ -897,7 +897,7 @@
         console.log('Saving note for patient:', currentPatientId);
         console.log('Patient verification available:', typeof window.patientVerification !== 'undefined');
 
-        const response = await window.patientVerification.fetchWithVerification(`/api/patients/${currentPatientId}/notes`, {
+        const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/patients/${currentPatientId}/notes`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -971,7 +971,7 @@
         this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
         showAlert(alertDiv, 'info', 'Updating note...');
 
-        const response = await window.patientVerification.fetchWithVerification(`/api/patients/${currentPatientId}/notes/${noteId}`, {
+        const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/patients/${currentPatientId}/notes/${noteId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1015,7 +1015,7 @@
 
       (async () => {
         try {
-          const response = await window.patientVerification.fetchWithVerification(`/api/patients/${currentPatientId}/notes/${noteId}`, {
+          const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/patients/${currentPatientId}/notes/${noteId}`, {
             method: 'DELETE',
             credentials: 'include'
           });
