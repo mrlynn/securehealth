@@ -33,7 +33,7 @@ class PatientVerification {
                     <div class="modal-content">
                         <div class="modal-header bg-warning text-dark">
                             <h5 class="modal-title" id="patientVerificationModalLabel">
-                                <i class="fas fa-shield-alt me-2"></i>Patient Identity Verification Required
+                                <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">Patient Identity Verification Required
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>

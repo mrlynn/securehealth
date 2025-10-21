@@ -254,7 +254,7 @@ class DashboardManager {
                 <div class="col-md-3 mb-4">
                     <div class="card stats-card">
                         <div class="card-body text-center">
-                            <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                            <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">
                             <h3 id="auditLogs">-</h3>
                             <p class="mb-0">Audit Logs</p>
                         </div>

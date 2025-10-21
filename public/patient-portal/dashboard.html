@@ -309,7 +309,7 @@
                 <div class="col-md-6">
                     <div class="info-card">
                         <h5 class="card-title">
-                            <i class="fas fa-shield-alt"></i>Insurance Information
+                            <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">Insurance Information
                         </h5>
                         <div id="insuranceInfo">
                             <div class="loading">
@@ -555,7 +555,7 @@
             } else {
                 document.getElementById('insuranceInfo').innerHTML = `
                     <div class="empty-state">
-                        <i class="fas fa-shield-alt"></i>
+                        <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">
                         <p>No insurance information on file</p>
                     </div>
                 `;
@@ -633,13 +633,13 @@
                             '<div class="empty-state"><i class="fas fa-pills"></i><p>No medications on file</p></div>'
                         }
                         
-                        <h6 class="mt-4"><i class="fas fa-shield-alt me-2"></i>Insurance Information</h6>
+                        <h6 class="mt-4"><img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">Insurance Information</h6>
                         ${data.insuranceDetails ? 
                             `<div class="insurance-info">
                                 <p><strong>Provider:</strong> ${data.insuranceDetails.provider || 'Not specified'}</p>
                                 <p><strong>Policy Number:</strong> ${data.insuranceDetails.policyNumber || 'Not specified'}</p>
                             </div>` :
-                            '<div class="empty-state"><i class="fas fa-shield-alt"></i><p>No insurance information on file</p></div>'
+                            '<div class="empty-state"><img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2"><p>No insurance information on file</p></div>'
                         }
                     </div>
                 </div>

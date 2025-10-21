@@ -120,7 +120,7 @@ class SecureHealthNavbar {
             <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
                 <div class="container">
                     <a class="navbar-brand fw-bold fs-3" href="/dashboard.html">
-                        <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                        <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">SecureHealth
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
@@ -160,7 +160,7 @@ class SecureHealthNavbar {
                         <i class="fas fa-star me-1"></i>Features
                     </a></li>
                     <li><a class="dropdown-item" href="/index.html#security">
-                        <i class="fas fa-shield-alt me-1"></i>Security
+                        <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">Security
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item ${currentPage === '/queryable-encryption-search.html' ? 'active' : ''}" href="/queryable-encryption-search.html">
