@@ -10,10 +10,7 @@
     php_server
     
     # Route API requests to Symfony
-    handle /api/* {
-        rewrite * /index.php
-        php_server
-    }
+    rewrite /api/* /index.php
     rewrite /staff/* /index.php
     
     # Handle all other requests
