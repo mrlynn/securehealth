@@ -6,7 +6,9 @@
 :9000 {
     root * public
     
-    # FrankenPHP has built-in PHP support
+    # FrankenPHP configuration
+    php_server
+    
     # Route API requests to Symfony
     rewrite /api/* /index.php
     rewrite /staff/* /index.php
