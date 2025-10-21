@@ -6,18 +6,14 @@
 :9000 {
     root * public
     
-    # Route API requests to Symfony
-    handle /api/* {
-        try_files {BasePath} /index.php
-    }
+    # Route API and staff requests to Symfony index.php
+    rewrite /api/* /index.php
+    rewrite /staff/* /index.php
     
-    # Route staff requests to Symfony
-    handle /staff/* {
-        try_files {BasePath} /index.php
-    }
-    
-    # Static files and fallback to index.html
+    # Try files in order: exact file, directory with index, then index.html
     try_files {path} {path}/ /index.html
+    
+    # Serve static files
     file_server
     
     # Log errors
