@@ -161,6 +161,13 @@
             color: var(--mongodb-black);
         }
         
+        /* Documentation button hover state */
+        .btn[style*="border: 1px solid var(--mongodb-green)"]:hover {
+            background-color: var(--mongodb-green) !important;
+            color: var(--mongodb-black) !important;
+            border-color: var(--mongodb-green) !important;
+        }
+        
         .navbar-custom {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -441,7 +448,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-search text-primary me-3 fs-4"></i>
+                                <i class="fas fa-search me-3 fs-4" style="color: var(--mongodb-green);"></i>
                                 <div>
                                     <h6 class="mb-1">Search Encrypted Data</h6>
                                     <small class="text-muted">Query without decryption</small>
@@ -450,7 +457,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-user-lock text-primary me-3 fs-4"></i>
+                                <i class="fas fa-user-lock me-3 fs-4" style="color: var(--mongodb-green);"></i>
                                 <div>
                                     <h6 class="mb-1">Role-Based Access</h6>
                                     <small class="text-muted">Different views per role</small>
@@ -459,7 +466,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-eye text-primary me-3 fs-4"></i>
+                                <i class="fas fa-eye me-3 fs-4" style="color: var(--mongodb-green);"></i>
                                 <div>
                                     <h6 class="mb-1">X-Ray View</h6>
                                     <small class="text-muted">See raw encrypted data</small>
@@ -468,7 +475,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-chart-line text-primary me-3 fs-4"></i>
+                                <i class="fas fa-chart-line me-3 fs-4" style="color: var(--mongodb-green);"></i>
                                 <div>
                                     <h6 class="mb-1">Audit Trails</h6>
                                     <small class="text-muted">Complete access logging</small>
@@ -480,7 +487,7 @@
                         <a href="/login.html" class="btn btn-primary-custom btn-custom me-3">
                             <i class="fas fa-play me-2"></i>Try Demo
                         </a>
-                        <a href="/documentation.html" class="btn btn-outline-primary btn-custom">
+                        <a href="/documentation.html" class="btn btn-custom" style="border: 1px solid var(--mongodb-green); color: var(--mongodb-green); background: transparent;">
                             <i class="fas fa-book me-2"></i>Documentation
                         </a>
                     </div>

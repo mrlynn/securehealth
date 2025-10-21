@@ -124,6 +124,25 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Custom button styles for MongoDB green theme */
+        .btn[style*="--mongodb-green"]:hover:not(:disabled) {
+            background-color: var(--mongodb-dark-green) !important;
+            border-color: var(--mongodb-dark-green) !important;
+            color: var(--mongodb-black) !important;
+        }
+        
+        .btn[style*="--mongodb-green"]:disabled {
+            background-color: var(--mongodb-gray) !important;
+            border-color: var(--mongodb-gray) !important;
+            color: var(--mongodb-white) !important;
+            opacity: 0.6;
+        }
+        
+        .btn[style*="border-color: var(--mongodb-green)"]:hover:not(:disabled) {
+            background-color: var(--mongodb-green) !important;
+            color: var(--mongodb-black) !important;
+        }
     </style>
 </head>
 <body>
@@ -198,7 +217,7 @@
                     <p class="text-muted">Manage your healthcare appointments</p>
                 </div>
                 <div class="col-md-4 text-md-end">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
+                    <button class="btn" style="background-color: var(--mongodb-green); color: var(--mongodb-black); border-color: var(--mongodb-green);" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
                         <i class="fas fa-plus-circle me-1"></i> Book New Appointment
                     </button>
                 </div>
@@ -232,7 +251,7 @@
                             </div>
                             <div class="alert alert-info" id="noUpcomingAppointments" style="display:none;">
                                 <i class="fas fa-info-circle me-2"></i> You have no upcoming appointments. 
-                                <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
+                                <button class="btn btn-sm ms-2" style="border-color: var(--mongodb-green); color: var(--mongodb-green);" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
                                     Book an appointment
                                 </button>
                             </div>
@@ -334,14 +353,14 @@
                                 </div>
                                 <div class="d-flex justify-content-end">
                                     <button class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                                    <button id="goToStep2" class="btn btn-primary" disabled>Next: Select Time</button>
+                                    <button id="goToStep2" class="btn" style="background-color: var(--mongodb-green); color: var(--mongodb-black); border-color: var(--mongodb-green);" disabled>Next: Select Time</button>
                                 </div>
                             </div>
                             
                             <!-- Step 2: Select Time -->
                             <div class="tab-pane fade" id="step2" role="tabpanel">
                                 <div id="timeSlotLoading" class="text-center py-3">
-                                    <div class="spinner-border text-primary" role="status">
+                                    <div class="spinner-border" style="color: var(--mongodb-green);" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <p class="mt-2">Loading available appointment slots...</p>
@@ -358,7 +377,7 @@
                                     <button class="btn btn-outline-secondary" id="backToStep1">Back</button>
                                     <div>
                                         <button class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                                        <button id="goToStep3" class="btn btn-primary" disabled>Next: Add Details</button>
+                                        <button id="goToStep3" class="btn" style="background-color: var(--mongodb-green); color: var(--mongodb-black); border-color: var(--mongodb-green);" disabled>Next: Add Details</button>
                                     </div>
                                 </div>
                             </div>
@@ -399,7 +418,7 @@
                                     <button class="btn btn-outline-secondary" id="backToStep2">Back</button>
                                     <div>
                                         <button class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                                        <button id="goToStep4" class="btn btn-primary">Next: Review & Confirm</button>
+                                        <button id="goToStep4" class="btn" style="background-color: var(--mongodb-green); color: var(--mongodb-black); border-color: var(--mongodb-green);">Next: Review & Confirm</button>
                                     </div>
                                 </div>
                             </div>
@@ -456,7 +475,7 @@
                             <h3>Appointment Confirmed!</h3>
                             <p class="lead mb-4" id="confirmationDetails"></p>
                             <p>A confirmation has been sent to your email. You can view and manage this appointment from your dashboard.</p>
-                            <button class="btn btn-primary mt-3" data-bs-dismiss="modal">Close</button>
+                            <button class="btn mt-3" style="background-color: var(--mongodb-green); color: var(--mongodb-black); border-color: var(--mongodb-green);" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
@@ -535,7 +554,7 @@
                     </div>
                     
                     <div id="reschedTimeSlotLoading" class="text-center py-3" style="display:none;">
-                        <div class="spinner-border text-primary" role="status">
+                        <div class="spinner-border" style="color: var(--mongodb-green);" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         <p class="mt-2">Loading available appointment slots...</p>
@@ -552,7 +571,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmReschedule" disabled>Confirm Reschedule</button>
+                    <button type="button" class="btn" style="background-color: var(--mongodb-green); color: var(--mongodb-black); border-color: var(--mongodb-green);" id="confirmReschedule" disabled>Confirm Reschedule</button>
                 </div>
             </div>
         </div>
