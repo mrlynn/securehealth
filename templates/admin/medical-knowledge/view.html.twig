@@ -1,0 +1,244 @@
+{% extends 'admin/medical-knowledge/base.html.twig' %}
+
+{% block title %}{{ knowledge.title }} - Medical Knowledge - SecureHealth{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.2.0/dist/tagify.css" />
+{% endblock %}
+
+{% block body %}
+    <div class="container knowledge-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fas fa-book-medical me-2"></i>
+                    Medical Knowledge Entry
+                </h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('admin_medical_knowledge_index') }}">Medical Knowledge</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">View Entry</li>
+                    </ol>
+                </nav>
+            </div>
+            <div>
+                <a href="{{ path('admin_medical_knowledge_edit', {id: knowledge.id}) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit me-1"></i>
+                    Edit Entry
+                </a>
+            </div>
+        </div>
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="h4 mb-0">{{ knowledge.title }}</h2>
+                    <span class="badge {{ knowledge.isActive ? 'bg-success' : 'bg-danger' }}">
+                        {{ knowledge.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        {% if knowledge.summary %}
+                            <h5>Summary</h5>
+                            <p class="lead">{{ knowledge.summary }}</p>
+                            <hr>
+                        {% endif %}
+                        
+                        <h5>Content</h5>
+                        <div class="markdown-content">
+                            {{ knowledge.content|nl2br }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <strong>Information</strong>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <small class="text-muted">Source</small><br>
+                                    <strong>{{ knowledge.source }}</strong>
+                                    {% if knowledge.sourceUrl %}
+                                        <a href="{{ knowledge.sourceUrl }}" target="_blank" class="ms-2 small">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    {% endif %}
+                                </li>
+                                {% if knowledge.sourceDate %}
+                                    <li class="list-group-item">
+                                        <small class="text-muted">Date</small><br>
+                                        <strong>{{ knowledge.sourceDate.toDateTime()|date('Y-m-d') }}</strong>
+                                    </li>
+                                {% endif %}
+                                <li class="list-group-item">
+                                    <small class="text-muted">Confidence Level</small><br>
+                                    <div class="confidence-indicator confidence-level-{{ knowledge.confidenceLevel }}">
+                                        <div></div>
+                                    </div>
+                                    <strong>{{ knowledge.confidenceLevel }}/5</strong>
+                                </li>
+                                <li class="list-group-item">
+                                    <small class="text-muted">Evidence Level</small><br>
+                                    <div class="evidence-indicator evidence-level-{{ knowledge.evidenceLevel }}">
+                                        <div></div>
+                                    </div>
+                                    <strong>{{ knowledge.evidenceLevel }}/5</strong>
+                                </li>
+                                <li class="list-group-item">
+                                    <small class="text-muted">Created</small><br>
+                                    <strong>{{ knowledge.createdAt.toDateTime()|date('Y-m-d H:i') }}</strong>
+                                </li>
+                                {% if knowledge.updatedAt %}
+                                    <li class="list-group-item">
+                                        <small class="text-muted">Last Updated</small><br>
+                                        <strong>{{ knowledge.updatedAt.toDateTime()|date('Y-m-d H:i') }}</strong>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <strong>Medical Context</strong>
+                            </div>
+                            <div class="card-body">
+                                {% if knowledge.specialties|length > 0 %}
+                                    <div class="mb-3">
+                                        <h6>Specialties</h6>
+                                        {% for specialty in knowledge.specialties %}
+                                            <a href="{{ path('admin_medical_knowledge_index', {specialty: specialty}) }}" class="badge specialty-badge text-decoration-none">
+                                                {{ specialty }}
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                {% if knowledge.tags|length > 0 %}
+                                    <div class="mb-3">
+                                        <h6>Tags</h6>
+                                        {% for tag in knowledge.tags %}
+                                            <a href="{{ path('admin_medical_knowledge_index', {tag: tag}) }}" class="badge tag-badge text-decoration-none">
+                                                {{ tag }}
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                {% if knowledge.relatedConditions|length > 0 %}
+                                    <div class="mb-3">
+                                        <h6>Related Conditions</h6>
+                                        {% for condition in knowledge.relatedConditions %}
+                                            <span class="badge condition-badge">{{ condition }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                {% if knowledge.relatedMedications|length > 0 %}
+                                    <div class="mb-3">
+                                        <h6>Related Medications</h6>
+                                        {% for medication in knowledge.relatedMedications %}
+                                            <span class="badge medication-badge">{{ medication }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                {% if knowledge.relatedProcedures|length > 0 %}
+                                    <div class="mb-3">
+                                        <h6>Related Procedures</h6>
+                                        {% for procedure in knowledge.relatedProcedures %}
+                                            <span class="badge procedure-badge">{{ procedure }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <a href="{{ path('admin_medical_knowledge_index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to List
+                        </a>
+                    </div>
+                    <div>
+                        <a href="{{ path('admin_medical_knowledge_edit', {id: knowledge.id}) }}" class="btn btn-primary">
+                            <i class="fas fa-edit me-1"></i>
+                            Edit
+                        </a>
+                        <button class="btn {{ knowledge.isActive ? 'btn-danger' : 'btn-success' }} toggle-status-btn" 
+                                data-knowledge-id="{{ knowledge.id }}" 
+                                data-current-status="{{ knowledge.isActive ? 'active' : 'inactive' }}">
+                            <i class="fas {{ knowledge.isActive ? 'fa-ban' : 'fa-check' }} me-1"></i>
+                            {{ knowledge.isActive ? 'Deactivate' : 'Activate' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if related|length > 0 %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <strong>Related Knowledge Entries</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for entry in related %}
+                            {% if entry.id != knowledge.id %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">
+                                                <a href="{{ path('admin_medical_knowledge_view', {id: entry.id}) }}" class="text-decoration-none">
+                                                    {{ entry.title }}
+                                                </a>
+                                            </h5>
+                                            <p class="card-text small text-muted">{{ entry.summary|default(entry.content|slice(0, 150) ~ '...') }}</p>
+                                            <div class="small">
+                                                {% for specialty in entry.specialties|slice(0, 2) %}
+                                                    <span class="badge specialty-badge">{{ specialty }}</span>
+                                                {% endfor %}
+                                                {% for tag in entry.tags|slice(0, 2) %}
+                                                    <span class="badge tag-badge">{{ tag }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Convert markdown content to HTML
+            const markdownContent = document.querySelector('.markdown-content');
+            if (markdownContent) {
+                const originalText = markdownContent.innerHTML.replace(/<br\s*\/?>/g, "\n");
+                markdownContent.innerHTML = marked.parse(originalText);
+            }
+        });
+    </script>
+{% endblock %}

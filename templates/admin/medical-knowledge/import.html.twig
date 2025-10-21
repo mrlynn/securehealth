@@ -1,0 +1,179 @@
+{% extends 'admin/medical-knowledge/base.html.twig' %}
+
+{% block title %}Import Medical Knowledge - SecureHealth{% endblock %}
+
+{% block body %}
+    <div class="container knowledge-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fas fa-file-import me-2"></i>
+                    Import Medical Knowledge
+                </h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('admin_medical_knowledge_index') }}">Medical Knowledge</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Import</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <strong>Import Data</strong>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ path('admin_medical_knowledge_import') }}" method="post" id="importForm" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="source" class="form-label">Source Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="source" name="source" required>
+                                <div class="invalid-feedback">
+                                    Please provide a source name for the imported data.
+                                </div>
+                                <div class="form-text">
+                                    A name to identify where this data is coming from (e.g., "PubMed API", "Internal Database").
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="importData" class="form-label">JSON Data <span class="text-danger">*</span></label>
+                                <textarea class="form-control font-monospace" id="importData" name="importData" rows="15" required></textarea>
+                                <div class="invalid-feedback">
+                                    Please provide valid JSON data.
+                                </div>
+                                <div class="form-text">
+                                    Paste JSON data in the format shown in the example on the right.
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{{ path('admin_medical_knowledge_index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-file-import me-1"></i>
+                                    Import Data
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <strong>Import Format</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="small">Your JSON data should be an array of objects with the following structure:</p>
+                        <pre class="bg-light p-3 rounded small" style="max-height: 400px; overflow-y: auto;">
+[
+  {
+    "title": "Example Medical Knowledge Entry",
+    "content": "Detailed content with markdown support.\n\n## Subtopics\n\n- Point 1\n- Point 2",
+    "summary": "A brief summary of this entry",
+    "tags": ["Tag1", "Tag2"],
+    "specialties": ["Cardiology", "Internal Medicine"],
+    "sourceUrl": "https://example.com/reference",
+    "sourceDate": "2024-05-15",
+    "confidenceLevel": 4,
+    "evidenceLevel": 3,
+    "relatedConditions": ["Hypertension", "Heart Failure"],
+    "relatedMedications": ["Lisinopril", "Metoprolol"],
+    "relatedProcedures": ["Echocardiogram"]
+  },
+  {
+    "title": "Another Knowledge Entry",
+    "content": "More detailed content here...",
+    "source": "Optional - will be overridden by form value",
+    "tags": ["Example", "Medical"]
+  }
+]</pre>
+                        <div class="alert alert-info mt-3 small">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Notes:</strong>
+                            <ul class="mb-0 ps-3">
+                                <li>Only <code>title</code> and <code>content</code> are required for each entry</li>
+                                <li>The <code>source</code> field from the form will be applied to all entries</li>
+                                <li>All imported entries will be flagged for review by default</li>
+                                <li>Large imports may take some time to process</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <strong>Bulk Import Tips</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="small">For large datasets:</p>
+                        <ul class="small">
+                            <li>Split imports into batches of 20-50 entries</li>
+                            <li>Verify data quality before importing</li>
+                            <li>Ensure all entries have meaningful titles</li>
+                            <li>Use consistent tags and specialties</li>
+                            <li>Review imported entries after import</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form validation
+            const form = document.getElementById('importForm');
+            const importData = document.getElementById('importData');
+            
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                // Validate JSON data
+                try {
+                    const jsonData = JSON.parse(importData.value);
+                    if (!Array.isArray(jsonData)) {
+                        importData.setCustomValidity('Data must be an array of knowledge entries');
+                        event.preventDefault();
+                    } else if (jsonData.length === 0) {
+                        importData.setCustomValidity('Array cannot be empty');
+                        event.preventDefault();
+                    } else {
+                        importData.setCustomValidity('');
+                    }
+                } catch (e) {
+                    importData.setCustomValidity('Invalid JSON format: ' + e.message);
+                    event.preventDefault();
+                }
+                
+                form.classList.add('was-validated');
+            });
+            
+            // Clear validation errors when editing
+            importData.addEventListener('input', function() {
+                importData.setCustomValidity('');
+            });
+        });
+    </script>
+{% endblock %}

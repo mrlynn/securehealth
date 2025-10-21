@@ -1,0 +1,219 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .knowledge-container {
+            padding: 1.5rem 0;
+        }
+        
+        .tag-badge, .specialty-badge, .condition-badge, .medication-badge, .procedure-badge {
+            display: inline-block;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        
+        .tag-badge { background-color: #6c757d; }
+        .specialty-badge { background-color: #0d6efd; }
+        .condition-badge { background-color: #dc3545; }
+        .medication-badge { background-color: #198754; }
+        .procedure-badge { background-color: #ffc107; color: #000; }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-active {
+            background-color: #28a745;
+        }
+        
+        .status-inactive {
+            background-color: #dc3545;
+        }
+        
+        .confidence-indicator, .evidence-indicator {
+            height: 6px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            margin-top: 3px;
+            overflow: hidden;
+            width: 100px;
+        }
+        
+        .confidence-indicator div, .evidence-indicator div {
+            height: 100%;
+            border-radius: 3px;
+        }
+        
+        .confidence-level-1 div, .evidence-level-1 div { width: 20%; background-color: #dc3545; }
+        .confidence-level-2 div, .evidence-level-2 div { width: 40%; background-color: #fd7e14; }
+        .confidence-level-3 div, .evidence-level-3 div { width: 60%; background-color: #ffc107; }
+        .confidence-level-4 div, .evidence-level-4 div { width: 80%; background-color: #20c997; }
+        .confidence-level-5 div, .evidence-level-5 div { width: 100%; background-color: #198754; }
+        
+        .markdown-content {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .markdown-content h1 {
+            font-size: 1.8rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .markdown-content h2 {
+            font-size: 1.5rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .markdown-content h3 {
+            font-size: 1.3rem;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .markdown-content p {
+            margin-bottom: 1rem;
+        }
+        
+        .markdown-content ul, .markdown-content ol {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+        
+        .markdown-content blockquote {
+            border-left: 4px solid #e9ecef;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #6c757d;
+        }
+        
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .markdown-content table, .markdown-content th, .markdown-content td {
+            border: 1px solid #dee2e6;
+        }
+        
+        .markdown-content th, .markdown-content td {
+            padding: 0.5rem;
+        }
+        
+        .markdown-content th {
+            background-color: #f8f9fa;
+        }
+        
+        .tagify {
+            width: 100%;
+            max-width: 100%;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.2.0/dist/tagify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Markdown preview if applicable
+            const previewButton = document.getElementById('preview-markdown');
+            const contentInput = document.getElementById('content');
+            const markdownPreview = document.getElementById('markdown-preview');
+            
+            if (previewButton && contentInput && markdownPreview) {
+                previewButton.addEventListener('click', function() {
+                    markdownPreview.innerHTML = marked.parse(contentInput.value);
+                });
+            }
+            
+            // Initialize Tagify on tag inputs
+            const tagInputs = document.querySelectorAll('input[data-tagify]');
+            tagInputs.forEach(input => {
+                // Get whitelist from data attribute if available
+                let whitelist = [];
+                const whitelistAttr = input.getAttribute('data-whitelist');
+                if (whitelistAttr) {
+                    try {
+                        whitelist = JSON.parse(whitelistAttr);
+                    } catch (e) {
+                        console.error('Invalid whitelist JSON:', e);
+                    }
+                }
+                
+                // Initialize Tagify
+                new Tagify(input, {
+                    whitelist: whitelist,
+                    enforceWhitelist: false,
+                    maxTags: 20,
+                    dropdown: {
+                        maxItems: 20,
+                        classname: 'tags-dropdown',
+                        enabled: 0,
+                        closeOnSelect: false
+                    }
+                });
+            });
+            
+            // Toggle status buttons
+            const toggleStatusButtons = document.querySelectorAll('.toggle-status-btn');
+            toggleStatusButtons.forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    
+                    const knowledgeId = this.getAttribute('data-knowledge-id');
+                    const currentStatus = this.getAttribute('data-current-status');
+                    const confirmMessage = currentStatus === 'active' ? 
+                        'Are you sure you want to deactivate this knowledge entry?' : 
+                        'Are you sure you want to activate this knowledge entry?';
+                    
+                    if (confirm(confirmMessage)) {
+                        try {
+                            const response = await fetch(`/admin/medical-knowledge/${knowledgeId}/toggle-status`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                            
+                            const result = await response.json();
+                            
+                            if (result.success) {
+                                // Show success message
+                                alert(result.message);
+                                
+                                // Update button and status indicator
+                                this.setAttribute('data-current-status', result.isActive ? 'active' : 'inactive');
+                                this.innerHTML = result.isActive ? 
+                                    '<i class="fas fa-ban"></i> Deactivate' : 
+                                    '<i class="fas fa-check"></i> Activate';
+                                
+                                const statusIndicator = document.querySelector(`.status-indicator[data-knowledge-id="${knowledgeId}"]`);
+                                if (statusIndicator) {
+                                    statusIndicator.className = `status-indicator ${result.isActive ? 'status-active' : 'status-inactive'}`;
+                                    statusIndicator.nextSibling.textContent = result.isActive ? 'Active' : 'Inactive';
+                                }
+                            } else {
+                                alert('Error: ' + result.message);
+                            }
+                        } catch (error) {
+                            console.error('Error toggling status:', error);
+                            alert('An error occurred while updating the status');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends 'admin/medical-knowledge/base.html.twig' %}
+
+{% block title %}Add Medical Knowledge Entry - SecureHealth{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.2.0/dist/tagify.css" />
+{% endblock %}
+
+{% block body %}
+    <div class="container knowledge-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Add Medical Knowledge Entry
+                </h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('admin_medical_knowledge_index') }}">Medical Knowledge</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Add New</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <strong>Entry Information</strong>
+            </div>
+            <div class="card-body">
+                <form action="{{ path('admin_medical_knowledge_new') }}" method="post" id="newKnowledgeForm" class="needs-validation" novalidate>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required minlength="5" maxlength="200">
+                            <div class="invalid-feedback">
+                                Please provide a title (5-200 characters).
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="source" class="form-label">Source <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="source" name="source" required>
+                            <div class="invalid-feedback">
+                                Please provide a source.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="sourceUrl" class="form-label">Source URL</label>
+                            <input type="url" class="form-control" id="sourceUrl" name="sourceUrl" placeholder="https://example.com/reference">
+                            <div class="invalid-feedback">
+                                Please provide a valid URL.
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sourceDate" class="form-label">Source Date</label>
+                            <input type="date" class="form-control" id="sourceDate" name="sourceDate">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="summary" class="form-label">Summary</label>
+                            <textarea class="form-control" id="summary" name="summary" rows="2" maxlength="500" placeholder="Brief summary of the knowledge entry"></textarea>
+                            <div class="form-text">Leave blank for auto-generated summary.</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="preview-markdown">
+                                    <i class="fas fa-eye me-1"></i> Preview
+                                </button>
+                            </div>
+                            <textarea class="form-control" id="content" name="content" rows="15" required></textarea>
+                            <div class="invalid-feedback">
+                                Please provide content.
+                            </div>
+                            <div class="form-text">Supports Markdown formatting.</div>
+                            
+                            <div id="markdown-preview" class="border p-3 mt-3 rounded markdown-content" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="specialties" class="form-label">Medical Specialties</label>
+                            <input type="text" id="specialties" name="specialties" class="form-control" 
+                                  data-tagify data-whitelist="{{ specialties|json_encode }}">
+                            <div class="form-text">
+                                Enter one or more medical specialties related to this knowledge entry.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tags" class="form-label">Tags</label>
+                            <input type="text" id="tags" name="tags" class="form-control" 
+                                  data-tagify data-whitelist="{{ tags|json_encode }}">
+                            <div class="form-text">
+                                Enter one or more tags to categorize this entry.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="relatedConditions" class="form-label">Related Conditions</label>
+                            <input type="text" id="relatedConditions" name="relatedConditions" class="form-control" 
+                                  data-tagify data-whitelist="{{ conditions|json_encode }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="relatedMedications" class="form-label">Related Medications</label>
+                            <input type="text" id="relatedMedications" name="relatedMedications" class="form-control" 
+                                  data-tagify data-whitelist="{{ medications|json_encode }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="relatedProcedures" class="form-label">Related Procedures</label>
+                            <input type="text" id="relatedProcedures" name="relatedProcedures" class="form-control" 
+                                  data-tagify data-whitelist="{{ procedures|json_encode }}">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="confidenceLevel" class="form-label">Confidence Level</label>
+                            <select class="form-select" id="confidenceLevel" name="confidenceLevel">
+                                <option value="1">1 - Very Low</option>
+                                <option value="2">2 - Low</option>
+                                <option value="3">3 - Moderate</option>
+                                <option value="4">4 - High</option>
+                                <option value="5" selected>5 - Very High</option>
+                            </select>
+                            <div class="form-text">
+                                How confident are you in the accuracy of this information?
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="evidenceLevel" class="form-label">Evidence Level</label>
+                            <select class="form-select" id="evidenceLevel" name="evidenceLevel">
+                                <option value="1">1 - Case Reports/Expert Opinion</option>
+                                <option value="2">2 - Case Control/Cohort Studies</option>
+                                <option value="3" selected>3 - Randomized Controlled Trials</option>
+                                <option value="4">4 - Multiple RCTs/Meta-analysis</option>
+                                <option value="5">5 - Systematic Reviews</option>
+                            </select>
+                            <div class="form-text">
+                                What level of evidence supports this information?
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="requiresReview" name="requiresReview">
+                                <label class="form-check-label" for="requiresReview">
+                                    Flag for Doctor Review
+                                </label>
+                                <div class="form-text">
+                                    Check this if the entry requires verification by a medical professional.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ path('admin_medical_knowledge_index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            Save Entry
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form validation
+            const form = document.getElementById('newKnowledgeForm');
+            
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            });
+            
+            // Toggle markdown preview
+            const previewButton = document.getElementById('preview-markdown');
+            const contentInput = document.getElementById('content');
+            const markdownPreview = document.getElementById('markdown-preview');
+            
+            previewButton.addEventListener('click', function() {
+                if (markdownPreview.style.display === 'none') {
+                    markdownPreview.innerHTML = marked.parse(contentInput.value);
+                    markdownPreview.style.display = 'block';
+                    previewButton.innerHTML = '<i class="fas fa-edit me-1"></i> Edit';
+                } else {
+                    markdownPreview.style.display = 'none';
+                    previewButton.innerHTML = '<i class="fas fa-eye me-1"></i> Preview';
+                }
+            });
+        });
+    </script>
+{% endblock %}

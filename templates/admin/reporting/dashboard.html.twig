@@ -1,0 +1,535 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Reporting Dashboard - SecureHealth{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css" integrity="sha512-/zs32ZEJh+/EO2N1b0PEdoA10JkdC3zJ8L5FTiQu82LR9S/rOQNfQN7U59U9BC12swNeRAz3HSzIL2vpp4fv3w==" crossorigin="anonymous" />
+    <style>
+        .stats-card {
+            transition: all .2s ease-in-out;
+        }
+        .stats-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+        }
+        .card-icon {
+            font-size: 2.5rem;
+            color: rgba(0,0,0,0.15);
+        }
+        .report-link-card {
+            transition: all .2s ease-in-out;
+        }
+        .report-link-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+        }
+        .dashboard-chart {
+            height: 300px !important;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-chart-line me-2"></i>
+                Reporting Dashboard
+            </h1>
+            <div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" id="last7DaysBtn">
+                        <i class="far fa-calendar-alt me-1"></i> Last 7 Days
+                    </button>
+                    <button type="button" class="btn btn-primary" id="last30DaysBtn">
+                        <i class="far fa-calendar-alt me-1"></i> Last 30 Days
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="last90DaysBtn">
+                        <i class="far fa-calendar-alt me-1"></i> Last 90 Days
+                    </button>
+                </div>
+                <button class="btn btn-success ms-2" id="generateReportBtn">
+                    <i class="fas fa-file-export me-1"></i> Generate Report
+                </button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2 stats-card">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Patients</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ patientCount|number_format }}</div>
+                                <div class="text-muted small mt-2">
+                                    <span class="text-success"><i class="fas fa-arrow-up"></i> 8.3%</span> from last month
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-users card-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2 stats-card">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Appointments</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ appointmentCount|number_format }}</div>
+                                <div class="text-muted small mt-2">
+                                    <span class="text-success"><i class="fas fa-arrow-up"></i> 12.7%</span> from last month
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-check card-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2 stats-card">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Users</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ userCount|number_format }}</div>
+                                <div class="text-muted small mt-2">
+                                    <span class="text-success"><i class="fas fa-arrow-up"></i> 5.2%</span> from last month
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-user-md card-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2 stats-card">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Activity Logs</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ auditLogCount|number_format }}</div>
+                                <div class="text-muted small mt-2">
+                                    <span class="text-success"><i class="fas fa-arrow-up"></i> 14.8%</span> from last month
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-clipboard-list card-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-xl-8 col-lg-7">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">System Activity Overview</h6>
+                        <div class="dropdown no-arrow">
+                            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                                <a class="dropdown-item" href="#"><i class="fas fa-file-csv me-1"></i> Export CSV</a>
+                                <a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-1"></i> Export PDF</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i> Configure</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-area">
+                            <canvas id="activityChart" class="dashboard-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-5">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">Activity Breakdown</h6>
+                        <div class="dropdown no-arrow">
+                            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                                <a class="dropdown-item" href="#"><i class="fas fa-file-csv me-1"></i> Export CSV</a>
+                                <a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-1"></i> Export PDF</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i> Configure</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-pie">
+                            <canvas id="activityTypeChart" class="dashboard-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <h2 class="h4 mb-3">Available Reports</h2>
+            </div>
+            
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card shadow report-link-card h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-users fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Patient Demographics</h5>
+                        <p class="card-text text-muted">Age distribution, gender, insurance types, and common conditions.</p>
+                        <a href="{{ path('app_reporting_patient_demographics') }}" class="btn btn-primary mt-3">
+                            <i class="fas fa-chart-pie me-1"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card shadow report-link-card h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-check fa-3x text-success"></i>
+                        </div>
+                        <h5 class="card-title">Appointment Statistics</h5>
+                        <p class="card-text text-muted">Trends, completion rates, distribution by provider and type.</p>
+                        <a href="{{ path('app_reporting_appointment_statistics') }}" class="btn btn-success mt-3">
+                            <i class="fas fa-chart-line me-1"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card shadow report-link-card h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-user-md fa-3x text-info"></i>
+                        </div>
+                        <h5 class="card-title">User Activity</h5>
+                        <p class="card-text text-muted">Login patterns, most active users, actions performed by role.</p>
+                        <a href="{{ path('app_reporting_user_activity') }}" class="btn btn-info mt-3">
+                            <i class="fas fa-chart-bar me-1"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card shadow report-link-card h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-brain fa-3x text-warning"></i>
+                        </div>
+                        <h5 class="card-title">Knowledge Usage</h5>
+                        <p class="card-text text-muted">Most accessed knowledge, search patterns, usage by provider type.</p>
+                        <a href="{{ path('app_reporting_knowledge_usage') }}" class="btn btn-warning mt-3">
+                            <i class="fas fa-chart-bar me-1"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card shadow report-link-card h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-shield-alt fa-3x text-danger"></i>
+                        </div>
+                        <h5 class="card-title">Security Audit</h5>
+                        <p class="card-text text-muted">Login attempts, failed access, security events, and compliance.</p>
+                        <a href="{{ path('app_reporting_security_audit') }}" class="btn btn-danger mt-3">
+                            <i class="fas fa-lock me-1"></i> View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Generation Modal -->
+    <div class="modal fade" id="generateReportModal" tabindex="-1" role="dialog" aria-labelledby="generateReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="generateReportModalLabel">Generate Custom Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="reportGenerationForm">
+                        <div class="mb-3">
+                            <label for="reportType" class="form-label">Report Type</label>
+                            <select class="form-select" id="reportType" required>
+                                <option value="">Select report type...</option>
+                                <option value="patient_demographics">Patient Demographics</option>
+                                <option value="appointment_statistics">Appointment Statistics</option>
+                                <option value="user_activity">User Activity</option>
+                                <option value="knowledge_usage">Knowledge Usage</option>
+                                <option value="security_audit">Security Audit</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dateRange" class="form-label">Date Range</label>
+                            <select class="form-select" id="dateRange" required>
+                                <option value="7">Last 7 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                                <option value="180">Last 6 months</option>
+                                <option value="365">Last 12 months</option>
+                                <option value="custom">Custom range...</option>
+                            </select>
+                        </div>
+                        <div id="customDateRangeContainer" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="startDate" class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="startDate">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="endDate" class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="endDate">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="exportFormat" class="form-label">Export Format</label>
+                            <select class="form-select" id="exportFormat" required>
+                                <option value="csv">CSV</option>
+                                <option value="pdf">PDF</option>
+                                <option value="xlsx">Excel</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="downloadReportBtn">
+                        <i class="fas fa-download me-1"></i> Download Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js" integrity="sha512-d9xgZrVZpmmQlfonhQUvTR7lMPtO7NkZMkA0ABN3PHCbKA5nqylQ/yWlFAyY6hYgdF1Qh6nYiuADWwKB4C2WSw==" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Activity Chart
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            const activityChart = new Chart(activityCtx, {
+                type: 'line',
+                data: {
+                    labels: {{ chartData.dates|json_encode|raw }},
+                    datasets: [
+                        {
+                            label: 'Total Activity',
+                            data: {{ chartData.activity|json_encode|raw }},
+                            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                            borderColor: 'rgba(78, 115, 223, 1)',
+                            pointRadius: 3,
+                            pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                            pointBorderColor: 'rgba(78, 115, 223, 1)',
+                            pointHoverRadius: 5,
+                            pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+                            pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+                            pointHitRadius: 10,
+                            pointBorderWidth: 2,
+                            borderWidth: 2,
+                            fill: true
+                        }
+                    ],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            left: 10,
+                            right: 25,
+                            top: 25,
+                            bottom: 0
+                        }
+                    },
+                    scales: {
+                        xAxes: [{
+                            time: {
+                                unit: 'date'
+                            },
+                            gridLines: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 7
+                            }
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                maxTicksLimit: 5,
+                                padding: 10,
+                                beginAtZero: true
+                            },
+                            gridLines: {
+                                color: "rgb(234, 236, 244)",
+                                zeroLineColor: "rgb(234, 236, 244)",
+                                drawBorder: false,
+                                borderDash: [2],
+                                zeroLineBorderDash: [2]
+                            }
+                        }],
+                    },
+                    legend: {
+                        display: false
+                    },
+                    tooltips: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyFontColor: "#858796",
+                        titleMarginBottom: 10,
+                        titleFontColor: '#6e707e',
+                        titleFontSize: 14,
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        xPadding: 15,
+                        yPadding: 15,
+                        displayColors: false,
+                        intersect: false,
+                        mode: 'index',
+                        caretPadding: 10
+                    }
+                }
+            });
+            
+            // Activity Type Pie Chart
+            const activityTypeCtx = document.getElementById('activityTypeChart').getContext('2d');
+            const activityTypeChart = new Chart(activityTypeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Patient Activity', 'User Activity', 'Security Events'],
+                    datasets: [{
+                        data: [
+                            {{ chartData.patient_activity|reduce((sum, value) => sum + value, 0) }}, 
+                            {{ chartData.user_activity|reduce((sum, value) => sum + value, 0) }}, 
+                            {{ chartData.security_events|reduce((sum, value) => sum + value, 0) }}
+                        ],
+                        backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e'],
+                        hoverBackgroundColor: ['#2e59d9', '#17a673', '#f4b619'],
+                        hoverBorderColor: "rgba(234, 236, 244, 1)",
+                    }],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    tooltips: {
+                        backgroundColor: "rgb(255,255,255)",
+                        bodyFontColor: "#858796",
+                        borderColor: '#dddfeb',
+                        borderWidth: 1,
+                        xPadding: 15,
+                        yPadding: 15,
+                        displayColors: false,
+                        caretPadding: 10,
+                    },
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                    cutoutPercentage: 70,
+                }
+            });
+            
+            // Handle date range selection
+            document.getElementById('last7DaysBtn').addEventListener('click', function() {
+                updateDateRange(7);
+                this.classList.add('btn-primary');
+                this.classList.remove('btn-outline-primary');
+                document.getElementById('last30DaysBtn').classList.remove('btn-primary');
+                document.getElementById('last30DaysBtn').classList.add('btn-outline-primary');
+                document.getElementById('last90DaysBtn').classList.remove('btn-primary');
+                document.getElementById('last90DaysBtn').classList.add('btn-outline-primary');
+            });
+            
+            document.getElementById('last30DaysBtn').addEventListener('click', function() {
+                updateDateRange(30);
+                this.classList.add('btn-primary');
+                this.classList.remove('btn-outline-primary');
+                document.getElementById('last7DaysBtn').classList.remove('btn-primary');
+                document.getElementById('last7DaysBtn').classList.add('btn-outline-primary');
+                document.getElementById('last90DaysBtn').classList.remove('btn-primary');
+                document.getElementById('last90DaysBtn').classList.add('btn-outline-primary');
+            });
+            
+            document.getElementById('last90DaysBtn').addEventListener('click', function() {
+                updateDateRange(90);
+                this.classList.add('btn-primary');
+                this.classList.remove('btn-outline-primary');
+                document.getElementById('last7DaysBtn').classList.remove('btn-primary');
+                document.getElementById('last7DaysBtn').classList.add('btn-outline-primary');
+                document.getElementById('last30DaysBtn').classList.remove('btn-primary');
+                document.getElementById('last30DaysBtn').classList.add('btn-outline-primary');
+            });
+            
+            function updateDateRange(days) {
+                // This would normally fetch new data for the charts
+                console.log(`Updating charts for last ${days} days`);
+            }
+            
+            // Handle report generation
+            document.getElementById('generateReportBtn').addEventListener('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('generateReportModal'));
+                modal.show();
+            });
+            
+            // Handle custom date range toggle
+            document.getElementById('dateRange').addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    document.getElementById('customDateRangeContainer').style.display = 'block';
+                } else {
+                    document.getElementById('customDateRangeContainer').style.display = 'none';
+                }
+            });
+            
+            // Handle report download
+            document.getElementById('downloadReportBtn').addEventListener('click', function() {
+                const reportType = document.getElementById('reportType').value;
+                if (!reportType) {
+                    alert('Please select a report type');
+                    return;
+                }
+                
+                // In a real application, this would generate and download the report
+                // For this demo, we'll just redirect to the export endpoint
+                window.location.href = `{{ path('app_reporting_export', {'reportType': 'placeholder'}) }}`.replace('placeholder', reportType);
+                
+                // Close the modal
+                bootstrap.Modal.getInstance(document.getElementById('generateReportModal')).hide();
+            });
+        });
+    </script>
+{% endblock %}

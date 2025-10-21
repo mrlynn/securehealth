@@ -1,0 +1,189 @@
+{% extends 'admin/medical-knowledge/base.html.twig' %}
+
+{% block title %}Medical Knowledge Management - SecureHealth{% endblock %}
+
+{% block body %}
+    <div class="container knowledge-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-book-medical me-2"></i>
+                Medical Knowledge Management
+            </h1>
+            <div>
+                <a href="{{ path('admin_medical_knowledge_stats') }}" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Statistics
+                </a>
+                <a href="{{ path('admin_medical_knowledge_import') }}" class="btn btn-outline-success me-2">
+                    <i class="fas fa-file-import me-1"></i>
+                    Import Knowledge
+                </a>
+                <a href="{{ path('admin_medical_knowledge_new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>
+                    Add New Entry
+                </a>
+            </div>
+        </div>
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <strong>Search & Filter</strong>
+                    <span class="badge bg-primary">{{ entries|length }} entries found</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <form action="{{ path('admin_medical_knowledge_index') }}" method="get" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="searchQuery" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="searchQuery" name="q" 
+                               value="{{ searchQuery }}" placeholder="Search by title or content (minimum 3 characters)">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="specialty" class="form-label">Specialty</label>
+                        <select class="form-select" id="specialty" name="specialty">
+                            <option value="">All Specialties</option>
+                            {% for commonSpecialty in [
+                                'Cardiology', 'Dermatology', 'Endocrinology', 'Family Medicine',
+                                'Gastroenterology', 'Internal Medicine', 'Neurology', 'Oncology',
+                                'Pediatrics', 'Psychiatry', 'Pulmonology'
+                            ] %}
+                                <option value="{{ commonSpecialty }}" {{ specialty == commonSpecialty ? 'selected' : '' }}>
+                                    {{ commonSpecialty }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tag" class="form-label">Tag</label>
+                        <select class="form-select" id="tag" name="tag">
+                            <option value="">All Tags</option>
+                            {% for commonTag in [
+                                'Acute', 'Chronic', 'Diagnostic', 'Emergency', 'Preventive',
+                                'Medication', 'Procedure', 'Treatment', 'Guidelines', 'Research',
+                                'Side Effects', 'Drug Interactions', 'Contraindications'
+                            ] %}
+                                <option value="{{ commonTag }}" {{ tag == commonTag ? 'selected' : '' }}>
+                                    {{ commonTag }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>
+                            Search
+                        </button>
+                        <a href="{{ path('admin_medical_knowledge_index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Clear Filters
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <strong>Medical Knowledge Entries</strong>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Source</th>
+                            <th>Specialties</th>
+                            <th>Tags</th>
+                            <th>Confidence</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in entries %}
+                            <tr>
+                                <td>
+                                    <a href="{{ path('admin_medical_knowledge_view', {id: entry.id}) }}" class="text-decoration-none">
+                                        {{ entry.title }}
+                                    </a>
+                                </td>
+                                <td>{{ entry.source }}</td>
+                                <td>
+                                    {% for specialty in entry.specialties|slice(0, 3) %}
+                                        <span class="badge specialty-badge">{{ specialty }}</span>
+                                    {% endfor %}
+                                    {% if entry.specialties|length > 3 %}
+                                        <span class="badge bg-secondary">+{{ entry.specialties|length - 3 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% for tag in entry.tags|slice(0, 3) %}
+                                        <span class="badge tag-badge">{{ tag }}</span>
+                                    {% endfor %}
+                                    {% if entry.tags|length > 3 %}
+                                        <span class="badge bg-secondary">+{{ entry.tags|length - 3 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="confidence-indicator confidence-level-{{ entry.confidenceLevel }}">
+                                        <div></div>
+                                    </div>
+                                    <small>{{ entry.confidenceLevel }}/5</small>
+                                </td>
+                                <td>
+                                    <span class="status-indicator {{ entry.isActive ? 'status-active' : 'status-inactive' }}" 
+                                          data-knowledge-id="{{ entry.id }}"></span>
+                                    {{ entry.isActive ? 'Active' : 'Inactive' }}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ path('admin_medical_knowledge_view', {id: entry.id}) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ path('admin_medical_knowledge_edit', {id: entry.id}) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-sm {{ entry.isActive ? 'btn-outline-danger' : 'btn-outline-success' }} toggle-status-btn"
+                                            data-knowledge-id="{{ entry.id }}" 
+                                            data-current-status="{{ entry.isActive ? 'active' : 'inactive' }}">
+                                        <i class="fas {{ entry.isActive ? 'fa-ban' : 'fa-check' }}"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-book-medical text-muted mb-3" style="font-size: 2.5rem;"></i>
+                                    <p class="mb-0 text-muted">No medical knowledge entries found</p>
+                                    {% if searchQuery or specialty or tag %}
+                                        <p class="mb-0 text-muted">Try adjusting your search filters</p>
+                                    {% else %}
+                                        <p class="mb-0">
+                                            <a href="{{ path('admin_medical_knowledge_new') }}" class="btn btn-primary mt-3">
+                                                <i class="fas fa-plus me-1"></i>
+                                                Add Your First Entry
+                                            </a>
+                                            <a href="{{ path('admin_medical_knowledge_import') }}" class="btn btn-outline-success mt-3 ms-2">
+                                                <i class="fas fa-file-import me-1"></i>
+                                                Import Knowledge
+                                            </a>
+                                        </p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

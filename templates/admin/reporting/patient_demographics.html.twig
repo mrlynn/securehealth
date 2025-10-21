@@ -1,0 +1,622 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Patient Demographics Report - SecureHealth{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css" integrity="sha512-/zs32ZEJh+/EO2N1b0PEdoA10JkdC3zJ8L5FTiQu82LR9S/rOQNfQN7U59U9BC12swNeRAz3HSzIL2vpp4fv3w==" crossorigin="anonymous" />
+    <style>
+        .report-card {
+            transition: all .2s ease-in-out;
+        }
+        .report-card:hover {
+            box-shadow: 0 10px 20px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+        }
+        .report-chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+        .report-actions {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            z-index: 10;
+        }
+        .export-btn {
+            font-size: 0.8rem;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('app_reporting_dashboard') }}">Reporting</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Patient Demographics</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fas fa-users me-2"></i>
+                    Patient Demographics Report
+                </h1>
+                <p class="text-muted">Analysis of patient population characteristics and trends</p>
+            </div>
+            <div class="report-filter-controls">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" id="last30DaysBtn">
+                        <i class="far fa-calendar-alt me-1"></i> Last 30 Days
+                    </button>
+                    <button type="button" class="btn btn-primary" id="allTimeBtn">
+                        <i class="far fa-calendar me-1"></i> All Time
+                    </button>
+                </div>
+                <a href="{{ path('app_reporting_export', {'reportType': 'patient_demographics'}) }}" class="btn btn-success ms-2">
+                    <i class="fas fa-file-export me-1"></i> Export Report
+                </a>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-info-circle fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="alert-heading mb-1">Report Information</h5>
+                            <p class="mb-0">This report shows the demographics of your patient population. Use this information to better understand your patient base and improve service delivery.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Age Distribution -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card shadow report-card">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Age Distribution</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="report-chart-container">
+                            <canvas id="ageDistributionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small text-muted">Based on all active patient records</div>
+                            <button class="btn btn-sm btn-outline-secondary export-btn">
+                                <i class="fas fa-download me-1"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow report-card">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Key Insights</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6>Age Group Distribution</h6>
+                            <p>The largest age group in your patient population is <strong>30-44</strong> years (32.7%), followed by <strong>45-59</strong> years (29.2%).</p>
+                        </div>
+                        <div class="mb-4">
+                            <h6>Trend Analysis</h6>
+                            <p>Over the past year, there has been a <span class="text-success">12% increase</span> in patients aged 60-74, suggesting a growing geriatric population.</p>
+                        </div>
+                        <div>
+                            <h6>Recommendations</h6>
+                            <ul class="small">
+                                <li>Consider expanding geriatric services</li>
+                                <li>Evaluate outreach programs for underrepresented age groups</li>
+                                <li>Review pediatric capacity needs based on 0-17 population</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gender and Insurance Distribution -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card shadow report-card">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Gender Distribution</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="report-chart-container">
+                            <canvas id="genderDistributionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small text-muted">Data from all patient records</div>
+                            <button class="btn btn-sm btn-outline-secondary export-btn">
+                                <i class="fas fa-download me-1"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow report-card">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Insurance Distribution</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="report-chart-container">
+                            <canvas id="insuranceDistributionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small text-muted">Based on primary insurance coverage</div>
+                            <button class="btn btn-sm btn-outline-secondary export-btn">
+                                <i class="fas fa-download me-1"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Medical Conditions -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow report-card">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Top Medical Conditions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="report-chart-container">
+                            <canvas id="conditionsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small text-muted">Based on documented diagnoses in patient records</div>
+                            <button class="btn btn-sm btn-outline-secondary export-btn">
+                                <i class="fas fa-download me-1"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Table -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow report-card">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Detailed Demographics Data</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover" id="demographicsTable" width="100%" cellspacing="0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Group</th>
+                                        <th>Count</th>
+                                        <th>Percentage</th>
+                                        <th>YoY Change</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td rowspan="6" class="align-middle">Age Group</td>
+                                        <td>0-17</td>
+                                        <td>53</td>
+                                        <td>8.3%</td>
+                                        <td><span class="text-success">+1.2%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>18-29</td>
+                                        <td>142</td>
+                                        <td>22.3%</td>
+                                        <td><span class="text-success">+3.6%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>30-44</td>
+                                        <td>208</td>
+                                        <td>32.7%</td>
+                                        <td><span class="text-success">+4.8%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>45-59</td>
+                                        <td>186</td>
+                                        <td>29.2%</td>
+                                        <td><span class="text-danger">-1.3%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>60-74</td>
+                                        <td>124</td>
+                                        <td>19.5%</td>
+                                        <td><span class="text-success">+12.4%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>75+</td>
+                                        <td>87</td>
+                                        <td>13.7%</td>
+                                        <td><span class="text-success">+8.2%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td rowspan="3" class="align-middle">Gender</td>
+                                        <td>Male</td>
+                                        <td>384</td>
+                                        <td>48.0%</td>
+                                        <td><span class="text-success">+2.1%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Female</td>
+                                        <td>410</td>
+                                        <td>51.3%</td>
+                                        <td><span class="text-danger">-1.8%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Other</td>
+                                        <td>6</td>
+                                        <td>0.8%</td>
+                                        <td><span class="text-success">+0.3%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td rowspan="5" class="align-middle">Insurance</td>
+                                        <td>Private Insurance</td>
+                                        <td>415</td>
+                                        <td>51.9%</td>
+                                        <td><span class="text-danger">-3.2%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Medicare</td>
+                                        <td>164</td>
+                                        <td>20.5%</td>
+                                        <td><span class="text-success">+5.4%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Medicaid</td>
+                                        <td>112</td>
+                                        <td>14.0%</td>
+                                        <td><span class="text-success">+2.1%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Self-Pay</td>
+                                        <td>58</td>
+                                        <td>7.3%</td>
+                                        <td><span class="text-danger">-0.8%</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Other</td>
+                                        <td>51</td>
+                                        <td>6.4%</td>
+                                        <td><span class="text-danger">-3.5%</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small text-muted">YoY = Year over Year change</div>
+                            <button class="btn btn-sm btn-outline-secondary export-btn">
+                                <i class="fas fa-download me-1"></i> Export Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js" integrity="sha512-d9xgZrVZpmmQlfonhQUvTR7lMPtO7NkZMkA0ABN3PHCbKA5nqylQ/yWlFAyY6hYgdF1Qh6nYiuADWwKB4C2WSw==" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch chart data
+            fetch('{{ path('app_reporting_patient_demographics_data') }}', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    initCharts(data.data);
+                } else {
+                    console.error('Error loading chart data');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+            
+            // Initialize charts with data
+            function initCharts(chartData) {
+                // Age Distribution Chart
+                const ageCtx = document.getElementById('ageDistributionChart').getContext('2d');
+                new Chart(ageCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(chartData.ageGroups),
+                        datasets: [{
+                            label: 'Number of Patients',
+                            data: Object.values(chartData.ageGroups),
+                            backgroundColor: [
+                                'rgba(78, 115, 223, 0.7)',
+                                'rgba(78, 115, 223, 0.7)',
+                                'rgba(78, 115, 223, 0.7)',
+                                'rgba(78, 115, 223, 0.7)',
+                                'rgba(78, 115, 223, 0.7)',
+                                'rgba(78, 115, 223, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(78, 115, 223, 1)',
+                                'rgba(78, 115, 223, 1)',
+                                'rgba(78, 115, 223, 1)',
+                                'rgba(78, 115, 223, 1)',
+                                'rgba(78, 115, 223, 1)',
+                                'rgba(78, 115, 223, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                left: 10,
+                                right: 25,
+                                top: 25,
+                                bottom: 0
+                            }
+                        },
+                        scales: {
+                            xAxes: [{
+                                gridLines: {
+                                    display: false,
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    maxTicksLimit: 6
+                                }
+                            }],
+                            yAxes: [{
+                                ticks: {
+                                    min: 0,
+                                    maxTicksLimit: 5,
+                                    padding: 10,
+                                    beginAtZero: true,
+                                },
+                                gridLines: {
+                                    color: "rgb(234, 236, 244)",
+                                    zeroLineColor: "rgb(234, 236, 244)",
+                                    drawBorder: false,
+                                    borderDash: [2],
+                                    zeroLineBorderDash: [2]
+                                }
+                            }],
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltips: {
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyFontColor: "#858796",
+                            titleMarginBottom: 10,
+                            titleFontColor: '#6e707e',
+                            titleFontSize: 14,
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            xPadding: 15,
+                            yPadding: 15,
+                            displayColors: false,
+                            intersect: false,
+                            mode: 'index',
+                            caretPadding: 10
+                        }
+                    }
+                });
+                
+                // Gender Distribution Chart
+                const genderCtx = document.getElementById('genderDistributionChart').getContext('2d');
+                new Chart(genderCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(chartData.genders),
+                        datasets: [{
+                            data: Object.values(chartData.genders),
+                            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+                            hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+                            hoverBorderColor: "rgba(234, 236, 244, 1)",
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        tooltips: {
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyFontColor: "#858796",
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            xPadding: 15,
+                            yPadding: 15,
+                            displayColors: false,
+                            caretPadding: 10,
+                        },
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        cutoutPercentage: 0
+                    },
+                });
+                
+                // Insurance Distribution Chart
+                const insuranceCtx = document.getElementById('insuranceDistributionChart').getContext('2d');
+                new Chart(insuranceCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(chartData.insuranceTypes),
+                        datasets: [{
+                            data: Object.values(chartData.insuranceTypes),
+                            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+                            hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
+                            hoverBorderColor: "rgba(234, 236, 244, 1)",
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        tooltips: {
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyFontColor: "#858796",
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            xPadding: 15,
+                            yPadding: 15,
+                            displayColors: false,
+                            caretPadding: 10,
+                        },
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        cutoutPercentage: 60
+                    },
+                });
+                
+                // Top Medical Conditions Chart
+                const conditionsCtx = document.getElementById('conditionsChart').getContext('2d');
+                new Chart(conditionsCtx, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: Object.keys(chartData.conditions),
+                        datasets: [{
+                            label: 'Number of Patients',
+                            data: Object.values(chartData.conditions),
+                            backgroundColor: [
+                                'rgba(78, 115, 223, 0.7)',
+                                'rgba(28, 200, 138, 0.7)',
+                                'rgba(54, 185, 204, 0.7)',
+                                'rgba(246, 194, 62, 0.7)',
+                                'rgba(231, 74, 59, 0.7)',
+                                'rgba(133, 135, 150, 0.7)',
+                                'rgba(105, 105, 105, 0.7)',
+                                'rgba(77, 77, 77, 0.7)',
+                                'rgba(173, 216, 230, 0.7)',
+                                'rgba(152, 251, 152, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(78, 115, 223, 1)',
+                                'rgba(28, 200, 138, 1)',
+                                'rgba(54, 185, 204, 1)',
+                                'rgba(246, 194, 62, 1)',
+                                'rgba(231, 74, 59, 1)',
+                                'rgba(133, 135, 150, 1)',
+                                'rgba(105, 105, 105, 1)',
+                                'rgba(77, 77, 77, 1)',
+                                'rgba(173, 216, 230, 1)',
+                                'rgba(152, 251, 152, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                left: 10,
+                                right: 25,
+                                top: 25,
+                                bottom: 0
+                            }
+                        },
+                        scales: {
+                            xAxes: [{
+                                ticks: {
+                                    min: 0,
+                                    maxTicksLimit: 5,
+                                    padding: 10,
+                                    beginAtZero: true,
+                                },
+                                gridLines: {
+                                    color: "rgb(234, 236, 244)",
+                                    zeroLineColor: "rgb(234, 236, 244)",
+                                    drawBorder: false,
+                                    borderDash: [2],
+                                    zeroLineBorderDash: [2]
+                                }
+                            }],
+                            yAxes: [{
+                                gridLines: {
+                                    display: false,
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    maxTicksLimit: 10
+                                }
+                            }],
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltips: {
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyFontColor: "#858796",
+                            titleMarginBottom: 10,
+                            titleFontColor: '#6e707e',
+                            titleFontSize: 14,
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            xPadding: 15,
+                            yPadding: 15,
+                            displayColors: false,
+                            intersect: false,
+                            mode: 'index',
+                            caretPadding: 10
+                        }
+                    }
+                });
+            }
+            
+            // Handle time period selection
+            document.getElementById('last30DaysBtn').addEventListener('click', function() {
+                this.classList.add('btn-primary');
+                this.classList.remove('btn-outline-primary');
+                document.getElementById('allTimeBtn').classList.remove('btn-primary');
+                document.getElementById('allTimeBtn').classList.add('btn-outline-primary');
+                // This would normally update the charts with 30-day data
+            });
+            
+            document.getElementById('allTimeBtn').addEventListener('click', function() {
+                this.classList.add('btn-primary');
+                this.classList.remove('btn-outline-primary');
+                document.getElementById('last30DaysBtn').classList.remove('btn-primary');
+                document.getElementById('last30DaysBtn').classList.add('btn-outline-primary');
+                // This would normally update the charts with all-time data
+            });
+            
+            // Handle export button clicks
+            document.querySelectorAll('.export-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // This would normally export the specific chart/table data
+                    // For now, just redirect to the main export endpoint
+                    window.location.href = '{{ path('app_reporting_export', {'reportType': 'patient_demographics'}) }}';
+                });
+            });
+        });
+    </script>
+{% endblock %}

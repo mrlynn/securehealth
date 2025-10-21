@@ -1,0 +1,305 @@
+{% extends 'admin/medical-knowledge/base.html.twig' %}
+
+{% block title %}Medical Knowledge Statistics - SecureHealth{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .stats-card {
+            transition: all 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+        .stats-icon {
+            font-size: 2.5rem;
+            opacity: 0.2;
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+        }
+        .tag-cloud span {
+            display: inline-block;
+            margin: 0.2rem;
+            transition: all 0.2s ease;
+        }
+        .tag-cloud span:hover {
+            transform: scale(1.1);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container knowledge-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Medical Knowledge Statistics
+                </h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('admin_medical_knowledge_index') }}">Medical Knowledge</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Statistics</li>
+                    </ol>
+                </nav>
+            </div>
+            <div>
+                <a href="{{ path('admin_medical_knowledge_index') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to List
+                </a>
+            </div>
+        </div>
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+        
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card shadow-sm stats-card border-primary h-100">
+                    <div class="card-body position-relative">
+                        <h5 class="card-title">Total Entries</h5>
+                        <h2 class="display-5 mb-0">{{ stats.totalEntries|default(0) }}</h2>
+                        <i class="fas fa-book-medical stats-icon text-primary"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm stats-card border-success h-100">
+                    <div class="card-body position-relative">
+                        <h5 class="card-title">Active Entries</h5>
+                        <h2 class="display-5 mb-0">{{ stats.activeEntries|default(0) }}</h2>
+                        <i class="fas fa-check-circle stats-icon text-success"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm stats-card border-info h-100">
+                    <div class="card-body position-relative">
+                        <h5 class="card-title">Unique Specialties</h5>
+                        <h2 class="display-5 mb-0">{{ stats.specialtyCount|default(0) }}</h2>
+                        <i class="fas fa-stethoscope stats-icon text-info"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm stats-card border-warning h-100">
+                    <div class="card-body position-relative">
+                        <h5 class="card-title">Unique Tags</h5>
+                        <h2 class="display-5 mb-0">{{ stats.tagCount|default(0) }}</h2>
+                        <i class="fas fa-tags stats-icon text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <strong>Confidence Levels</strong>
+                    </div>
+                    <div class="card-body">
+                        {% if stats.confidenceLevels is defined %}
+                            {% for level, count in stats.confidenceLevels %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Level {{ level }}</span>
+                                        <span class="badge bg-secondary">{{ count }}</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar 
+                                                {% if level == 1 %}bg-danger
+                                                {% elseif level == 2 %}bg-warning
+                                                {% elseif level == 3 %}bg-info
+                                                {% elseif level == 4 %}bg-primary
+                                                {% else %}bg-success{% endif %}"
+                                             role="progressbar"
+                                             style="width: {{ (count / stats.totalEntries * 100)|round }}%"
+                                             aria-valuenow="{{ (count / stats.totalEntries * 100)|round }}"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                            {{ (count / stats.totalEntries * 100)|round }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center my-4">No data available</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <strong>Evidence Levels</strong>
+                    </div>
+                    <div class="card-body">
+                        {% if stats.evidenceLevels is defined %}
+                            {% for level, count in stats.evidenceLevels %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Level {{ level }}</span>
+                                        <span class="badge bg-secondary">{{ count }}</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar 
+                                                {% if level == 1 %}bg-danger
+                                                {% elseif level == 2 %}bg-warning
+                                                {% elseif level == 3 %}bg-info
+                                                {% elseif level == 4 %}bg-primary
+                                                {% else %}bg-success{% endif %}"
+                                             role="progressbar"
+                                             style="width: {{ (count / stats.totalEntries * 100)|round }}%"
+                                             aria-valuenow="{{ (count / stats.totalEntries * 100)|round }}"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                            {{ (count / stats.totalEntries * 100)|round }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center my-4">No data available</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <strong>Entry Statistics</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Flagged for Review</span>
+                                <span class="badge bg-warning">{{ stats.flaggedForReview|default(0) }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" role="progressbar"
+                                     style="width: {{ stats.totalEntries > 0 ? (stats.flaggedForReview / stats.totalEntries * 100)|round : 0 }}%"
+                                     aria-valuenow="{{ stats.totalEntries > 0 ? (stats.flaggedForReview / stats.totalEntries * 100)|round : 0 }}"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    {{ stats.totalEntries > 0 ? (stats.flaggedForReview / stats.totalEntries * 100)|round : 0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Inactive Entries</span>
+                                <span class="badge bg-danger">{{ stats.inactiveEntries|default(0) }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-danger" role="progressbar"
+                                     style="width: {{ stats.totalEntries > 0 ? (stats.inactiveEntries / stats.totalEntries * 100)|round : 0 }}%"
+                                     aria-valuenow="{{ stats.totalEntries > 0 ? (stats.inactiveEntries / stats.totalEntries * 100)|round : 0 }}"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    {{ stats.totalEntries > 0 ? (stats.inactiveEntries / stats.totalEntries * 100)|round : 0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <table class="table table-sm mt-4">
+                            <tbody>
+                                <tr>
+                                    <td>Conditions Referenced</td>
+                                    <td class="text-end">{{ stats.conditionCount|default(0) }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Medications Referenced</td>
+                                    <td class="text-end">{{ stats.medicationCount|default(0) }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Procedures Referenced</td>
+                                    <td class="text-end">{{ stats.procedureCount|default(0) }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Avg. Content Length</td>
+                                    <td class="text-end">{{ stats.avgContentLength|default(0)|number_format }} chars</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>Top Specialties</strong>
+                            <a href="{{ path('admin_medical_knowledge_index') }}" class="text-decoration-none small">View All</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if stats.topSpecialties is defined and stats.topSpecialties is not empty %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Specialty</th>
+                                            <th class="text-end">Count</th>
+                                            <th class="text-end">Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for specialty, count in stats.topSpecialties %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{{ path('admin_medical_knowledge_index', {specialty: specialty}) }}" class="text-decoration-none">
+                                                        {{ specialty }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-end">{{ count }}</td>
+                                                <td class="text-end">{{ stats.totalEntries > 0 ? (count / stats.totalEntries * 100)|round : 0 }}%</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center my-4">No specialty data available</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <strong>Tag Cloud</strong>
+                    </div>
+                    <div class="card-body">
+                        {% if stats.topTags is defined and stats.topTags is not empty %}
+                            <div class="tag-cloud text-center">
+                                {% for tag, count in stats.topTags %}
+                                    {% set fontSize = 0.8 + (count / stats.tagMaxCount * 1.2) %}
+                                    {% set opacity = 0.5 + (count / stats.tagMaxCount * 0.5) %}
+                                    <a href="{{ path('admin_medical_knowledge_index', {tag: tag}) }}" class="text-decoration-none">
+                                        <span class="badge tag-badge" style="font-size: {{ fontSize }}rem; opacity: {{ opacity }};">
+                                            {{ tag }}
+                                        </span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center my-4">No tag data available</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Records - Patient Portal - SecureHealth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/patient-portal.css">
+    <style>
+        .record-card {
+            transition: transform 0.2s;
+            border-left: 4px solid #4a90e2;
+            margin-bottom: 15px;
+        }
+        .record-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .record-card.visit {
+            border-left-color: #4a90e2;
+        }
+        .record-card.procedure {
+            border-left-color: #28a745;
+        }
+        .record-card.report {
+            border-left-color: #6c757d;
+        }
+        .record-card.discharge {
+            border-left-color: #dc3545;
+        }
+        .record-type-badge {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+        }
+        .pdf-download-btn {
+            white-space: nowrap;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4a90e2;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="dashboard.html">
+                <img src="/images/secure-health-logo-square.png" alt="SecureHealth Logo" height="30">
+                Patient Portal
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="appointments.html">
+                            <i class="fas fa-calendar-alt me-1"></i> Appointments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="medical-records.html">
+                            <i class="fas fa-file-medical me-1"></i> Medical Records
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="test-results.html">
+                            <i class="fas fa-vial me-1"></i> Test Results
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="messages.html">
+                            <i class="fas fa-envelope me-1"></i> Messages
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="prescriptions.html">
+                            <i class="fas fa-prescription me-1"></i> Prescriptions
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> <span id="patientName">Loading...</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="profile.html">Profile</a></li>
+                            <li><a class="dropdown-item" href="settings.html">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div id="authentication-required" style="display:none;">
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">Authentication Required</h4>
+                <p>You need to login to access the Patient Portal.</p>
+                <hr>
+                <a href="login.html" class="btn btn-danger">Login</a>
+            </div>
+        </div>
+
+        <div id="authenticated-content" style="display:none;">
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-6">
+                    <h2><i class="fas fa-file-medical me-2"></i>Medical Records</h2>
+                    <p class="text-muted">View and download your medical records</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <button class="btn btn-primary" id="downloadCompleteRecordBtn">
+                        <i class="fas fa-file-pdf me-1"></i> Download Complete Health Record
+                    </button>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-info-circle fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h5 class="card-title mb-1">About Your Medical Records</h5>
+                                    <p class="card-text mb-0">
+                                        Your medical records are secure and confidential. You can view individual records or download your complete health record in PDF format. All downloads are encrypted and HIPAA-compliant.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" id="recordSearch" class="form-control" placeholder="Search records...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="dropdown d-flex justify-content-md-end mt-2 mt-md-0">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter me-1"></i> Filter by Type
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                            <li><a class="dropdown-item active" href="#" data-filter="all">All Records</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" data-filter="visit">Office Visits</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="procedure">Procedures</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="report">Lab & Imaging Reports</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="discharge">Discharge Summaries</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12" id="medicalRecordsContainer">
+                    <div class="text-center py-5" id="medicalRecordsLoading">
+                        <div class="loader"></div>
+                        <p class="mt-3 text-muted">Loading your medical records...</p>
+                    </div>
+                    
+                    <div class="alert alert-info" id="noRecordsMessage" style="display:none;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No medical records found matching your search criteria.
+                    </div>
+
+                    <div id="medicalRecordsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Detail Modal -->
+    <div class="modal fade" id="recordDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="recordTitle">Medical Record Detail</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="recordDetailLoading" class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading record details...</p>
+                    </div>
+
+                    <div id="recordDetailContent" style="display:none;">
+                        <!-- Content will be dynamically inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="downloadRecordBtn">
+                        <i class="fas fa-file-pdf me-1"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Preview Modal -->
+    <div class="modal fade" id="pdfPreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">PDF Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="pdfPreview" style="height: 70vh;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="downloadPdfBtn">
+                        <i class="fas fa-download me-1"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap and jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Patient Portal Authentication -->
+    <script src="/assets/js/patient-auth.js"></script>
+    
+    <!-- PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279/build/pdf.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Global variables
+            let patientData = null;
+            let healthRecordsData = [];
+            let currentFilter = 'all';
+            let currentRecord = null;
+            let demographicsData = null;
+            
+            // Check authentication
+            if (!isLoggedIn()) {
+                document.getElementById('authentication-required').style.display = 'block';
+                document.getElementById('authenticated-content').style.display = 'none';
+                return;
+            } else {
+                document.getElementById('authentication-required').style.display = 'none';
+                document.getElementById('authenticated-content').style.display = 'block';
+                
+                // Load patient data and health records
+                loadPatientData();
+                loadHealthRecords();
+                loadPatientDemographics();
+            }
+            
+            // Load patient data
+            function loadPatientData() {
+                fetch('/api/patient-portal/dashboard', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        patientData = data.data;
+                        document.getElementById('patientName').innerText = `${patientData.patient.firstName} ${patientData.patient.lastName}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading patient data:', error);
+                });
+            }
+
+            // Load patient demographics
+            function loadPatientDemographics() {
+                fetch('/api/patient-portal/health-records/demographics', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        demographicsData = data.data;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading patient demographics:', error);
+                });
+            }
+            
+            // Load health records
+            function loadHealthRecords() {
+                fetch('/api/patient-portal/health-records', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('medicalRecordsLoading').style.display = 'none';
+                    
+                    if (data.success && data.data.length > 0) {
+                        healthRecordsData = data.data;
+                        renderHealthRecords(healthRecordsData);
+                    } else {
+                        document.getElementById('noRecordsMessage').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading health records:', error);
+                    document.getElementById('medicalRecordsLoading').style.display = 'none';
+                    document.getElementById('noRecordsMessage').style.display = 'block';
+                    document.getElementById('noRecordsMessage').innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading medical records. Please try again later.
+                    `;
+                });
+            }
+            
+            // Render health records
+            function renderHealthRecords(records) {
+                const container = document.getElementById('medicalRecordsList');
+                container.innerHTML = '';
+                
+                if (records.length === 0) {
+                    document.getElementById('noRecordsMessage').style.display = 'block';
+                    return;
+                }
+                
+                document.getElementById('noRecordsMessage').style.display = 'none';
+                
+                // Sort by date (newest first)
+                records.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                records.forEach(record => {
+                    // Card class based on record type
+                    const cardClass = `record-card ${record.type}`;
+                    
+                    // Type badge
+                    let typeBadge = '';
+                    switch(record.type) {
+                        case 'visit':
+                            typeBadge = `<span class="badge bg-primary record-type-badge">${record.visitType || 'Visit'}</span>`;
+                            break;
+                        case 'procedure':
+                            typeBadge = '<span class="badge bg-success record-type-badge">Procedure</span>';
+                            break;
+                        case 'report':
+                            typeBadge = `<span class="badge bg-secondary record-type-badge">${record.reportType || 'Report'}</span>`;
+                            break;
+                        case 'discharge':
+                            typeBadge = '<span class="badge bg-danger record-type-badge">Discharge</span>';
+                            break;
+                        default:
+                            typeBadge = `<span class="badge bg-info record-type-badge">${record.type}</span>`;
+                    }
+                    
+                    // Create record card
+                    const card = document.createElement('div');
+                    card.className = `card ${cardClass}`;
+                    card.dataset.id = record.id;
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8 mb-3 mb-md-0">
+                                    <div class="d-flex align-items-start mb-2">
+                                        <h5 class="card-title mb-0 me-2">${record.title}</h5>
+                                        ${typeBadge}
+                                    </div>
+                                    <p class="card-text text-muted mb-1 small">
+                                        <i class="fas fa-calendar-alt me-1"></i> ${formatDate(record.date)}
+                                    </p>
+                                    <p class="card-text mb-1 small">
+                                        <i class="fas fa-user-md me-1"></i> ${record.provider}
+                                    </p>
+                                    <p class="card-text small">
+                                        <i class="fas fa-hospital me-1"></i> ${record.facility}
+                                    </p>
+                                    ${record.diagnosis ? 
+                                        `<p class="card-text mb-0 small"><strong>Diagnosis:</strong> ${record.diagnosis}</p>` : ''}
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    <p class="card-text mb-3 small">${record.summary}</p>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary view-record-btn">
+                                            <i class="fas fa-eye me-1"></i> View
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary download-pdf-btn">
+                                            <i class="fas fa-file-pdf me-1"></i> PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                    
+                    // Add event listeners
+                    card.querySelector('.view-record-btn').addEventListener('click', () => {
+                        openRecordDetail(record.id);
+                    });
+                    
+                    card.querySelector('.download-pdf-btn').addEventListener('click', () => {
+                        downloadRecordPdf(record.id);
+                    });
+                });
+            }
+            
+            // Open record detail modal
+            function openRecordDetail(id) {
+                const modal = new bootstrap.Modal(document.getElementById('recordDetailModal'));
+                modal.show();
+                
+                document.getElementById('recordDetailLoading').style.display = 'block';
+                document.getElementById('recordDetailContent').style.display = 'none';
+                
+                fetch(`/api/patient-portal/health-records/${id}`, {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentRecord = data.data;
+                        
+                        // Set record title in modal header
+                        document.getElementById('recordTitle').textContent = currentRecord.title;
+                        
+                        // Generate content based on record type
+                        let detailsHtml = '';
+                        
+                        // Basic information for all record types
+                        detailsHtml += `
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <h6 class="text-muted">Date</h6>
+                                        <div>${formatDate(currentRecord.date)}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h6 class="text-muted">Provider</h6>
+                                        <div>${currentRecord.provider}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <h6 class="text-muted">Facility</h6>
+                                        <div>${currentRecord.facility}</div>
+                                    </div>
+                                    ${currentRecord.diagnosis ? `
+                                    <div class="mb-3">
+                                        <h6 class="text-muted">Diagnosis</h6>
+                                        <div>${currentRecord.diagnosis}</div>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Type-specific details
+                        if (currentRecord.type === 'visit' && currentRecord.details) {
+                            detailsHtml += `
+                                <h5 class="border-bottom pb-2 mb-3">Visit Details</h5>
+                                ${currentRecord.details.chiefComplaint ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Chief Complaint</h6>
+                                    <div>${currentRecord.details.chiefComplaint}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.vitalSigns ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Vital Signs</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <ul class="list-unstyled">
+                                                <li>Blood Pressure: ${currentRecord.details.vitalSigns.bloodPressure}</li>
+                                                <li>Heart Rate: ${currentRecord.details.vitalSigns.heartRate}</li>
+                                                <li>Respiratory Rate: ${currentRecord.details.vitalSigns.respiratoryRate}</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <ul class="list-unstyled">
+                                                <li>Temperature: ${currentRecord.details.vitalSigns.temperature}</li>
+                                                <li>Oxygen Saturation: ${currentRecord.details.vitalSigns.oxygenSaturation}</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.assessment ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Assessment</h6>
+                                    <div>${currentRecord.details.assessment}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.diagnosis ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Diagnosis</h6>
+                                    <div>${currentRecord.details.diagnosis}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.plan ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Plan</h6>
+                                    <div>${currentRecord.details.plan}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.medications && currentRecord.details.medications.length > 0 ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Medications</h6>
+                                    <ul>
+                                        ${currentRecord.details.medications.map(med => `<li>${med}</li>`).join('')}
+                                    </ul>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.followUp ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Follow-up</h6>
+                                    <div>${currentRecord.details.followUp}</div>
+                                </div>` : ''}
+                            `;
+                        } else if (currentRecord.type === 'procedure' && currentRecord.details) {
+                            detailsHtml += `
+                                <h5 class="border-bottom pb-2 mb-3">Procedure Details</h5>
+                                ${currentRecord.details.procedureName ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Procedure</h6>
+                                    <div>${currentRecord.details.procedureName}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.indication ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Indication</h6>
+                                    <div>${currentRecord.details.indication}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.preOpDiagnosis ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Pre-operative Diagnosis</h6>
+                                    <div>${currentRecord.details.preOpDiagnosis}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.postOpDiagnosis ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Post-operative Diagnosis</h6>
+                                    <div>${currentRecord.details.postOpDiagnosis}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.anesthesia ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Anesthesia</h6>
+                                    <div>${currentRecord.details.anesthesia}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.findings ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Findings</h6>
+                                    <div>${currentRecord.details.findings}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.complications ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Complications</h6>
+                                    <div>${currentRecord.details.complications}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.devices ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Devices Used</h6>
+                                    <div>
+                                        <p class="mb-1"><strong>Type:</strong> ${currentRecord.details.devices.type}</p>
+                                        <p class="mb-1"><strong>Manufacturer:</strong> ${currentRecord.details.devices.manufacturer}</p>
+                                        <p class="mb-1"><strong>Model:</strong> ${currentRecord.details.devices.model}</p>
+                                        <p class="mb-1"><strong>Size:</strong> ${currentRecord.details.devices.size}</p>
+                                        <p class="mb-0"><strong>Location:</strong> ${currentRecord.details.devices.location}</p>
+                                    </div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.surgeon ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Surgeon</h6>
+                                    <div>
+                                        <p class="mb-1"><strong>Name:</strong> ${currentRecord.details.surgeon.name}</p>
+                                        <p class="mb-0"><strong>Specialty:</strong> ${currentRecord.details.surgeon.specialty}</p>
+                                    </div>
+                                </div>` : ''}
+                            `;
+                        } else if (currentRecord.type === 'discharge' && currentRecord.details) {
+                            detailsHtml += `
+                                <h5 class="border-bottom pb-2 mb-3">Discharge Summary</h5>
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <h6 class="text-muted">Admission Date</h6>
+                                            <div>${formatDate(currentRecord.details.admissionDate)}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <h6 class="text-muted">Discharge Date</h6>
+                                            <div>${formatDate(currentRecord.details.dischargeDate)}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <h6 class="text-muted">Admission Diagnosis</h6>
+                                            <div>${currentRecord.details.admissionDiagnosis}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <h6 class="text-muted">Discharge Diagnosis</h6>
+                                            <div>${currentRecord.details.dischargeDiagnosis}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                ${currentRecord.details.procedures && currentRecord.details.procedures.length > 0 ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Procedures Performed</h6>
+                                    <ul>
+                                        ${currentRecord.details.procedures.map(proc => `<li>${proc}</li>`).join('')}
+                                    </ul>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.hospitalCourse ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Hospital Course</h6>
+                                    <div>${currentRecord.details.hospitalCourse}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.dischargeMedications && currentRecord.details.dischargeMedications.length > 0 ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Discharge Medications</h6>
+                                    <ul>
+                                        ${currentRecord.details.dischargeMedications.map(med => `<li>${med}</li>`).join('')}
+                                    </ul>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.dischargeInstructions && currentRecord.details.dischargeInstructions.length > 0 ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Discharge Instructions</h6>
+                                    <ul>
+                                        ${currentRecord.details.dischargeInstructions.map(inst => `<li>${inst}</li>`).join('')}
+                                    </ul>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.dischargeCondition ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Condition at Discharge</h6>
+                                    <div>${currentRecord.details.dischargeCondition}</div>
+                                </div>` : ''}
+                                
+                                ${currentRecord.details.attendingPhysician ? `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Attending Physician</h6>
+                                    <div>${currentRecord.details.attendingPhysician}</div>
+                                </div>` : ''}
+                            `;
+                        } else {
+                            // For report types or types without specific detail formatting
+                            detailsHtml += `
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Summary</h6>
+                                    <div>${currentRecord.summary}</div>
+                                </div>
+                            `;
+                        }
+                        
+                        // Add footer with document info
+                        detailsHtml += `
+                            <div class="alert alert-secondary mt-4 mb-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <p class="mb-0 small">
+                                            <strong>Document Type:</strong> ${currentRecord.documentType}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0 small">
+                                            <strong>Record ID:</strong> ${currentRecord.id}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Set content and show
+                        document.getElementById('recordDetailContent').innerHTML = detailsHtml;
+                        document.getElementById('recordDetailLoading').style.display = 'none';
+                        document.getElementById('recordDetailContent').style.display = 'block';
+                        
+                        // Set download button action
+                        document.getElementById('downloadRecordBtn').onclick = function() {
+                            downloadRecordPdf(currentRecord.id);
+                        };
+                    } else {
+                        // Show error
+                        document.getElementById('recordDetailContent').innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Error loading record details: ${data.message}
+                            </div>
+                        `;
+                        document.getElementById('recordDetailLoading').style.display = 'none';
+                        document.getElementById('recordDetailContent').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading record details:', error);
+                    
+                    document.getElementById('recordDetailContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Error loading record details. Please try again.
+                        </div>
+                    `;
+                    document.getElementById('recordDetailLoading').style.display = 'none';
+                    document.getElementById('recordDetailContent').style.display = 'block';
+                });
+            }
+            
+            // Download record as PDF
+            function downloadRecordPdf(id) {
+                // Get record data if not current
+                if (!currentRecord || currentRecord.id !== id) {
+                    fetch(`/api/patient-portal/health-records/${id}`, {
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            currentRecord = data.data;
+                            generateAndDownloadPdf(currentRecord);
+                        } else {
+                            alert('Error loading record: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading record for PDF:', error);
+                        alert('Error loading record. Please try again.');
+                    });
+                } else {
+                    generateAndDownloadPdf(currentRecord);
+                }
+            }
+
+            // Generate and download PDF for a specific record
+            function generateAndDownloadPdf(record) {
+                // Initialize jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add header with logo
+                doc.setFontSize(22);
+                doc.setTextColor(41, 128, 185); // Blue color
+                doc.text("SecureHealth Medical Center", 20, 20);
+                
+                doc.setFontSize(16);
+                doc.setTextColor(40, 40, 40);
+                doc.text("Medical Record", 20, 30);
+                
+                // Add patient info
+                doc.setFontSize(12);
+                doc.text(`Patient: ${demographicsData ? demographicsData.firstName + ' ' + demographicsData.lastName : 'John Doe'}`, 20, 40);
+                doc.text(`Date of Birth: ${demographicsData ? formatDate(demographicsData.dateOfBirth) : '01/01/1980'}`, 20, 46);
+                doc.text(`Medical Record Number: ${demographicsData ? demographicsData.id : '123456789'}`, 20, 52);
+
+                // Add record info
+                doc.setFontSize(14);
+                doc.setTextColor(41, 128, 185);
+                doc.text(record.title, 20, 62);
+                
+                doc.setFontSize(11);
+                doc.setTextColor(40, 40, 40);
+                doc.text(`Date: ${formatDate(record.date)}`, 20, 70);
+                doc.text(`Provider: ${record.provider}`, 120, 70);
+                doc.text(`Facility: ${record.facility}`, 20, 76);
+                doc.text(`Document Type: ${record.documentType}`, 120, 76);
+                
+                if (record.diagnosis) {
+                    doc.text(`Diagnosis: ${record.diagnosis}`, 20, 82);
+                }
+                
+                // Add record content
+                let yPos = 94;
+                
+                // Add summary
+                doc.setFontSize(11);
+                doc.text("Summary:", 20, yPos);
+                
+                // Split summary text to fit width
+                const splitSummary = doc.splitTextToSize(record.summary, 170);
+                doc.text(splitSummary, 20, yPos + 6);
+                
+                yPos += (splitSummary.length * 6) + 10;
+                
+                // Add specific details based on record type
+                if (record.type === 'visit' && record.details) {
+                    doc.setFontSize(13);
+                    doc.text("Visit Details", 20, yPos);
+                    yPos += 6;
+                    
+                    if (record.details.chiefComplaint) {
+                        doc.setFontSize(11);
+                        doc.text("Chief Complaint:", 20, yPos);
+                        const splitComplaint = doc.splitTextToSize(record.details.chiefComplaint, 170);
+                        doc.text(splitComplaint, 20, yPos + 6);
+                        yPos += (splitComplaint.length * 6) + 10;
+                    }
+                    
+                    if (record.details.assessment) {
+                        doc.setFontSize(11);
+                        doc.text("Assessment:", 20, yPos);
+                        const splitAssessment = doc.splitTextToSize(record.details.assessment, 170);
+                        doc.text(splitAssessment, 20, yPos + 6);
+                        yPos += (splitAssessment.length * 6) + 10;
+                    }
+                    
+                    if (record.details.plan) {
+                        doc.setFontSize(11);
+                        doc.text("Plan:", 20, yPos);
+                        const splitPlan = doc.splitTextToSize(record.details.plan, 170);
+                        doc.text(splitPlan, 20, yPos + 6);
+                        yPos += (splitPlan.length * 6) + 10;
+                    }
+                    
+                    if (record.details.medications && record.details.medications.length > 0) {
+                        doc.setFontSize(11);
+                        doc.text("Medications:", 20, yPos);
+                        yPos += 6;
+                        
+                        record.details.medications.forEach(med => {
+                            doc.text(`• ${med}`, 25, yPos);
+                            yPos += 6;
+                        });
+                        
+                        yPos += 4;
+                    }
+                } else if (record.type === 'procedure' && record.details) {
+                    doc.setFontSize(13);
+                    doc.text("Procedure Details", 20, yPos);
+                    yPos += 6;
+                    
+                    if (record.details.procedureName) {
+                        doc.setFontSize(11);
+                        doc.text("Procedure:", 20, yPos);
+                        doc.text(record.details.procedureName, 70, yPos);
+                        yPos += 6;
+                    }
+                    
+                    if (record.details.indication) {
+                        doc.setFontSize(11);
+                        doc.text("Indication:", 20, yPos);
+                        doc.text(record.details.indication, 70, yPos);
+                        yPos += 6;
+                    }
+                    
+                    if (record.details.findings) {
+                        doc.setFontSize(11);
+                        doc.text("Findings:", 20, yPos);
+                        const splitFindings = doc.splitTextToSize(record.details.findings, 120);
+                        doc.text(splitFindings, 70, yPos);
+                        yPos += (splitFindings.length * 6) + 4;
+                    }
+                    
+                    if (record.details.complications) {
+                        doc.setFontSize(11);
+                        doc.text("Complications:", 20, yPos);
+                        doc.text(record.details.complications, 70, yPos);
+                        yPos += 6;
+                    }
+                    
+                    if (record.details.devices) {
+                        doc.setFontSize(11);
+                        doc.text("Devices Used:", 20, yPos);
+                        yPos += 6;
+                        
+                        doc.text(`Type: ${record.details.devices.type}`, 25, yPos);
+                        yPos += 6;
+                        doc.text(`Manufacturer: ${record.details.devices.manufacturer}`, 25, yPos);
+                        yPos += 6;
+                        doc.text(`Model: ${record.details.devices.model}`, 25, yPos);
+                        yPos += 6;
+                        doc.text(`Size: ${record.details.devices.size}`, 25, yPos);
+                        yPos += 6;
+                        doc.text(`Location: ${record.details.devices.location}`, 25, yPos);
+                        yPos += 10;
+                    }
+                } else if (record.type === 'discharge' && record.details) {
+                    doc.setFontSize(13);
+                    doc.text("Discharge Summary", 20, yPos);
+                    yPos += 6;
+                    
+                    doc.setFontSize(11);
+                    doc.text("Admission Date:", 20, yPos);
+                    doc.text(formatDate(record.details.admissionDate), 80, yPos);
+                    doc.text("Discharge Date:", 120, yPos);
+                    doc.text(formatDate(record.details.dischargeDate), 170, yPos);
+                    yPos += 8;
+                    
+                    doc.text("Admission Diagnosis:", 20, yPos);
+                    const splitAdmDx = doc.splitTextToSize(record.details.admissionDiagnosis, 170);
+                    doc.text(splitAdmDx, 20, yPos + 6);
+                    yPos += (splitAdmDx.length * 6) + 10;
+                    
+                    doc.text("Discharge Diagnosis:", 20, yPos);
+                    const splitDcDx = doc.splitTextToSize(record.details.dischargeDiagnosis, 170);
+                    doc.text(splitDcDx, 20, yPos + 6);
+                    yPos += (splitDcDx.length * 6) + 10;
+                    
+                    if (record.details.hospitalCourse) {
+                        doc.text("Hospital Course:", 20, yPos);
+                        const splitCourse = doc.splitTextToSize(record.details.hospitalCourse, 170);
+                        doc.text(splitCourse, 20, yPos + 6);
+                        yPos += (splitCourse.length * 6) + 10;
+                    }
+                    
+                    if (record.details.dischargeMedications && record.details.dischargeMedications.length > 0) {
+                        doc.text("Discharge Medications:", 20, yPos);
+                        yPos += 6;
+                        
+                        record.details.dischargeMedications.forEach(med => {
+                            doc.text(`• ${med}`, 25, yPos);
+                            yPos += 6;
+                        });
+                        
+                        yPos += 4;
+                    }
+                }
+                
+                // Add footer
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('SecureHealth Medical Center - CONFIDENTIAL', 20, doc.internal.pageSize.height - 10);
+                    doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 40, doc.internal.pageSize.height - 10);
+                }
+                
+                // Save the PDF
+                const fileName = `Medical_Record_${record.id}_${formatDateForFilename(record.date)}.pdf`;
+                
+                // Open preview modal
+                const pdfPreviewModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal'));
+                pdfPreviewModal.show();
+                
+                // Create data URL
+                const pdfDataUri = doc.output('datauristring');
+                
+                // Display PDF in preview
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279/build/pdf.worker.min.js';
+                
+                // Clear previous preview
+                document.getElementById('pdfPreview').innerHTML = '';
+                
+                // Create canvas for PDF preview
+                const canvas = document.createElement('canvas');
+                canvas.className = 'w-100 h-100';
+                document.getElementById('pdfPreview').appendChild(canvas);
+                
+                // Load and render PDF
+                const loadingTask = pdfjsLib.getDocument(pdfDataUri);
+                loadingTask.promise.then(pdf => {
+                    pdf.getPage(1).then(page => {
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        
+                        const renderContext = {
+                            canvasContext: canvas.getContext('2d'),
+                            viewport: viewport
+                        };
+                        
+                        page.render(renderContext);
+                    });
+                });
+                
+                // Set download button action
+                document.getElementById('downloadPdfBtn').onclick = function() {
+                    doc.save(fileName);
+                };
+            }
+            
+            // Generate and download complete health record
+            document.getElementById('downloadCompleteRecordBtn').addEventListener('click', function() {
+                // Check if demographics data is loaded
+                if (!demographicsData) {
+                    alert('Patient data is still loading. Please try again in a moment.');
+                    return;
+                }
+                
+                // Initialize jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Cover page
+                doc.setFontSize(22);
+                doc.setTextColor(41, 128, 185);
+                doc.text("SecureHealth Medical Center", 20, 20);
+                
+                doc.setFontSize(18);
+                doc.setTextColor(40, 40, 40);
+                doc.text("Complete Health Record", 20, 40);
+                
+                doc.setFontSize(14);
+                doc.text("Confidential Medical Information", 20, 50);
+                
+                // Add patient info
+                doc.setFontSize(12);
+                doc.text(`Patient: ${demographicsData.firstName} ${demographicsData.lastName}`, 20, 70);
+                doc.text(`Date of Birth: ${formatDate(demographicsData.dateOfBirth)}`, 20, 78);
+                doc.text(`Medical Record Number: ${demographicsData.id}`, 20, 86);
+                
+                doc.setFontSize(11);
+                doc.text(`Generated on: ${formatDate(new Date().toISOString())}`, 20, 100);
+                
+                // Patient demographics page
+                doc.addPage();
+                doc.setFontSize(16);
+                doc.setTextColor(41, 128, 185);
+                doc.text("Patient Demographics", 20, 20);
+                
+                doc.setFontSize(12);
+                doc.setTextColor(40, 40, 40);
+                
+                let yPos = 35;
+                doc.text(`Name: ${demographicsData.firstName} ${demographicsData.lastName}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Date of Birth: ${formatDate(demographicsData.dateOfBirth)}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Age: ${demographicsData.age}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Gender: ${demographicsData.gender}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Address: ${demographicsData.address}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Phone: ${demographicsData.phoneNumber}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Email: ${demographicsData.email}`, 20, yPos);
+                yPos += 16;
+                
+                doc.setFontSize(14);
+                doc.text("Emergency Contact", 20, yPos);
+                yPos += 8;
+                doc.setFontSize(12);
+                doc.text(`Name: ${demographicsData.emergencyContact.name}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Relationship: ${demographicsData.emergencyContact.relationship}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Phone: ${demographicsData.emergencyContact.phoneNumber}`, 20, yPos);
+                yPos += 16;
+                
+                doc.setFontSize(14);
+                doc.text("Insurance Information", 20, yPos);
+                yPos += 8;
+                doc.setFontSize(12);
+                doc.text(`Provider: ${demographicsData.insuranceProvider}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Policy Number: ${demographicsData.insurancePolicyNumber}`, 20, yPos);
+                yPos += 16;
+                
+                doc.setFontSize(14);
+                doc.text("Medical Information", 20, yPos);
+                yPos += 8;
+                doc.setFontSize(12);
+                doc.text(`Primary Care Provider: ${demographicsData.primaryCareProvider}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Blood Type: ${demographicsData.bloodType}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Height: ${demographicsData.height}`, 20, yPos);
+                yPos += 8;
+                doc.text(`Weight: ${demographicsData.weight}`, 20, yPos);
+                yPos += 8;
+                doc.text(`BMI: ${demographicsData.bmi}`, 20, yPos);
+                yPos += 16;
+                
+                // Allergies
+                doc.setFontSize(14);
+                doc.text("Allergies", 20, yPos);
+                yPos += 8;
+                doc.setFontSize(12);
+                
+                if (demographicsData.allergies && demographicsData.allergies.length > 0) {
+                    demographicsData.allergies.forEach(allergy => {
+                        doc.text(`• ${allergy}`, 25, yPos);
+                        yPos += 8;
+                    });
+                } else {
+                    doc.text("No known allergies", 25, yPos);
+                    yPos += 8;
+                }
+                
+                // Medical conditions
+                yPos += 8;
+                doc.setFontSize(14);
+                doc.text("Medical Conditions", 20, yPos);
+                yPos += 8;
+                doc.setFontSize(12);
+                
+                if (demographicsData.medicalConditions && demographicsData.medicalConditions.length > 0) {
+                    demographicsData.medicalConditions.forEach(condition => {
+                        doc.text(`• ${condition}`, 25, yPos);
+                        yPos += 8;
+                    });
+                } else {
+                    doc.text("No known medical conditions", 25, yPos);
+                    yPos += 8;
+                }
+                
+                // Table of contents for records
+                doc.addPage();
+                doc.setFontSize(16);
+                doc.setTextColor(41, 128, 185);
+                doc.text("Medical Records", 20, 20);
+                
+                doc.setFontSize(12);
+                doc.setTextColor(40, 40, 40);
+                doc.text("The following records are included in this document:", 20, 30);
+                
+                // Sort records by date (newest first)
+                const sortedRecords = [...healthRecordsData].sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                // Create table
+                const tableData = [
+                    ['Date', 'Record Type', 'Provider', 'Description']
+                ];
+                
+                sortedRecords.forEach(record => {
+                    tableData.push([
+                        formatDate(record.date),
+                        record.type.charAt(0).toUpperCase() + record.type.slice(1),
+                        record.provider,
+                        record.title
+                    ]);
+                });
+                
+                doc.autoTable({
+                    startY: 40,
+                    head: [tableData[0]],
+                    body: tableData.slice(1),
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [41, 128, 185],
+                        textColor: 255
+                    },
+                    styles: {
+                        overflow: 'linebreak',
+                        cellWidth: 'wrap'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 30 },
+                        1: { cellWidth: 30 },
+                        2: { cellWidth: 40 },
+                        3: { cellWidth: 'auto' }
+                    }
+                });
+                
+                // Add individual record pages
+                sortedRecords.forEach(record => {
+                    doc.addPage();
+                    doc.setFontSize(16);
+                    doc.setTextColor(41, 128, 185);
+                    doc.text(record.title, 20, 20);
+                    
+                    doc.setFontSize(12);
+                    doc.setTextColor(40, 40, 40);
+                    doc.text(`Date: ${formatDate(record.date)}`, 20, 30);
+                    doc.text(`Type: ${record.type.charAt(0).toUpperCase() + record.type.slice(1)}`, 120, 30);
+                    doc.text(`Provider: ${record.provider}`, 20, 38);
+                    doc.text(`Facility: ${record.facility}`, 120, 38);
+                    
+                    if (record.diagnosis) {
+                        doc.text(`Diagnosis: ${record.diagnosis}`, 20, 46);
+                    }
+                    
+                    // Summary
+                    doc.setFontSize(14);
+                    doc.text("Summary", 20, 58);
+                    
+                    doc.setFontSize(12);
+                    const splitSummary = doc.splitTextToSize(record.summary, 170);
+                    doc.text(splitSummary, 20, 66);
+                });
+                
+                // Add footer to all pages
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('SecureHealth Medical Center - CONFIDENTIAL', 20, doc.internal.pageSize.height - 10);
+                    doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 40, doc.internal.pageSize.height - 10);
+                }
+                
+                // Save the PDF
+                const fileName = `Complete_Health_Record_${demographicsData.lastName}_${formatDateForFilename(new Date().toISOString())}.pdf`;
+                
+                // Open preview modal
+                const pdfPreviewModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal'));
+                pdfPreviewModal.show();
+                
+                // Create data URL
+                const pdfDataUri = doc.output('datauristring');
+                
+                // Display PDF in preview
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279/build/pdf.worker.min.js';
+                
+                // Clear previous preview
+                document.getElementById('pdfPreview').innerHTML = '';
+                
+                // Create canvas for PDF preview
+                const canvas = document.createElement('canvas');
+                canvas.className = 'w-100 h-100';
+                document.getElementById('pdfPreview').appendChild(canvas);
+                
+                // Load and render PDF
+                const loadingTask = pdfjsLib.getDocument(pdfDataUri);
+                loadingTask.promise.then(pdf => {
+                    pdf.getPage(1).then(page => {
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        
+                        const renderContext = {
+                            canvasContext: canvas.getContext('2d'),
+                            viewport: viewport
+                        };
+                        
+                        page.render(renderContext);
+                    });
+                });
+                
+                // Set download button action
+                document.getElementById('downloadPdfBtn').onclick = function() {
+                    doc.save(fileName);
+                };
+            });
+            
+            // Filter records
+            document.querySelectorAll('#filterDropdown + .dropdown-menu .dropdown-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active class
+                    document.querySelectorAll('#filterDropdown + .dropdown-menu .dropdown-item').forEach(el => {
+                        el.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Get filter value
+                    const filter = this.getAttribute('data-filter');
+                    currentFilter = filter;
+                    
+                    // Apply filter
+                    applyFilters();
+                    
+                    // Update dropdown button text
+                    const filterText = this.textContent;
+                    document.getElementById('filterDropdown').innerHTML = `<i class="fas fa-filter me-1"></i> ${filterText}`;
+                });
+            });
+            
+            // Search functionality
+            document.getElementById('searchButton').addEventListener('click', function() {
+                applyFilters();
+            });
+            
+            document.getElementById('recordSearch').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+            
+            // Apply filters and search
+            function applyFilters() {
+                const searchQuery = document.getElementById('recordSearch').value.toLowerCase();
+                
+                let filtered = [...healthRecordsData];
+                
+                // Apply current filter
+                if (currentFilter !== 'all') {
+                    filtered = filtered.filter(record => record.type === currentFilter);
+                }
+                
+                // Apply search query
+                if (searchQuery) {
+                    filtered = filtered.filter(record => {
+                        return record.title.toLowerCase().includes(searchQuery) ||
+                               record.provider.toLowerCase().includes(searchQuery) ||
+                               record.facility.toLowerCase().includes(searchQuery) ||
+                               record.summary.toLowerCase().includes(searchQuery) ||
+                               (record.diagnosis && record.diagnosis.toLowerCase().includes(searchQuery));
+                    });
+                }
+                
+                // Render filtered records
+                renderHealthRecords(filtered);
+            }
+            
+            // Utility function to format dates
+            function formatDate(dateString) {
+                if (!dateString) return 'N/A';
+                
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+            
+            // Utility function to format dates for filenames
+            function formatDateForFilename(dateString) {
+                if (!dateString) return 'unknown';
+                
+                const date = new Date(dateString);
+                return date.toISOString().split('T')[0];
+            }
+            
+            // Logout handler
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                logout();
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
+</body>
+</html>

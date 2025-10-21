@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Results - Patient Portal - SecureHealth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/patient-portal.css">
+    <style>
+        .test-result-card {
+            transition: transform 0.2s;
+            border-left: 4px solid #4a90e2;
+        }
+        .test-result-card.flagged {
+            border-left: 4px solid #dc3545;
+        }
+        .test-result-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .test-status {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+        }
+        .test-date {
+            color: #6c757d;
+        }
+        .back-btn {
+            display: none;
+        }
+        .result-normal {
+            color: #28a745;
+        }
+        .result-borderline {
+            color: #ffc107;
+        }
+        .result-high, .result-low {
+            color: #dc3545;
+            font-weight: 500;
+        }
+        .test-info {
+            background: rgba(0,0,0,0.03);
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .pdf-download-btn {
+            white-space: nowrap;
+        }
+        .result-details-table th {
+            width: 25%;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4a90e2;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="dashboard.html">
+                <img src="/images/secure-health-logo-square.png" alt="SecureHealth Logo" height="30">
+                Patient Portal
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="appointments.html">
+                            <i class="fas fa-calendar-alt me-1"></i> Appointments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="medical-records.html">
+                            <i class="fas fa-file-medical me-1"></i> Medical Records
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="test-results.html">
+                            <i class="fas fa-vial me-1"></i> Test Results
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="messages.html">
+                            <i class="fas fa-envelope me-1"></i> Messages
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="prescriptions.html">
+                            <i class="fas fa-prescription me-1"></i> Prescriptions
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> <span id="patientName">Loading...</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="profile.html">Profile</a></li>
+                            <li><a class="dropdown-item" href="settings.html">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div id="authentication-required" style="display:none;">
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">Authentication Required</h4>
+                <p>You need to login to access the Patient Portal.</p>
+                <hr>
+                <a href="login.html" class="btn btn-danger">Login</a>
+            </div>
+        </div>
+
+        <div id="authenticated-content" style="display:none;">
+            <!-- Test Results List View -->
+            <div id="results-list-view">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h2><i class="fas fa-vial me-2"></i>Test Results</h2>
+                        <p class="text-muted">View your laboratory and diagnostic test results</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-filter me-1"></i> Filter
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                        <li><a class="dropdown-item active" href="#" data-filter="all">All Results</a></li>
+                                        <li><a class="dropdown-item" href="#" data-filter="flagged">Flagged Results</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" data-filter="recent">Recent (Last 3 Months)</a></li>
+                                        <li><a class="dropdown-item" href="#" data-filter="older">Older Results</a></li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div class="input-group">
+                                        <input type="text" id="searchInput" class="form-control" placeholder="Search results...">
+                                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="testResultsLoading" class="text-center">
+                                <div class="loader"></div>
+                                <p class="mt-3 text-muted">Loading your test results...</p>
+                            </div>
+
+                            <div id="testResultsList">
+                                <!-- Test results will be dynamically inserted here -->
+                            </div>
+
+                            <div id="noTestResults" class="alert alert-info" style="display:none;">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No test results found. Your laboratory and diagnostic test results will appear here when they become available.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Result Detail View -->
+            <div id="result-detail-view" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <button class="btn btn-outline-secondary back-btn" id="backToResultsList">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Results
+                    </button>
+                    <button class="btn btn-outline-primary pdf-download-btn" id="downloadPdfBtn">
+                        <i class="fas fa-file-pdf me-1"></i> Download PDF
+                    </button>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 id="testTypeHeading" class="h5 mb-0"></h3>
+                            <span id="testStatusBadge" class="badge rounded-pill"></span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="test-info mb-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <p class="mb-1"><strong>Date:</strong> <span id="testDate"></span></p>
+                                    <p class="mb-1"><strong>Ordering Provider:</strong> <span id="testProvider"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Patient:</strong> <span id="testPatientName"></span></p>
+                                    <p class="mb-0"><strong>Summary:</strong> <span id="testSummary"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="h5 mb-3">Results</h4>
+                        <div class="table-responsive">
+                            <table class="table table-hover result-details-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Test</th>
+                                        <th>Result</th>
+                                        <th>Reference Range</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="testDetailsBody">
+                                    <!-- Test details will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="testNotes" class="alert alert-info mt-4" style="display:none;">
+                            <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Notes</h6>
+                            <p class="mb-0" id="testNotesContent"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-secondary">
+                    <h6 class="alert-heading">About Your Results</h6>
+                    <p class="small mb-0">
+                        These test results are provided for your information and should be reviewed with your healthcare provider. 
+                        Results outside the reference range may require follow-up but do not necessarily indicate a problem. 
+                        Please contact your healthcare provider if you have any questions about these results.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap and jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Patient Portal Authentication -->
+    <script src="/assets/js/patient-auth.js"></script>
+    
+    <!-- PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Global variables
+            let patientData = null;
+            let testResultsData = [];
+            let currentTestResult = null;
+            let currentFilter = 'all';
+            
+            // Check authentication
+            if (!isLoggedIn()) {
+                document.getElementById('authentication-required').style.display = 'block';
+                document.getElementById('authenticated-content').style.display = 'none';
+                return;
+            } else {
+                document.getElementById('authentication-required').style.display = 'none';
+                document.getElementById('authenticated-content').style.display = 'block';
+                
+                // Load patient data and test results
+                loadPatientData();
+                loadTestResults();
+            }
+            
+            // Load patient dashboard data
+            function loadPatientData() {
+                fetch('/api/patient-portal/dashboard', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        patientData = data.data;
+                        document.getElementById('patientName').innerText = `${patientData.patient.firstName} ${patientData.patient.lastName}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading patient data:', error);
+                });
+            }
+            
+            // Load test results
+            function loadTestResults() {
+                fetch('/api/patient-portal/test-results', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('testResultsLoading').style.display = 'none';
+                    
+                    if (data.success && data.data.length > 0) {
+                        testResultsData = data.data;
+                        renderTestResults(testResultsData);
+                    } else {
+                        document.getElementById('noTestResults').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading test results:', error);
+                    document.getElementById('testResultsLoading').style.display = 'none';
+                    document.getElementById('noTestResults').style.display = 'block';
+                    document.getElementById('noTestResults').innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading test results. Please try again later.
+                    `;
+                });
+            }
+            
+            // Render test results list
+            function renderTestResults(results) {
+                const container = document.getElementById('testResultsList');
+                container.innerHTML = '';
+                
+                if (results.length === 0) {
+                    document.getElementById('noTestResults').style.display = 'block';
+                    return;
+                }
+                
+                document.getElementById('noTestResults').style.display = 'none';
+                
+                results.forEach(result => {
+                    const date = new Date(result.date);
+                    const formattedDate = date.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric'
+                    });
+                    
+                    const card = document.createElement('div');
+                    card.className = `card test-result-card mb-3 ${result.flagged ? 'flagged' : ''}`;
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <h5 class="card-title">${result.type}</h5>
+                                    <p class="card-text test-date mb-1">
+                                        <i class="far fa-calendar-alt me-1"></i> ${formattedDate}
+                                    </p>
+                                    <p class="card-text mb-1">
+                                        <i class="fas fa-user-md me-1"></i> ${result.orderingProvider}
+                                    </p>
+                                    <p class="card-text mb-0">
+                                        <span class="text-muted">Summary:</span> ${result.summary}
+                                    </p>
+                                </div>
+                                <div class="col-md-3 text-end d-flex flex-column justify-content-between align-items-end">
+                                    <span class="badge rounded-pill bg-${result.status === 'final' ? 'success' : 'warning'} mb-3 test-status">
+                                        ${result.status === 'final' ? 'Final' : 'Pending'}
+                                    </span>
+                                    ${result.flagged ? 
+                                        '<span class="badge rounded-pill bg-danger mb-3"><i class="fas fa-flag me-1"></i> Flagged</span>' : ''}
+                                    <button class="btn btn-sm btn-outline-primary view-result-btn" data-id="${result.id}">
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                    
+                    // Add click event to view details button
+                    card.querySelector('.view-result-btn').addEventListener('click', () => {
+                        viewTestResult(result.id);
+                    });
+                });
+            }
+            
+            // View test result detail
+            function viewTestResult(id) {
+                // Show loading
+                document.getElementById('results-list-view').style.display = 'none';
+                document.getElementById('result-detail-view').style.display = 'block';
+                document.getElementById('backToResultsList').style.display = 'block';
+                
+                // Load test result detail
+                fetch(`/api/patient-portal/test-results/${id}`, {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentTestResult = data.data;
+                        renderTestResultDetail(data.data);
+                    } else {
+                        alert('Error loading test result: ' + data.message);
+                        goBackToResultsList();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading test result detail:', error);
+                    alert('Error loading test result details. Please try again.');
+                    goBackToResultsList();
+                });
+            }
+            
+            // Render test result detail
+            function renderTestResultDetail(result) {
+                // Set basic test info
+                document.getElementById('testTypeHeading').textContent = result.type;
+                document.getElementById('testStatusBadge').textContent = result.status === 'final' ? 'Final' : 'Pending';
+                document.getElementById('testStatusBadge').className = 
+                    result.status === 'final' ? 'badge rounded-pill bg-success' : 'badge rounded-pill bg-warning';
+                
+                const date = new Date(result.date);
+                document.getElementById('testDate').textContent = date.toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric'
+                });
+                
+                document.getElementById('testProvider').textContent = result.orderingProvider;
+                document.getElementById('testSummary').textContent = result.summary;
+                document.getElementById('testPatientName').textContent = `${patientData.patient.firstName} ${patientData.patient.lastName}`;
+                
+                // Render test details
+                const detailsBody = document.getElementById('testDetailsBody');
+                detailsBody.innerHTML = '';
+                
+                if (result.details && result.details.length > 0) {
+                    result.details.forEach(detail => {
+                        const row = document.createElement('tr');
+                        
+                        // Set row class based on status
+                        if (detail.status === 'high' || detail.status === 'low') {
+                            row.className = 'table-danger';
+                        } else if (detail.status === 'borderline') {
+                            row.className = 'table-warning';
+                        }
+                        
+                        // Format value with unit if present
+                        const valueDisplay = detail.unit ? `${detail.value} ${detail.unit}` : detail.value;
+                        
+                        // Set status class for styling
+                        let statusClass = '';
+                        let statusText = detail.status || 'normal';
+                        statusText = statusText.charAt(0).toUpperCase() + statusText.slice(1);
+                        
+                        if (detail.status === 'normal') {
+                            statusClass = 'result-normal';
+                        } else if (detail.status === 'borderline') {
+                            statusClass = 'result-borderline';
+                        } else if (detail.status === 'high') {
+                            statusClass = 'result-high';
+                            statusText = 'High';
+                        } else if (detail.status === 'low') {
+                            statusClass = 'result-low';
+                            statusText = 'Low';
+                        }
+                        
+                        row.innerHTML = `
+                            <td>${detail.name}</td>
+                            <td>${valueDisplay}</td>
+                            <td>${detail.referenceRange || 'N/A'}</td>
+                            <td class="${statusClass}">${statusText}</td>
+                        `;
+                        
+                        detailsBody.appendChild(row);
+                    });
+                    
+                    // Check if any test has notes
+                    const notesArray = result.details.filter(detail => detail.note);
+                    if (notesArray.length > 0) {
+                        let notesHtml = '';
+                        notesArray.forEach(detail => {
+                            if (detail.note) {
+                                notesHtml += `<p><strong>${detail.name}:</strong> ${detail.note}</p>`;
+                            }
+                        });
+                        
+                        document.getElementById('testNotesContent').innerHTML = notesHtml;
+                        document.getElementById('testNotes').style.display = 'block';
+                    } else {
+                        document.getElementById('testNotes').style.display = 'none';
+                    }
+                    
+                } else {
+                    // No details available
+                    detailsBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Detailed results not available for this test.
+                            </td>
+                        </tr>
+                    `;
+                    document.getElementById('testNotes').style.display = 'none';
+                }
+            }
+            
+            // Go back to results list
+            function goBackToResultsList() {
+                document.getElementById('result-detail-view').style.display = 'none';
+                document.getElementById('results-list-view').style.display = 'block';
+                currentTestResult = null;
+            }
+            
+            // Add event listener to back button
+            document.getElementById('backToResultsList').addEventListener('click', goBackToResultsList);
+            
+            // Filter test results
+            document.querySelectorAll('#filterDropdown + .dropdown-menu .dropdown-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active class
+                    document.querySelectorAll('#filterDropdown + .dropdown-menu .dropdown-item').forEach(el => {
+                        el.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Get filter value
+                    const filter = this.getAttribute('data-filter');
+                    currentFilter = filter;
+                    
+                    // Apply filter
+                    applyFilters();
+                    
+                    // Update dropdown button text
+                    const filterText = this.textContent;
+                    document.getElementById('filterDropdown').innerHTML = `<i class="fas fa-filter me-1"></i> ${filterText}`;
+                });
+            });
+            
+            // Search functionality
+            document.getElementById('searchButton').addEventListener('click', function() {
+                applyFilters();
+            });
+            
+            document.getElementById('searchInput').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+            
+            // Apply filters and search
+            function applyFilters() {
+                const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+                
+                let filtered = [...testResultsData];
+                
+                // Apply current filter
+                if (currentFilter === 'flagged') {
+                    filtered = filtered.filter(result => result.flagged);
+                } else if (currentFilter === 'recent') {
+                    const threeMonthsAgo = new Date();
+                    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+                    
+                    filtered = filtered.filter(result => {
+                        const resultDate = new Date(result.date);
+                        return resultDate >= threeMonthsAgo;
+                    });
+                } else if (currentFilter === 'older') {
+                    const threeMonthsAgo = new Date();
+                    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+                    
+                    filtered = filtered.filter(result => {
+                        const resultDate = new Date(result.date);
+                        return resultDate < threeMonthsAgo;
+                    });
+                }
+                
+                // Apply search query
+                if (searchQuery) {
+                    filtered = filtered.filter(result => {
+                        return result.type.toLowerCase().includes(searchQuery) ||
+                               result.summary.toLowerCase().includes(searchQuery) ||
+                               result.orderingProvider.toLowerCase().includes(searchQuery);
+                    });
+                }
+                
+                // Render filtered results
+                renderTestResults(filtered);
+            }
+            
+            // PDF Download functionality
+            document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+                if (!currentTestResult) return;
+                
+                // Initialize jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add header
+                doc.setFontSize(18);
+                doc.setTextColor(40, 40, 40);
+                doc.text("SecureHealth - Test Result Report", 20, 20);
+                
+                // Add patient info
+                doc.setFontSize(12);
+                doc.text(`Patient: ${patientData.patient.firstName} ${patientData.patient.lastName}`, 20, 30);
+                doc.text(`Test: ${currentTestResult.type}`, 20, 38);
+                
+                // Add test info
+                doc.setFontSize(11);
+                doc.text(`Date: ${new Date(currentTestResult.date).toLocaleDateString()}`, 20, 46);
+                doc.text(`Provider: ${currentTestResult.orderingProvider}`, 20, 54);
+                doc.text(`Status: ${currentTestResult.status}`, 20, 62);
+                doc.text(`Summary: ${currentTestResult.summary}`, 20, 70);
+                
+                // Add test results table
+                if (currentTestResult.details && currentTestResult.details.length > 0) {
+                    const tableData = [];
+                    
+                    // Add table header
+                    tableData.push(['Test', 'Result', 'Reference Range', 'Status']);
+                    
+                    // Add table rows
+                    currentTestResult.details.forEach(detail => {
+                        const valueDisplay = detail.unit ? `${detail.value} ${detail.unit}` : detail.value;
+                        
+                        let statusText = detail.status || 'normal';
+                        statusText = statusText.charAt(0).toUpperCase() + statusText.slice(1);
+                        
+                        tableData.push([
+                            detail.name,
+                            valueDisplay,
+                            detail.referenceRange || 'N/A',
+                            statusText
+                        ]);
+                    });
+                    
+                    // Create the table
+                    doc.autoTable({
+                        startY: 80,
+                        head: [tableData[0]],
+                        body: tableData.slice(1),
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [66, 139, 202],
+                            textColor: 255
+                        },
+                        styles: {
+                            cellPadding: 3,
+                            fontSize: 10
+                        },
+                        columnStyles: {
+                            0: {fontStyle: 'bold'}
+                        }
+                    });
+                    
+                    // Check if any test has notes and add them
+                    const notesArray = currentTestResult.details.filter(detail => detail.note);
+                    if (notesArray.length > 0) {
+                        const finalY = (doc.lastAutoTable.finalY || 120) + 10;
+                        
+                        doc.setFontSize(12);
+                        doc.text('Notes:', 20, finalY);
+                        
+                        let yPos = finalY + 8;
+                        
+                        notesArray.forEach(detail => {
+                            if (detail.note) {
+                                doc.setFontSize(10);
+                                doc.text(`${detail.name}: ${detail.note}`, 20, yPos);
+                                yPos += 6;
+                            }
+                        });
+                    }
+                    
+                } else {
+                    // No details available
+                    doc.setFontSize(12);
+                    doc.text('Detailed results not available for this test.', 20, 80);
+                }
+                
+                // Add footer
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.text('These test results are provided for your information and should be reviewed with your healthcare provider.', 20, doc.internal.pageSize.height - 20);
+                    doc.text(`Generated on ${new Date().toLocaleString()} - Page ${i} of ${pageCount}`, 20, doc.internal.pageSize.height - 10);
+                }
+                
+                // Save PDF
+                const fileName = `${currentTestResult.type.replace(/\s+/g, '-')}-${currentTestResult.date}.pdf`;
+                doc.save(fileName);
+            });
+            
+            // Logout handler
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                logout();
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
+</body>
+</html>

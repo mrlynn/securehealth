@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescriptions - Patient Portal - SecureHealth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/patient-portal.css">
+    <style>
+        .prescription-card {
+            transition: transform 0.2s;
+            border-left: 4px solid #4a90e2;
+            margin-bottom: 15px;
+        }
+        .prescription-card.inactive {
+            border-left-color: #6c757d;
+            opacity: 0.7;
+        }
+        .prescription-card.controlled {
+            border-left-color: #dc3545;
+        }
+        .prescription-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .prescription-status {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+        }
+        .refill-btn {
+            white-space: nowrap;
+        }
+        .refill-request-card {
+            border-left: 4px solid #4a90e2;
+            margin-bottom: 15px;
+        }
+        .refill-request-card.pending {
+            border-left-color: #ffc107;
+        }
+        .refill-request-card.approved {
+            border-left-color: #28a745;
+        }
+        .refill-request-card.denied {
+            border-left-color: #dc3545;
+        }
+        .refill-request-card.completed {
+            border-left-color: #6c757d;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4a90e2;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="dashboard.html">
+                <img src="/images/secure-health-logo-square.png" alt="SecureHealth Logo" height="30">
+                Patient Portal
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="appointments.html">
+                            <i class="fas fa-calendar-alt me-1"></i> Appointments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="medical-records.html">
+                            <i class="fas fa-file-medical me-1"></i> Medical Records
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="test-results.html">
+                            <i class="fas fa-vial me-1"></i> Test Results
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="messages.html">
+                            <i class="fas fa-envelope me-1"></i> Messages
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="prescriptions.html">
+                            <i class="fas fa-prescription me-1"></i> Prescriptions
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> <span id="patientName">Loading...</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="profile.html">Profile</a></li>
+                            <li><a class="dropdown-item" href="settings.html">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div id="authentication-required" style="display:none;">
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">Authentication Required</h4>
+                <p>You need to login to access the Patient Portal.</p>
+                <hr>
+                <a href="login.html" class="btn btn-danger">Login</a>
+            </div>
+        </div>
+
+        <div id="authenticated-content" style="display:none;">
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <h2><i class="fas fa-prescription me-2"></i>Prescriptions</h2>
+                    <p class="text-muted">View and manage your medication prescriptions</p>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs mb-4" id="prescriptionTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab">
+                        <i class="fas fa-prescription-bottle me-1"></i> Active Medications
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="refill-requests-tab" data-bs-toggle="tab" data-bs-target="#refill-requests" type="button" role="tab">
+                        <i class="fas fa-sync me-1"></i> Refill Requests
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+                        <i class="fas fa-history me-1"></i> Medication History
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="prescriptionsTabContent">
+                <!-- Active Prescriptions Tab -->
+                <div class="tab-pane fade show active" id="active" role="tabpanel">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="input-group" style="max-width: 400px;">
+                                    <input type="text" id="prescriptionSearch" class="form-control" placeholder="Search medications...">
+                                    <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown">
+                                        <i class="fas fa-filter me-1"></i> Filter
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                        <li><a class="dropdown-item active" href="#" data-filter="all">All Medications</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" data-filter="refillable">Refillable</a></li>
+                                        <li><a class="dropdown-item" href="#" data-filter="non-refillable">Non-Refillable</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" data-filter="controlled">Controlled Substances</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12" id="prescriptionsContainer">
+                            <div class="text-center py-5" id="prescriptionsLoading">
+                                <div class="loader"></div>
+                                <p class="mt-3 text-muted">Loading your prescriptions...</p>
+                            </div>
+                            
+                            <div class="alert alert-info" id="noPrescriptionsMessage" style="display:none;">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No medications found. Your active prescriptions will appear here when they become available.
+                            </div>
+
+                            <div id="prescriptionsList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Refill Requests Tab -->
+                <div class="tab-pane fade" id="refill-requests" role="tabpanel">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">About Prescription Refills</h5>
+                                    <p class="card-text mb-0">
+                                        Refill requests are typically processed within 1-2 business days. For urgent refills, please contact your healthcare provider directly.
+                                        Controlled substance refills may require an office visit before approval.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="text-center py-5" id="refillRequestsLoading">
+                                <div class="loader"></div>
+                                <p class="mt-3 text-muted">Loading your refill requests...</p>
+                            </div>
+                            
+                            <div class="alert alert-info" id="noRefillRequestsMessage" style="display:none;">
+                                <i class="fas fa-info-circle me-2"></i>
+                                You have no active refill requests at this time.
+                            </div>
+
+                            <div id="refillRequestsList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medication History Tab -->
+                <div class="tab-pane fade" id="history" role="tabpanel">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="text-center py-5" id="medicationHistoryLoading">
+                                <div class="loader"></div>
+                                <p class="mt-3 text-muted">Loading your medication history...</p>
+                            </div>
+                            
+                            <div class="alert alert-info" id="noMedicationHistoryMessage" style="display:none;">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No medication history found.
+                            </div>
+
+                            <div id="medicationHistoryList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prescription Detail Modal -->
+    <div class="modal fade" id="prescriptionDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="prescriptionName">Medication Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="prescriptionDetailLoading" class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading prescription details...</p>
+                    </div>
+
+                    <div id="prescriptionDetailContent" style="display:none;">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Medication</h6>
+                                    <div id="detailMedication" class="fs-5 fw-bold"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Dosage</h6>
+                                    <div id="detailDosage"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Instructions</h6>
+                                    <div id="detailInstructions"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Prescribed By</h6>
+                                    <div id="detailPrescriber"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Prescribed Date</h6>
+                                    <div id="detailPrescribedDate"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Expiration Date</h6>
+                                    <div id="detailExpirationDate"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Quantity</h6>
+                                    <div id="detailQuantity"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Refills</h6>
+                                    <div id="detailRefills"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Last Filled</h6>
+                                    <div id="detailLastFilled"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Status</h6>
+                                    <div id="detailStatus"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Pharmacy</h6>
+                                    <div id="detailPharmacy"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-muted">Next Refill Date</h6>
+                                    <div id="detailNextRefill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Refill History -->
+                        <div class="mt-4" id="refillHistorySection">
+                            <h5 class="border-bottom pb-2">Refill History</h5>
+                            <div id="refillHistoryContent" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="requestRefillBtn" style="display:none;">
+                        <i class="fas fa-sync me-1"></i> Request Refill
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Refill Modal -->
+    <div class="modal fade" id="requestRefillModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Request Prescription Refill</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="refillPrescriptionId">
+
+                    <div class="alert alert-info">
+                        <strong>Medication:</strong> <span id="refillMedicationName"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="refillPharmacy" class="form-label">Pharmacy</label>
+                        <select id="refillPharmacy" class="form-select">
+                            <option value="" selected disabled>Select pharmacy...</option>
+                            <option value="loading">Loading pharmacies...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="refillNotes" class="form-label">Additional Notes (Optional)</label>
+                        <textarea id="refillNotes" class="form-control" rows="3" placeholder="Any special instructions or requests..."></textarea>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Refill requests are typically processed within 1-2 business days. For urgent needs, please contact your healthcare provider directly.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitRefillRequest">
+                        Submit Refill Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap and jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Patient Portal Authentication -->
+    <script src="/assets/js/patient-auth.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Global variables
+            let patientData = null;
+            let prescriptionsData = [];
+            let refillRequestsData = [];
+            let currentFilter = 'all';
+            let pharmaciesData = [];
+            
+            // Check authentication
+            if (!isLoggedIn()) {
+                document.getElementById('authentication-required').style.display = 'block';
+                document.getElementById('authenticated-content').style.display = 'none';
+                return;
+            } else {
+                document.getElementById('authentication-required').style.display = 'none';
+                document.getElementById('authenticated-content').style.display = 'block';
+                
+                // Load patient data and prescriptions
+                loadPatientData();
+                loadPrescriptions();
+                loadPharmacies();
+            }
+            
+            // Load patient data
+            function loadPatientData() {
+                fetch('/api/patient-portal/dashboard', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        patientData = data.data;
+                        document.getElementById('patientName').innerText = `${patientData.patient.firstName} ${patientData.patient.lastName}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading patient data:', error);
+                });
+            }
+            
+            // Load prescriptions
+            function loadPrescriptions() {
+                fetch('/api/patient-portal/prescriptions', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('prescriptionsLoading').style.display = 'none';
+                    
+                    if (data.success && data.data.length > 0) {
+                        prescriptionsData = data.data;
+                        renderPrescriptions(prescriptionsData);
+                    } else {
+                        document.getElementById('noPrescriptionsMessage').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading prescriptions:', error);
+                    document.getElementById('prescriptionsLoading').style.display = 'none';
+                    document.getElementById('noPrescriptionsMessage').style.display = 'block';
+                    document.getElementById('noPrescriptionsMessage').innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading prescriptions. Please try again later.
+                    `;
+                });
+                
+                // Also load refill requests when switching to that tab
+                document.getElementById('refill-requests-tab').addEventListener('click', function() {
+                    if (refillRequestsData.length === 0) {
+                        loadRefillRequests();
+                    }
+                });
+                
+                // And load medication history when switching to that tab
+                document.getElementById('history-tab').addEventListener('click', function() {
+                    if (document.getElementById('medicationHistoryList').innerHTML === '') {
+                        loadMedicationHistory();
+                    }
+                });
+            }
+            
+            // Load refill requests
+            function loadRefillRequests() {
+                document.getElementById('refillRequestsLoading').style.display = 'block';
+                document.getElementById('noRefillRequestsMessage').style.display = 'none';
+                
+                fetch('/api/patient-portal/prescriptions/refill-requests', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('refillRequestsLoading').style.display = 'none';
+                    
+                    if (data.success && data.data.length > 0) {
+                        refillRequestsData = data.data;
+                        renderRefillRequests(refillRequestsData);
+                    } else {
+                        document.getElementById('noRefillRequestsMessage').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading refill requests:', error);
+                    document.getElementById('refillRequestsLoading').style.display = 'none';
+                    document.getElementById('noRefillRequestsMessage').style.display = 'block';
+                    document.getElementById('noRefillRequestsMessage').innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading refill requests. Please try again later.
+                    `;
+                });
+            }
+            
+            // Load medication history
+            function loadMedicationHistory() {
+                document.getElementById('medicationHistoryLoading').style.display = 'block';
+                document.getElementById('noMedicationHistoryMessage').style.display = 'none';
+                
+                // For demo purposes, we'll just use our prescriptions data and filter inactive ones
+                setTimeout(() => {
+                    document.getElementById('medicationHistoryLoading').style.display = 'none';
+                    
+                    if (prescriptionsData.length > 0) {
+                        const inactivePrescriptions = prescriptionsData.filter(p => p.status === 'completed' || p.expirationDate < new Date().toISOString().split('T')[0]);
+                        
+                        if (inactivePrescriptions.length > 0) {
+                            renderMedicationHistory(inactivePrescriptions);
+                        } else {
+                            document.getElementById('noMedicationHistoryMessage').style.display = 'block';
+                        }
+                    } else {
+                        document.getElementById('noMedicationHistoryMessage').style.display = 'block';
+                    }
+                }, 1000);
+            }
+            
+            // Load pharmacies for refill requests
+            function loadPharmacies() {
+                fetch('/api/patient-portal/prescriptions/pharmacies', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data.length > 0) {
+                        pharmaciesData = data.data;
+                        
+                        // Update the pharmacy dropdown in the refill modal
+                        const pharmacySelect = document.getElementById('refillPharmacy');
+                        pharmacySelect.innerHTML = '<option value="" disabled>Select pharmacy...</option>';
+                        
+                        // Add pharmacies to dropdown
+                        pharmaciesData.forEach(pharmacy => {
+                            const option = document.createElement('option');
+                            option.value = pharmacy.id;
+                            option.textContent = pharmacy.name;
+                            
+                            // Mark preferred pharmacy
+                            if (pharmacy.isPreferred) {
+                                option.textContent += ' (Preferred)';
+                                option.selected = true;
+                            }
+                            
+                            pharmacySelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading pharmacies:', error);
+                });
+            }
+            
+            // Render prescriptions list
+            function renderPrescriptions(prescriptions) {
+                const container = document.getElementById('prescriptionsList');
+                container.innerHTML = '';
+                
+                if (prescriptions.length === 0) {
+                    document.getElementById('noPrescriptionsMessage').style.display = 'block';
+                    return;
+                }
+                
+                document.getElementById('noPrescriptionsMessage').style.display = 'none';
+                
+                // Filter active prescriptions
+                const activePrescriptions = prescriptions.filter(p => p.status === 'active');
+                
+                // Sort by medication name
+                activePrescriptions.sort((a, b) => a.medication.localeCompare(b.medication));
+                
+                activePrescriptions.forEach(prescription => {
+                    // Calculate days until next refill if available
+                    let nextRefillText = '';
+                    let daysUntilRefill = null;
+                    
+                    if (prescription.nextRefillDate) {
+                        const today = new Date();
+                        const nextRefill = new Date(prescription.nextRefillDate);
+                        today.setHours(0, 0, 0, 0);
+                        nextRefill.setHours(0, 0, 0, 0);
+                        
+                        const diffTime = nextRefill.getTime() - today.getTime();
+                        daysUntilRefill = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (daysUntilRefill <= 0) {
+                            nextRefillText = `<span class="text-success">Refill available now</span>`;
+                        } else if (daysUntilRefill === 1) {
+                            nextRefillText = `Refill available tomorrow`;
+                        } else {
+                            nextRefillText = `Refill available in ${daysUntilRefill} days`;
+                        }
+                    } else {
+                        nextRefillText = 'No refills available';
+                    }
+                    
+                    // Card class based on prescription type
+                    let cardClass = 'prescription-card';
+                    if (prescription.isControlled) {
+                        cardClass += ' controlled';
+                    }
+                    if (prescription.status !== 'active') {
+                        cardClass += ' inactive';
+                    }
+                    
+                    // Create prescription card
+                    const card = document.createElement('div');
+                    card.className = `card ${cardClass}`;
+                    card.dataset.id = prescription.id;
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-lg-6 mb-3 mb-lg-0">
+                                    <h5 class="card-title mb-1">${prescription.medication}</h5>
+                                    <p class="card-text mb-2 text-muted">${prescription.dosage}</p>
+                                    <p class="card-text mb-0 small">
+                                        <i class="fas fa-pills me-1"></i> ${prescription.instructions}
+                                    </p>
+                                </div>
+                                <div class="col-lg-3 mb-3 mb-lg-0">
+                                    <p class="card-text mb-1 small">
+                                        <i class="fas fa-user-md me-1"></i> ${prescription.prescribedBy}
+                                    </p>
+                                    <p class="card-text mb-1 small">
+                                        <i class="fas fa-calendar-alt me-1"></i> Prescribed: ${formatDate(prescription.prescribedDate)}
+                                    </p>
+                                    <p class="card-text mb-0 small">
+                                        <i class="fas fa-store me-1"></i> ${prescription.pharmacy}
+                                    </p>
+                                </div>
+                                <div class="col-lg-3 text-lg-end">
+                                    ${prescription.isControlled ? 
+                                        '<span class="badge rounded-pill bg-danger mb-2">Controlled Substance</span><br>' : ''}
+                                    ${prescription.refillsRemaining > 0 ? 
+                                        `<span class="badge rounded-pill bg-info mb-2">${prescription.refillsRemaining} refill${prescription.refillsRemaining !== 1 ? 's' : ''} remaining</span><br>` : 
+                                        '<span class="badge rounded-pill bg-secondary mb-2">No refills remaining</span><br>'}
+                                    <p class="card-text small mb-2">${nextRefillText}</p>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary view-rx-btn">
+                                            <i class="fas fa-eye me-1"></i> View
+                                        </button>
+                                        ${prescription.hasRefillsRemaining ? 
+                                            `<button class="btn btn-sm btn-outline-success refill-btn" ${daysUntilRefill > 0 ? 'disabled' : ''}>
+                                                <i class="fas fa-sync me-1"></i> Refill
+                                            </button>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                    
+                    // Add event listeners
+                    card.querySelector('.view-rx-btn').addEventListener('click', () => {
+                        openPrescriptionDetail(prescription.id);
+                    });
+                    
+                    const refillBtn = card.querySelector('.refill-btn');
+                    if (refillBtn) {
+                        refillBtn.addEventListener('click', () => {
+                            openRefillModal(prescription.id);
+                        });
+                    }
+                });
+            }
+            
+            // Render refill requests
+            function renderRefillRequests(requests) {
+                const container = document.getElementById('refillRequestsList');
+                container.innerHTML = '';
+                
+                if (requests.length === 0) {
+                    document.getElementById('noRefillRequestsMessage').style.display = 'block';
+                    return;
+                }
+                
+                document.getElementById('noRefillRequestsMessage').style.display = 'none';
+                
+                // Sort by requested date (newest first)
+                requests.sort((a, b) => new Date(b.requestedDate) - new Date(a.requestedDate));
+                
+                requests.forEach(request => {
+                    // Card class based on status
+                    const cardClass = `refill-request-card ${request.status}`;
+                    
+                    // Status badge
+                    let statusBadge;
+                    switch (request.status) {
+                        case 'pending':
+                            statusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+                            break;
+                        case 'approved':
+                            statusBadge = '<span class="badge bg-success">Approved</span>';
+                            break;
+                        case 'denied':
+                            statusBadge = '<span class="badge bg-danger">Denied</span>';
+                            break;
+                        case 'completed':
+                            statusBadge = '<span class="badge bg-secondary">Completed</span>';
+                            break;
+                        default:
+                            statusBadge = '<span class="badge bg-secondary">Unknown</span>';
+                    }
+                    
+                    // Status specific details
+                    let statusDetails = '';
+                    if (request.status === 'approved') {
+                        statusDetails = `
+                            <p class="mb-1 small">Approved on ${formatDate(request.approvedDate)}</p>
+                            ${request.pickupReady ? 
+                                '<p class="mb-0 text-success fw-bold"><i class="fas fa-check-circle me-1"></i> Ready for pickup</p>' : 
+                                '<p class="mb-0 small">Will be ready for pickup soon</p>'}
+                        `;
+                    } else if (request.status === 'denied') {
+                        statusDetails = `
+                            <p class="mb-0 small text-danger">Reason: ${request.deniedReason}</p>
+                        `;
+                    } else if (request.status === 'completed') {
+                        statusDetails = `
+                            <p class="mb-0 small">Filled on ${formatDate(request.filledDate)}</p>
+                        `;
+                    } else if (request.status === 'pending') {
+                        statusDetails = `
+                            <p class="mb-0 small text-muted">Expected processing time: ${request.expectedProcessingTime}</p>
+                        `;
+                    }
+                    
+                    // Create refill request card
+                    const card = document.createElement('div');
+                    card.className = `card ${cardClass} mb-3`;
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3 mb-md-0">
+                                    <h5 class="card-title mb-1">${request.medication}</h5>
+                                    <p class="card-text mb-0 small">
+                                        <i class="fas fa-calendar me-1"></i> Requested: ${formatDate(request.requestedDate)}
+                                    </p>
+                                </div>
+                                <div class="col-md-4 mb-3 mb-md-0">
+                                    <p class="card-text mb-1">
+                                        <i class="fas fa-store me-1"></i> ${request.pharmacy}
+                                    </p>
+                                    ${statusDetails}
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    ${statusBadge}
+                                    <button class="btn btn-sm btn-outline-primary mt-2 view-rx-btn" data-id="${request.prescriptionId}">
+                                        <i class="fas fa-eye me-1"></i> View Prescription
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                    
+                    // Add event listener for view button
+                    card.querySelector('.view-rx-btn').addEventListener('click', (e) => {
+                        openPrescriptionDetail(e.currentTarget.getAttribute('data-id'));
+                    });
+                });
+            }
+            
+            // Render medication history
+            function renderMedicationHistory(medications) {
+                const container = document.getElementById('medicationHistoryList');
+                container.innerHTML = '';
+                
+                if (medications.length === 0) {
+                    document.getElementById('noMedicationHistoryMessage').style.display = 'block';
+                    return;
+                }
+                
+                document.getElementById('noMedicationHistoryMessage').style.display = 'none';
+                
+                // Sort by prescribed date (newest first)
+                medications.sort((a, b) => new Date(b.prescribedDate) - new Date(a.prescribedDate));
+                
+                // Group by year
+                const yearGroups = {};
+                medications.forEach(med => {
+                    const year = new Date(med.prescribedDate).getFullYear();
+                    if (!yearGroups[year]) {
+                        yearGroups[year] = [];
+                    }
+                    yearGroups[year].push(med);
+                });
+                
+                // Create cards for each year group
+                Object.keys(yearGroups)
+                    .sort((a, b) => b - a) // Sort years descending
+                    .forEach(year => {
+                        const yearHeader = document.createElement('h5');
+                        yearHeader.className = 'mt-4 mb-3';
+                        yearHeader.textContent = year;
+                        container.appendChild(yearHeader);
+                        
+                        const meds = yearGroups[year];
+                        meds.forEach(med => {
+                            const card = document.createElement('div');
+                            card.className = 'card prescription-card inactive mb-3';
+                            card.dataset.id = med.id;
+                            card.innerHTML = `
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <h5 class="card-title mb-1">${med.medication}</h5>
+                                            <p class="card-text mb-2 text-muted">${med.dosage}</p>
+                                            <p class="card-text mb-0 small">
+                                                <i class="fas fa-pills me-1"></i> ${med.instructions}
+                                            </p>
+                                        </div>
+                                        <div class="col-md-4 mb-3 mb-md-0">
+                                            <p class="card-text mb-1 small">
+                                                <i class="fas fa-user-md me-1"></i> ${med.prescribedBy}
+                                            </p>
+                                            <p class="card-text mb-1 small">
+                                                <i class="fas fa-calendar-alt me-1"></i> Prescribed: ${formatDate(med.prescribedDate)}
+                                            </p>
+                                            <p class="card-text mb-0 small">
+                                                <i class="fas fa-calendar-times me-1"></i> Expired: ${formatDate(med.expirationDate)}
+                                            </p>
+                                        </div>
+                                        <div class="col-md-2 text-md-end">
+                                            <button class="btn btn-sm btn-outline-primary view-rx-btn">
+                                                <i class="fas fa-eye me-1"></i> View
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            container.appendChild(card);
+                            
+                            // Add event listener
+                            card.querySelector('.view-rx-btn').addEventListener('click', () => {
+                                openPrescriptionDetail(med.id);
+                            });
+                        });
+                    });
+            }
+            
+            // Open prescription detail modal
+            function openPrescriptionDetail(id) {
+                const modal = new bootstrap.Modal(document.getElementById('prescriptionDetailModal'));
+                modal.show();
+                
+                document.getElementById('prescriptionDetailLoading').style.display = 'block';
+                document.getElementById('prescriptionDetailContent').style.display = 'none';
+                document.getElementById('requestRefillBtn').style.display = 'none';
+                
+                fetch(`/api/patient-portal/prescriptions/${id}`, {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const prescription = data.data;
+                        
+                        // Set prescription name in modal header
+                        document.getElementById('prescriptionName').textContent = prescription.medication;
+                        
+                        // Fill in prescription details
+                        document.getElementById('detailMedication').textContent = prescription.medication;
+                        document.getElementById('detailDosage').textContent = prescription.dosage;
+                        document.getElementById('detailInstructions').textContent = prescription.instructions;
+                        document.getElementById('detailPrescriber').textContent = prescription.prescribedBy;
+                        document.getElementById('detailPrescribedDate').textContent = formatDate(prescription.prescribedDate);
+                        document.getElementById('detailExpirationDate').textContent = formatDate(prescription.expirationDate);
+                        document.getElementById('detailQuantity').textContent = `${prescription.quantity} units`;
+                        document.getElementById('detailRefills').textContent = `${prescription.refillsRemaining} of ${prescription.refillsTotal} refills remaining`;
+                        document.getElementById('detailLastFilled').textContent = formatDate(prescription.lastFilled);
+                        
+                        // Status with badge
+                        let statusBadge = '';
+                        if (prescription.status === 'active') {
+                            statusBadge = '<span class="badge rounded-pill bg-success">Active</span>';
+                        } else if (prescription.status === 'completed') {
+                            statusBadge = '<span class="badge rounded-pill bg-secondary">Completed</span>';
+                        }
+                        document.getElementById('detailStatus').innerHTML = statusBadge;
+                        
+                        document.getElementById('detailPharmacy').textContent = prescription.pharmacy;
+                        
+                        // Next refill date
+                        if (prescription.nextRefillDate) {
+                            document.getElementById('detailNextRefill').textContent = formatDate(prescription.nextRefillDate);
+                        } else {
+                            document.getElementById('detailNextRefill').textContent = 'No refills available';
+                        }
+                        
+                        // Refill history section
+                        if (prescription.refillHistory && prescription.refillHistory.length > 0) {
+                            const historyContent = document.getElementById('refillHistoryContent');
+                            historyContent.innerHTML = '';
+                            
+                            prescription.refillHistory.forEach((refill, index) => {
+                                const row = document.createElement('div');
+                                row.className = index < prescription.refillHistory.length - 1 ? 'mb-3 pb-3 border-bottom' : '';
+                                row.innerHTML = `
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <p class="mb-1"><strong>Date:</strong> ${formatDate(refill.requestedDate)}</p>
+                                            <p class="mb-0"><strong>Status:</strong> ${capitalize(refill.status)}</p>
+                                        </div>
+                                        <div class="col-md-8">
+                                            ${refill.approvedDate ? `<p class="mb-1"><strong>Approved:</strong> ${formatDate(refill.approvedDate)}</p>` : ''}
+                                            ${refill.approvedBy ? `<p class="mb-1"><strong>Approved by:</strong> ${refill.approvedBy}</p>` : ''}
+                                            ${refill.quantityDispensed ? `<p class="mb-1"><strong>Quantity:</strong> ${refill.quantityDispensed} units</p>` : ''}
+                                            ${refill.notes ? `<p class="mb-0"><strong>Notes:</strong> ${refill.notes}</p>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                                historyContent.appendChild(row);
+                            });
+                            
+                            document.getElementById('refillHistorySection').style.display = 'block';
+                        } else {
+                            document.getElementById('refillHistorySection').style.display = 'none';
+                        }
+                        
+                        // Show refill button if refills are available
+                        if (prescription.hasRefillsRemaining && prescription.status === 'active') {
+                            const refillBtn = document.getElementById('requestRefillBtn');
+                            refillBtn.style.display = 'block';
+                            
+                            // Check if refill is available based on next refill date
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            
+                            if (prescription.nextRefillDate) {
+                                const nextRefill = new Date(prescription.nextRefillDate);
+                                nextRefill.setHours(0, 0, 0, 0);
+                                
+                                if (nextRefill > today) {
+                                    refillBtn.disabled = true;
+                                    refillBtn.innerHTML = `<i class="fas fa-sync me-1"></i> Refill Available on ${formatDate(prescription.nextRefillDate)}`;
+                                } else {
+                                    refillBtn.disabled = false;
+                                    refillBtn.innerHTML = `<i class="fas fa-sync me-1"></i> Request Refill`;
+                                    
+                                    // Add event listener for refill button
+                                    refillBtn.onclick = () => {
+                                        // Hide current modal
+                                        bootstrap.Modal.getInstance(document.getElementById('prescriptionDetailModal')).hide();
+                                        
+                                        // Open refill modal
+                                        openRefillModal(prescription.id);
+                                    };
+                                }
+                            } else {
+                                refillBtn.disabled = true;
+                                refillBtn.innerHTML = `<i class="fas fa-sync me-1"></i> No Refills Available`;
+                            }
+                        }
+                        
+                        document.getElementById('prescriptionDetailLoading').style.display = 'none';
+                        document.getElementById('prescriptionDetailContent').style.display = 'block';
+                    } else {
+                        // Show error
+                        document.getElementById('prescriptionDetailContent').innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Error loading prescription details: ${data.message}
+                            </div>
+                        `;
+                        document.getElementById('prescriptionDetailLoading').style.display = 'none';
+                        document.getElementById('prescriptionDetailContent').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading prescription details:', error);
+                    
+                    document.getElementById('prescriptionDetailContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Error loading prescription details. Please try again.
+                        </div>
+                    `;
+                    document.getElementById('prescriptionDetailLoading').style.display = 'none';
+                    document.getElementById('prescriptionDetailContent').style.display = 'block';
+                });
+            }
+            
+            // Open refill modal
+            function openRefillModal(id) {
+                const prescription = prescriptionsData.find(p => p.id === id);
+                if (!prescription) return;
+                
+                document.getElementById('refillPrescriptionId').value = id;
+                document.getElementById('refillMedicationName').textContent = prescription.medication;
+                
+                const modal = new bootstrap.Modal(document.getElementById('requestRefillModal'));
+                modal.show();
+            }
+            
+            // Submit refill request
+            document.getElementById('submitRefillRequest').addEventListener('click', function() {
+                const prescriptionId = document.getElementById('refillPrescriptionId').value;
+                const pharmacyId = document.getElementById('refillPharmacy').value;
+                const notes = document.getElementById('refillNotes').value;
+                
+                if (!pharmacyId) {
+                    alert('Please select a pharmacy for your refill.');
+                    return;
+                }
+                
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                
+                fetch(`/api/patient-portal/prescriptions/${prescriptionId}/request-refill`, {
+                    method: 'POST',
+                    headers: {
+                        ...getAuthHeaders(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pharmacyId: pharmacyId,
+                        notes: notes
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.disabled = false;
+                    this.innerHTML = 'Submit Refill Request';
+                    
+                    if (data.success) {
+                        // Close modal
+                        bootstrap.Modal.getInstance(document.getElementById('requestRefillModal')).hide();
+                        
+                        // Show success message
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                        alertDiv.innerHTML = `
+                            <i class="fas fa-check-circle me-2"></i>
+                            Refill request submitted successfully. Your request is being processed.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        document.getElementById('authenticated-content').prepend(alertDiv);
+                        
+                        // Switch to refill requests tab
+                        document.getElementById('refill-requests-tab').click();
+                        
+                        // Reload refill requests
+                        loadRefillRequests();
+                        
+                        // Reset form
+                        document.getElementById('refillNotes').value = '';
+                    } else {
+                        alert('Error submitting refill request: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting refill request:', error);
+                    this.disabled = false;
+                    this.innerHTML = 'Submit Refill Request';
+                    alert('Error submitting refill request. Please try again.');
+                });
+            });
+            
+            // Filter prescriptions
+            document.querySelectorAll('#filterDropdown + .dropdown-menu .dropdown-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active class
+                    document.querySelectorAll('#filterDropdown + .dropdown-menu .dropdown-item').forEach(el => {
+                        el.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Get filter value
+                    const filter = this.getAttribute('data-filter');
+                    currentFilter = filter;
+                    
+                    // Apply filter
+                    applyFilters();
+                    
+                    // Update dropdown button text
+                    const filterText = this.textContent;
+                    document.getElementById('filterDropdown').innerHTML = `<i class="fas fa-filter me-1"></i> ${filterText}`;
+                });
+            });
+            
+            // Search functionality
+            document.getElementById('searchButton').addEventListener('click', function() {
+                applyFilters();
+            });
+            
+            document.getElementById('prescriptionSearch').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+            
+            // Apply filters and search
+            function applyFilters() {
+                const searchQuery = document.getElementById('prescriptionSearch').value.toLowerCase();
+                
+                let filtered = [...prescriptionsData];
+                
+                // Apply active filter (only show active prescriptions in the first tab)
+                filtered = filtered.filter(p => p.status === 'active');
+                
+                // Apply current filter
+                if (currentFilter === 'refillable') {
+                    filtered = filtered.filter(p => p.refillsRemaining > 0);
+                } else if (currentFilter === 'non-refillable') {
+                    filtered = filtered.filter(p => p.refillsRemaining <= 0);
+                } else if (currentFilter === 'controlled') {
+                    filtered = filtered.filter(p => p.isControlled);
+                }
+                
+                // Apply search query
+                if (searchQuery) {
+                    filtered = filtered.filter(p => {
+                        return p.medication.toLowerCase().includes(searchQuery) ||
+                               p.prescribedBy.toLowerCase().includes(searchQuery) ||
+                               p.instructions.toLowerCase().includes(searchQuery) ||
+                               p.pharmacy.toLowerCase().includes(searchQuery);
+                    });
+                }
+                
+                // Render filtered prescriptions
+                renderPrescriptions(filtered);
+            }
+            
+            // Utility function to format dates
+            function formatDate(dateString) {
+                if (!dateString) return 'N/A';
+                
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+            
+            // Utility function to capitalize first letter
+            function capitalize(string) {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+            
+            // Logout handler
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                logout();
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .user-management-container {
+            padding: 1.5rem 0;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-active {
+            background-color: #28a745;
+        }
+        
+        .status-inactive {
+            background-color: #dc3545;
+        }
+        
+        .user-actions {
+            white-space: nowrap;
+        }
+        
+        .password-strength-meter {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .password-strength-meter div {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .password-strength-text {
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        
+        .sidebar {
+            position: sticky;
+            top: 1.5rem;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Password strength meter
+            const passwordInputs = document.querySelectorAll('input[type="password"][data-password-meter]');
+            
+            passwordInputs.forEach(input => {
+                const meterId = input.getAttribute('data-password-meter');
+                const meter = document.getElementById(meterId);
+                const meterBar = meter?.querySelector('.password-strength-meter div');
+                const meterText = meter?.querySelector('.password-strength-text');
+                
+                if (meterBar && meterText) {
+                    input.addEventListener('input', function() {
+                        const password = this.value;
+                        let strength = 0;
+                        let feedbackText = '';
+                        
+                        if (password.length > 0) {
+                            strength += 20;
+                            feedbackText = 'Very weak';
+                            meterBar.style.backgroundColor = '#dc3545'; // red
+                        }
+                        
+                        if (password.length >= 8) {
+                            strength += 20;
+                            feedbackText = 'Weak';
+                            meterBar.style.backgroundColor = '#ffc107'; // yellow
+                        }
+                        
+                        if (password.match(/[A-Z]/)) {
+                            strength += 20;
+                            feedbackText = 'Medium';
+                            meterBar.style.backgroundColor = '#fd7e14'; // orange
+                        }
+                        
+                        if (password.match(/[0-9]/)) {
+                            strength += 20;
+                            feedbackText = 'Strong';
+                            meterBar.style.backgroundColor = '#20c997'; // teal
+                        }
+                        
+                        if (password.match(/[^A-Za-z0-9]/)) {
+                            strength += 20;
+                            feedbackText = 'Very strong';
+                            meterBar.style.backgroundColor = '#28a745'; // green
+                        }
+                        
+                        meterBar.style.width = strength + '%';
+                        meterText.textContent = password.length > 0 ? feedbackText : '';
+                    });
+                }
+            });
+        });
+    </script>
+{% endblock %}

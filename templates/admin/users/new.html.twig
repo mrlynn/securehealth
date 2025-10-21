@@ -1,0 +1,190 @@
+{% extends 'admin/users/base.html.twig' %}
+
+{% block title %}Add New User - SecureHealth{% endblock %}
+
+{% block body %}
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-user-plus me-2"></i>
+                Add New User
+            </h1>
+            <a href="{{ path('admin_users_index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to User List
+            </a>
+        </div>
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <strong>User Information</strong>
+            </div>
+            <div class="card-body">
+                <form action="{{ path('admin_users_new') }}" method="post" id="newUserForm" class="needs-validation" novalidate>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="invalid-feedback">
+                                Please provide a valid email address.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                            <div class="invalid-feedback">
+                                Please provide a username.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <div class="invalid-feedback">
+                                Please provide a password.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                            <div id="passwordMismatch" class="invalid-feedback">
+                                Passwords do not match.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">User Roles</label>
+                        <div class="border p-3 rounded">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="role_admin" name="roles[]" value="ROLE_ADMIN">
+                                <label class="form-check-label" for="role_admin">
+                                    <span class="badge bg-danger me-1">ADMIN</span> Administrator
+                                    <small class="text-muted ms-2">Full system access and management</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="role_doctor" name="roles[]" value="ROLE_DOCTOR">
+                                <label class="form-check-label" for="role_doctor">
+                                    <span class="badge bg-primary me-1">DOCTOR</span> Doctor
+                                    <small class="text-muted ms-2">Full patient access, diagnosis, treatment</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="role_nurse" name="roles[]" value="ROLE_NURSE">
+                                <label class="form-check-label" for="role_nurse">
+                                    <span class="badge bg-success me-1">NURSE</span> Nurse
+                                    <small class="text-muted ms-2">Patient vitals, medications, care</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="role_receptionist" name="roles[]" value="ROLE_RECEPTIONIST">
+                                <label class="form-check-label" for="role_receptionist">
+                                    <span class="badge bg-info me-1">RECEPTIONIST</span> Receptionist
+                                    <small class="text-muted ms-2">Scheduling, basic patient info</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="role_patient" name="roles[]" value="ROLE_PATIENT">
+                                <label class="form-check-label" for="role_patient">
+                                    <span class="badge bg-warning text-dark me-1">PATIENT</span> Patient
+                                    <small class="text-muted ms-2">Self-service patient portal access</small>
+                                </label>
+                            </div>
+                            <div class="invalid-feedback role-feedback" style="display: none;">
+                                Please select at least one role.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            Create User
+                        </button>
+                        <a href="{{ path('admin_users_index') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('newUserForm');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const passwordMismatch = document.getElementById('passwordMismatch');
+            const roleCheckboxes = document.querySelectorAll('input[name="roles[]"]');
+            const roleFeedback = document.querySelector('.role-feedback');
+            
+            // Form validation
+            form.addEventListener('submit', function(event) {
+                let isValid = true;
+                
+                // Check password match
+                if (password.value !== confirmPassword.value) {
+                    passwordMismatch.style.display = 'block';
+                    confirmPassword.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    passwordMismatch.style.display = 'none';
+                    confirmPassword.classList.remove('is-invalid');
+                }
+                
+                // Check if at least one role is selected
+                const hasRole = Array.from(roleCheckboxes).some(checkbox => checkbox.checked);
+                if (!hasRole) {
+                    roleFeedback.style.display = 'block';
+                    isValid = false;
+                } else {
+                    roleFeedback.style.display = 'none';
+                }
+                
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            });
+            
+            // Password confirmation validation
+            confirmPassword.addEventListener('input', function() {
+                if (password.value !== confirmPassword.value) {
+                    passwordMismatch.style.display = 'block';
+                    confirmPassword.classList.add('is-invalid');
+                } else {
+                    passwordMismatch.style.display = 'none';
+                    confirmPassword.classList.remove('is-invalid');
+                }
+            });
+            
+            // Role selection validation
+            roleCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const hasRole = Array.from(roleCheckboxes).some(cb => cb.checked);
+                    if (!hasRole) {
+                        roleFeedback.style.display = 'block';
+                    } else {
+                        roleFeedback.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

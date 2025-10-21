@@ -1,0 +1,280 @@
+{% extends 'admin/users/base.html.twig' %}
+
+{% block title %}User Management - SecureHealth{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .role-badge {
+            display: inline-block;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+        }
+        .table-responsive {
+            min-height: 400px;
+        }
+        .user-actions {
+            white-space: nowrap;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-active {
+            background-color: #28a745;
+        }
+        .status-inactive {
+            background-color: #dc3545;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-users-cog me-2"></i>
+                User Management
+            </h1>
+            <a href="{{ path('admin_users_new') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i>
+                Add New User
+            </a>
+        </div>
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>System Users</strong>
+                <span class="badge bg-primary">{{ users|length }} total</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Status</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                            {% set isActive = 'ROLE_INACTIVE' not in user.roles %}
+                            <tr class="{{ not isActive ? 'table-danger' : '' }}">
+                                <td>
+                                    <span class="status-indicator {{ isActive ? 'status-active' : 'status-inactive' }}" 
+                                          title="{{ isActive ? 'Active' : 'Inactive' }}"></span>
+                                    {{ isActive ? 'Active' : 'Inactive' }}
+                                </td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% for role in user.roles %}
+                                        {% set badgeClass = '' %}
+                                        {% if role == 'ROLE_ADMIN' %}
+                                            {% set badgeClass = 'bg-danger' %}
+                                        {% elseif role == 'ROLE_DOCTOR' %}
+                                            {% set badgeClass = 'bg-primary' %}
+                                        {% elseif role == 'ROLE_NURSE' %}
+                                            {% set badgeClass = 'bg-success' %}
+                                        {% elseif role == 'ROLE_RECEPTIONIST' %}
+                                            {% set badgeClass = 'bg-info' %}
+                                        {% elseif role == 'ROLE_PATIENT' %}
+                                            {% set badgeClass = 'bg-warning text-dark' %}
+                                        {% elseif role == 'ROLE_USER' %}
+                                            {% set badgeClass = 'bg-secondary' %}
+                                        {% elseif role == 'ROLE_INACTIVE' %}
+                                            {% set badgeClass = 'bg-dark' %}
+                                        {% else %}
+                                            {% set badgeClass = 'bg-secondary' %}
+                                        {% endif %}
+                                        <span class="badge {{ badgeClass }} role-badge">{{ role|replace({'ROLE_': ''}) }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td class="text-end user-actions">
+                                    <a href="{{ path('admin_users_edit', {'id': user.id}) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    
+                                    <button class="btn btn-sm btn-outline-warning reset-password-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#resetPasswordModal" 
+                                            data-user-id="{{ user.id }}"
+                                            data-user-email="{{ user.email }}">
+                                        <i class="fas fa-key"></i> Reset Password
+                                    </button>
+                                    
+                                    <button class="btn btn-sm {{ isActive ? 'btn-outline-danger' : 'btn-outline-success' }} toggle-status-btn"
+                                            data-user-id="{{ user.id }}" 
+                                            data-current-status="{{ isActive ? 'active' : 'inactive' }}">
+                                        <i class="fas {{ isActive ? 'fa-user-slash' : 'fa-user-check' }}"></i> 
+                                        {{ isActive ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="fas fa-users text-muted mb-3" style="font-size: 2.5rem;"></i>
+                                    <p class="mb-0 text-muted">No users found</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reset Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You are about to reset the password for: <strong id="resetUserEmail"></strong></p>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                        <div id="passwordMismatch" class="invalid-feedback">Passwords do not match</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="resetPasswordConfirm">Reset Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const resetPasswordModal = document.getElementById('resetPasswordModal');
+            const resetUserEmail = document.getElementById('resetUserEmail');
+            const newPassword = document.getElementById('newPassword');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const passwordMismatch = document.getElementById('passwordMismatch');
+            const resetPasswordConfirm = document.getElementById('resetPasswordConfirm');
+            
+            let currentUserId = null;
+            
+            // Reset password button click
+            document.querySelectorAll('.reset-password-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentUserId = this.getAttribute('data-user-id');
+                    resetUserEmail.textContent = this.getAttribute('data-user-email');
+                    newPassword.value = '';
+                    confirmPassword.value = '';
+                    passwordMismatch.style.display = 'none';
+                });
+            });
+            
+            // Password confirmation validation
+            confirmPassword.addEventListener('input', function() {
+                if (newPassword.value !== confirmPassword.value) {
+                    passwordMismatch.style.display = 'block';
+                    confirmPassword.classList.add('is-invalid');
+                    resetPasswordConfirm.disabled = true;
+                } else {
+                    passwordMismatch.style.display = 'none';
+                    confirmPassword.classList.remove('is-invalid');
+                    resetPasswordConfirm.disabled = false;
+                }
+            });
+            
+            // Reset password confirmation
+            resetPasswordConfirm.addEventListener('click', async function() {
+                if (newPassword.value !== confirmPassword.value) {
+                    passwordMismatch.style.display = 'block';
+                    confirmPassword.classList.add('is-invalid');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/admin/users/${currentUserId}/reset-password`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `password=${encodeURIComponent(newPassword.value)}`
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Close the modal
+                        bootstrap.Modal.getInstance(resetPasswordModal).hide();
+                        
+                        // Show success message
+                        const alert = document.createElement('div');
+                        alert.className = 'alert alert-success alert-dismissible fade show';
+                        alert.innerHTML = `
+                            Password reset successfully
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        document.querySelector('.container').prepend(alert);
+                    } else {
+                        // Show error message in modal
+                        alert('Error: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error resetting password:', error);
+                    alert('An error occurred while resetting the password');
+                }
+            });
+            
+            // Toggle user status (activate/deactivate)
+            document.querySelectorAll('.toggle-status-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const currentStatus = this.getAttribute('data-current-status');
+                    const action = currentStatus === 'active' ? 'deactivate' : 'activate';
+                    
+                    if (confirm(`Are you sure you want to ${action} this user?`)) {
+                        try {
+                            const response = await fetch(`/admin/users/${userId}/toggle-status`, {
+                                method: 'POST'
+                            });
+                            
+                            const result = await response.json();
+                            
+                            if (result.success) {
+                                // Reload the page to show updated status
+                                location.reload();
+                            } else {
+                                alert('Error: ' + result.message);
+                            }
+                        } catch (error) {
+                            console.error('Error toggling user status:', error);
+                            alert('An error occurred while updating the user status');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
