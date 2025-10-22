@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const widgets = document.querySelectorAll('[data-securehealth-github-widget]');
     widgets.forEach(element => {
         const options = {
-            repoOwner: element.dataset.repoOwner || 'yourusername',
+            repoOwner: element.dataset.repoOwner || 'mrlynn',
             repoName: element.dataset.repoName || 'securehealth',
             container: element,
             theme: element.dataset.theme || 'light',
