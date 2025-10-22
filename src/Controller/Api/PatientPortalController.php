@@ -263,93 +263,24 @@ class PatientPortalController extends AbstractController
         }
 
         try {
-            // Create patient record
-            $patient = new Patient();
-            $patient->setFirstName($data['firstName']);
-            $patient->setLastName($data['lastName']);
-            $patient->setEmail($data['email']);
-            $patient->setBirthDate(new \MongoDB\BSON\UTCDateTime(new \DateTime($data['birthDate'])));
-            
-            if (isset($data['phoneNumber'])) {
-                $patient->setPhoneNumber($data['phoneNumber']);
-            }
+            // Use direct MongoDB operations to avoid Doctrine issues
+            $this->createPatientWithDirectMongoDB($data);
 
-            $this->documentManager->persist($patient);
-            
-            // Try to flush with retry logic for "not primary" errors
-            $maxRetries = 3;
-            $retryCount = 0;
-            $flushSuccess = false;
-            
-            while ($retryCount < $maxRetries && !$flushSuccess) {
-                try {
-                    $this->documentManager->flush();
-                    $flushSuccess = true;
-                } catch (\Exception $flushError) {
-                    $retryCount++;
-                    if (strpos($flushError->getMessage(), 'not primary') !== false && $retryCount < $maxRetries) {
-                        // Wait a bit before retrying
-                        usleep(500000); // 0.5 seconds
-                        error_log("MongoDB 'not primary' error, retry $retryCount/$maxRetries");
-                    } else {
-                        throw $flushError;
-                    }
-                }
-            }
-            
-            if (!$flushSuccess) {
-                // Fallback to direct MongoDB operations
-                error_log('Doctrine flush failed, trying direct MongoDB operations');
-                $this->createPatientWithDirectMongoDB($data);
-            }
-
-            // Create user account linked to patient
-            $user = new User();
-            $user->setEmail($data['email']);
-            $user->setUsername($data['firstName'] . ' ' . $data['lastName']);
-            $user->setRoles(['ROLE_PATIENT']);
-            $user->setIsPatient(true);
-            $user->setPatientId($patient->getId());
-            
-            // Hash the password properly
-            $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
-            $user->setPassword($hashedPassword);
-
-            $this->documentManager->persist($user);
-            
-            // Try to flush user with retry logic for "not primary" errors
-            $maxRetries = 3;
-            $retryCount = 0;
-            $flushSuccess = false;
-            
-            while ($retryCount < $maxRetries && !$flushSuccess) {
-                try {
-                    $this->documentManager->flush();
-                    $flushSuccess = true;
-                } catch (\Exception $flushError) {
-                    $retryCount++;
-                    if (strpos($flushError->getMessage(), 'not primary') !== false && $retryCount < $maxRetries) {
-                        // Wait a bit before retrying
-                        usleep(500000); // 0.5 seconds
-                        error_log("MongoDB 'not primary' error for user, retry $retryCount/$maxRetries");
-                    } else {
-                        throw $flushError;
-                    }
-                }
-            }
-            
-            if (!$flushSuccess) {
-                throw new \Exception('Failed to save user after multiple retries');
-            }
 
             // Log the registration (non-blocking - don't fail registration if audit logging fails)
             try {
+                // Create a temporary user object for audit logging
+                $tempUser = new User();
+                $tempUser->setEmail($data['email']);
+                $tempUser->setUsername($data['firstName'] . ' ' . $data['lastName']);
+                $tempUser->setRoles(['ROLE_PATIENT']);
+                $tempUser->setIsPatient(true);
+                
                 $this->auditLogService->log(
-                    $user,
+                    $tempUser,
                     'patient_portal_registration',
                     [
                         'action' => 'register',
-                        'patientId' => (string)$patient->getId(),
                         'email' => $data['email']
                     ]
                 );
@@ -362,9 +293,7 @@ class PatientPortalController extends AbstractController
                 'success' => true,
                 'message' => 'Patient account created successfully',
                 'data' => [
-                    'userId' => (string)$user->getId(),
-                    'patientId' => (string)$patient->getId(),
-                    'email' => $user->getEmail()
+                    'email' => $data['email']
                 ]
             ], Response::HTTP_CREATED);
 
