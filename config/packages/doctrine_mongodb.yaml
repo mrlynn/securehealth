@@ -13,6 +13,8 @@ doctrine_mongodb:
                 journal: true
                 connectTimeoutMS: 30000
                 socketTimeoutMS: 30000
+                # Force cache refresh
+                replicaSet: null
     default_database: '%env(resolve:MONGODB_DB)%'
     document_managers:
         default:
