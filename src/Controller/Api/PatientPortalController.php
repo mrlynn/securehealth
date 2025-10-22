@@ -320,14 +320,8 @@ class PatientPortalController extends AbstractController
     private function createPatientWithDirectMongoDB(array $data): void
     {
         try {
-            // Check cluster health first
-            if (!$this->robustMongoDB->isClusterHealthy()) {
-                error_log('MongoDB cluster is not healthy, waiting for recovery...');
-                if (!$this->robustMongoDB->waitForClusterHealth(30)) {
-                    throw new \Exception('MongoDB cluster is not responding after 30 seconds');
-                }
-            }
-
+            error_log('Starting direct MongoDB operations for patient registration');
+            
             // Create patient document
             $patientDoc = [
                 'firstName' => $data['firstName'],
@@ -342,9 +336,11 @@ class PatientPortalController extends AbstractController
                 $patientDoc['phoneNumber'] = $data['phoneNumber'];
             }
 
+            error_log('Attempting to insert patient document');
             // Insert patient using robust MongoDB service with enhanced retry
             $patientResult = $this->robustMongoDB->insertOne('patients', $patientDoc);
             $patientId = $patientResult->getInsertedId();
+            error_log('Patient inserted successfully with ID: ' . $patientId);
 
             // Create user document
             $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
@@ -360,8 +356,10 @@ class PatientPortalController extends AbstractController
                 'updatedAt' => new \MongoDB\BSON\UTCDateTime()
             ];
 
+            error_log('Attempting to insert user document');
             // Insert user using robust MongoDB service with enhanced retry
             $userResult = $this->robustMongoDB->insertOne('users', $userDoc);
+            error_log('User inserted successfully with ID: ' . $userResult->getInsertedId());
 
             error_log('Successfully created patient and user using direct MongoDB operations');
 
