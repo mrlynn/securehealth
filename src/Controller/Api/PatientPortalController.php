@@ -320,6 +320,14 @@ class PatientPortalController extends AbstractController
     private function createPatientWithDirectMongoDB(array $data): void
     {
         try {
+            // Check cluster health first
+            if (!$this->robustMongoDB->isClusterHealthy()) {
+                error_log('MongoDB cluster is not healthy, waiting for recovery...');
+                if (!$this->robustMongoDB->waitForClusterHealth(30)) {
+                    throw new \Exception('MongoDB cluster is not responding after 30 seconds');
+                }
+            }
+
             // Create patient document
             $patientDoc = [
                 'firstName' => $data['firstName'],
@@ -334,7 +342,7 @@ class PatientPortalController extends AbstractController
                 $patientDoc['phoneNumber'] = $data['phoneNumber'];
             }
 
-            // Insert patient using robust MongoDB service
+            // Insert patient using robust MongoDB service with enhanced retry
             $patientResult = $this->robustMongoDB->insertOne('patients', $patientDoc);
             $patientId = $patientResult->getInsertedId();
 
@@ -352,13 +360,14 @@ class PatientPortalController extends AbstractController
                 'updatedAt' => new \MongoDB\BSON\UTCDateTime()
             ];
 
-            // Insert user using robust MongoDB service
+            // Insert user using robust MongoDB service with enhanced retry
             $userResult = $this->robustMongoDB->insertOne('users', $userDoc);
 
             error_log('Successfully created patient and user using direct MongoDB operations');
 
         } catch (\Exception $e) {
-            error_log('Direct MongoDB operations also failed: ' . $e->getMessage());
+            error_log('Direct MongoDB operations failed: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
             throw new \Exception('Failed to create patient account using fallback method: ' . $e->getMessage());
         }
     }
