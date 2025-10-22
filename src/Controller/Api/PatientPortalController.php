@@ -263,9 +263,8 @@ class PatientPortalController extends AbstractController
         }
 
         try {
-            // For now, let's just return success to test if the endpoint works
-            // TODO: Implement proper MongoDB fallback
-            error_log('Patient registration endpoint reached - temporarily returning success for testing');
+            // Use simple MongoDB operations without complex retry logic
+            $this->createPatientWithSimpleMongoDB($data);
 
 
             // Log the registration (non-blocking - don't fail registration if audit logging fails)
@@ -292,7 +291,7 @@ class PatientPortalController extends AbstractController
 
             return $this->json([
                 'success' => true,
-                'message' => 'Patient account created successfully (test mode)',
+                'message' => 'Patient account created successfully',
                 'data' => [
                     'email' => $data['email']
                 ]
@@ -312,6 +311,66 @@ class PatientPortalController extends AbstractController
                     'line' => $e->getLine()
                 ]
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Simple MongoDB operations without complex retry logic
+     */
+    private function createPatientWithSimpleMongoDB(array $data): void
+    {
+        try {
+            error_log('Starting simple MongoDB operations for patient registration');
+            
+            // Get MongoDB client directly
+            $client = new \MongoDB\Client($_ENV['MONGODB_URI'] ?? 'mongodb://localhost:27017');
+            $database = $client->selectDatabase($_ENV['MONGODB_DB'] ?? 'securehealth');
+            
+            // Create patient document
+            $patientDoc = [
+                'firstName' => $data['firstName'],
+                'lastName' => $data['lastName'],
+                'email' => $data['email'],
+                'birthDate' => new \MongoDB\BSON\UTCDateTime(new \DateTime($data['birthDate'])),
+                'createdAt' => new \MongoDB\BSON\UTCDateTime(),
+                'updatedAt' => new \MongoDB\BSON\UTCDateTime()
+            ];
+
+            if (isset($data['phoneNumber'])) {
+                $patientDoc['phoneNumber'] = $data['phoneNumber'];
+            }
+
+            error_log('Attempting to insert patient document');
+            $patientsCollection = $database->selectCollection('patients');
+            $patientResult = $patientsCollection->insertOne($patientDoc);
+            $patientId = $patientResult->getInsertedId();
+            error_log('Patient inserted successfully with ID: ' . $patientId);
+
+            // Create user document
+            $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+            $userDoc = [
+                'email' => $data['email'],
+                'username' => $data['firstName'] . ' ' . $data['lastName'],
+                'password' => $hashedPassword,
+                'roles' => ['ROLE_PATIENT'],
+                'isAdmin' => false,
+                'isPatient' => true,
+                'patientId' => $patientId,
+                'createdAt' => new \MongoDB\BSON\UTCDateTime(),
+                'updatedAt' => new \MongoDB\BSON\UTCDateTime()
+            ];
+
+            error_log('Attempting to insert user document');
+            $usersCollection = $database->selectCollection('users');
+            $userResult = $usersCollection->insertOne($userDoc);
+            error_log('User inserted successfully with ID: ' . $userResult->getInsertedId());
+
+            error_log('Successfully created patient and user using simple MongoDB operations');
+
+        } catch (\Exception $e) {
+            error_log('Simple MongoDB operations failed: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            throw new \Exception('Failed to create patient account: ' . $e->getMessage());
         }
     }
 
