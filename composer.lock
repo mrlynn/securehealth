@@ -172,6 +172,7 @@
                     "type": "tidelift"
                 }
             ],
+            "abandoned": true,
             "time": "2022-05-20T20:07:39+00:00"
         },
         {
@@ -586,16 +587,16 @@
         },
         {
             "name": "doctrine/mongodb-odm-bundle",
-            "version": "5.4.1",
+            "version": "5.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/DoctrineMongoDBBundle.git",
-                "reference": "739c432ca8bdd10892a7df65602a8b79d7205bbd"
+                "reference": "eec60e49193bd7d92dac8e2ba948ebd1c3726a7a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/DoctrineMongoDBBundle/zipball/739c432ca8bdd10892a7df65602a8b79d7205bbd",
-                "reference": "739c432ca8bdd10892a7df65602a8b79d7205bbd",
+                "url": "https://api.github.com/repos/doctrine/DoctrineMongoDBBundle/zipball/eec60e49193bd7d92dac8e2ba948ebd1c3726a7a",
+                "reference": "eec60e49193bd7d92dac8e2ba948ebd1c3726a7a",
                 "shasum": ""
             },
             "require": {
@@ -666,9 +667,9 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/DoctrineMongoDBBundle/issues",
-                "source": "https://github.com/doctrine/DoctrineMongoDBBundle/tree/5.4.1"
+                "source": "https://github.com/doctrine/DoctrineMongoDBBundle/tree/5.4.2"
             },
-            "time": "2025-09-04T21:46:29+00:00"
+            "time": "2025-10-17T10:47:28+00:00"
         },
         {
             "name": "doctrine/persistence",
