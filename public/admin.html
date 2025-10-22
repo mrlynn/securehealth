@@ -114,11 +114,12 @@
           return;
         }
         
-        // Check if user is admin
+        // Check if user is admin or doctor (doctors can view audit logs)
         const isAdmin = window.secureHealthNavbar.hasRole('admin');
+        const isDoctor = window.secureHealthNavbar.hasRole('doctor');
         
-        if (!isAdmin) {
-          alert('Access denied. Admin privileges required.');
+        if (!isAdmin && !isDoctor) {
+          alert('Access denied. Admin or Doctor privileges required.');
           window.location.href = '/patients.html';
           return;
         }
@@ -129,21 +130,42 @@
       async function fetchAuditLogs() {
         const params = new URLSearchParams();
         if (limitSel.value) params.set('limit', limitSel.value);
-        if (actionSel.value) params.set('action', actionSel.value);
+        if (actionSel.value) params.set('actionType', actionSel.value);
         if (entitySel.value) params.set('entityType', entitySel.value);
-        const res = await fetch(`/api_audit_logs.php?${params.toString()}`, {
-          credentials: 'include'
-        });
-        const data = await res.json();
-        renderAudit(data.logs || []);
-        metricsTotal.textContent = data.metrics?.total ?? '—';
-        metrics24h.textContent = data.metrics?.last24h ?? '—';
+        
+        try {
+          const res = await fetch(`/api/audit-logs?${params.toString()}`, {
+            credentials: 'include'
+          });
+          
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
+          
+          const data = await res.json();
+          renderAudit(data || []);
+          
+          // For now, show placeholder metrics since the API doesn't return them
+          metricsTotal.textContent = data.length || '0';
+          metrics24h.textContent = '—';
+        } catch (error) {
+          console.error('Error fetching audit logs:', error);
+          alert('Failed to load audit logs: ' + error.message);
+        }
       }
 
       function fmt(ts) {
         try {
-          const ms = ts?.$date?.$numberLong ? parseInt(ts.$date.$numberLong, 10) : null;
-          return ms ? new Date(ms).toLocaleString() : '';
+          // Handle both MongoDB BSON format and ISO string format
+          if (ts?.$date?.$numberLong) {
+            const ms = parseInt(ts.$date.$numberLong, 10);
+            return new Date(ms).toLocaleString();
+          } else if (typeof ts === 'string') {
+            return new Date(ts).toLocaleString();
+          } else if (ts) {
+            return new Date(ts).toLocaleString();
+          }
+          return '';
         } catch { return ''; }
       }
 
@@ -151,11 +173,11 @@
         auditTableBody.innerHTML = logs.map(l => `
           <tr>
             <td class="text-nowrap">${fmt(l.timestamp)}</td>
-            <td><span class="badge bg-secondary badge-chip">${l.action || ''}</span></td>
+            <td><span class="badge bg-secondary badge-chip">${l.actionType || l.action || ''}</span></td>
             <td><span class="badge bg-info text-dark badge-chip">${l.entityType || ''}</span></td>
             <td class="text-truncate" title="${l.entityId || ''}">${l.entityId || ''}</td>
-            <td class="text-truncate" title="${l.userId || ''}">${l.userId || ''}</td>
-            <td><code class="json">${escapeHtml(JSON.stringify(l.details || {}, null, 2))}</code></td>
+            <td class="text-truncate" title="${l.username || l.userId || ''}">${l.username || l.userId || ''}</td>
+            <td><code class="json">${escapeHtml(JSON.stringify(l.metadata || l.details || {}, null, 2))}</code></td>
           </tr>
         `).join('');
       }

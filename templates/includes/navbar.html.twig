@@ -139,10 +139,21 @@
                     {% endif %}
                 {% endif %}
                 
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ path('docs_index') }}">
-                        <i class="fas fa-book mr-1"></i>Documentation
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="resourcesDropdown" role="button" data-toggle="dropdown">
+                        <i class="fas fa-book mr-1"></i>Resources
                     </a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ path('docs_index') }}">
+                            <i class="fas fa-book mr-1"></i>Documentation
+                        </a>
+                        <a class="dropdown-item" href="/queryable-encryption-search.html">
+                            <i class="fas fa-search mr-1"></i>Encryption Demo
+                        </a>
+                        <a class="dropdown-item" href="/wizard.html">
+                            <i class="fas fa-magic mr-1"></i>Demo Wizard
+                        </a>
+                    </div>
                 </li>
                 
                 <li class="nav-item">

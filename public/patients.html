@@ -775,18 +775,24 @@
   // Show raw MongoDB document in a Bootstrap modal (X-Ray)
   async function viewRaw(id) {
     try {
-      const res = await fetch(`/api_mongo_patient_raw.php?id=${encodeURIComponent(id)}`, {
+      const res = await fetch(`/api_mongo_patient_xray.php?id=${encodeURIComponent(id)}`, {
         credentials: 'include'
       });
-      const text = await res.text();
-      showRawModal(text);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      const data = await res.json();
+      showXRayModal(data);
     } catch (e) {
-      alert('Failed to load raw document');
+      console.error('Failed to load X-Ray data:', e);
+      alert('Failed to load X-Ray data: ' + e.message);
     }
   }
   
-  function showRawModal(rawJson) {
-    const modalId = 'rawModal';
+  function showXRayModal(data) {
+    const modalId = 'xrayModal';
     let modalEl = document.getElementById(modalId);
     if (!modalEl) {
       modalEl = document.createElement('div');
@@ -797,30 +803,163 @@
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Raw MongoDB Document (Encrypted at Rest)</h5>
+              <h5 class="modal-title">
+                <i class="fas fa-x-ray me-2"></i>Patient Data X-Ray
+                <span class="badge bg-info ms-2" id="encryptionStatus">Loading...</span>
+              </h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <p class="text-muted small">This is the raw document as stored in MongoDB. Encrypted fields appear as BinData subtype 6. The application decrypts fields before display based on role permissions.</p>
-              <pre id="rawJsonPre" class="bg-dark text-warning p-3 rounded" style="white-space: pre-wrap; word-break: break-word; font-size: 0.85rem;"></pre>
+              <p class="text-muted small mb-3">
+                This tool shows both the encrypted data as stored in MongoDB and the decrypted data as used by the application. 
+                This demonstrates MongoDB Queryable Encryption in action.
+              </p>
+              
+              <!-- Tab Navigation -->
+              <ul class="nav nav-tabs" id="xrayTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="encrypted-tab" data-bs-toggle="tab" data-bs-target="#encrypted-pane" type="button" role="tab" aria-controls="encrypted-pane" aria-selected="true">
+                    <i class="fas fa-lock me-1"></i>Encrypted (Raw MongoDB)
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="decrypted-tab" data-bs-toggle="tab" data-bs-target="#decrypted-pane" type="button" role="tab" aria-controls="decrypted-pane" aria-selected="false">
+                    <i class="fas fa-unlock me-1"></i>Decrypted (Application View)
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison-pane" type="button" role="tab" aria-controls="comparison-pane" aria-selected="false">
+                    <i class="fas fa-balance-scale me-1"></i>Side-by-Side
+                  </button>
+                </li>
+              </ul>
+              
+              <!-- Tab Content -->
+              <div class="tab-content mt-3" id="xrayTabContent">
+                <!-- Encrypted Tab -->
+                <div class="tab-pane fade show active" id="encrypted-pane" role="tabpanel" aria-labelledby="encrypted-tab">
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-1"></i>
+                    <strong>Encrypted Data:</strong> This is how the patient data is stored in MongoDB. 
+                    Sensitive fields are encrypted using MongoDB Queryable Encryption and appear as Binary data (BinData subtype 6).
+                  </div>
+                  <pre id="encryptedJsonPre" class="bg-dark text-warning p-3 rounded" style="white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; max-height: 500px; overflow-y: auto;"></pre>
+                </div>
+                
+                <!-- Decrypted Tab -->
+                <div class="tab-pane fade" id="decrypted-pane" role="tabpanel" aria-labelledby="decrypted-tab">
+                  <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    <strong>Decrypted Data:</strong> This is how the application sees the patient data after decryption. 
+                    All sensitive fields are readable and properly formatted.
+                  </div>
+                  <pre id="decryptedJsonPre" class="bg-dark text-light p-3 rounded" style="white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; max-height: 500px; overflow-y: auto;"></pre>
+                </div>
+                
+                <!-- Comparison Tab -->
+                <div class="tab-pane fade" id="comparison-pane" role="tabpanel" aria-labelledby="comparison-tab">
+                  <div class="alert alert-warning">
+                    <i class="fas fa-balance-scale me-1"></i>
+                    <strong>Side-by-Side Comparison:</strong> Compare encrypted vs decrypted data to see the transformation.
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <h6 class="text-warning">Encrypted (MongoDB Storage)</h6>
+                      <pre id="comparisonEncryptedPre" class="bg-dark text-warning p-2 rounded" style="white-space: pre-wrap; word-break: break-word; font-size: 0.75rem; max-height: 400px; overflow-y: auto;"></pre>
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="text-light">Decrypted (Application View)</h6>
+                      <pre id="comparisonDecryptedPre" class="bg-dark text-light p-2 rounded" style="white-space: pre-wrap; word-break: break-word; font-size: 0.75rem; max-height: 400px; overflow-y: auto;"></pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="modal-footer">
+              <div class="me-auto">
+                <small class="text-muted" id="metadataInfo"></small>
+              </div>
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
           </div>
         </div>`;
       document.body.appendChild(modalEl);
     }
-    const pre = modalEl.querySelector('#rawJsonPre');
-    try {
-      // If server returned canonical EJSON, pretty print it
-      const maybeObj = JSON.parse(rawJson);
-      pre.textContent = JSON.stringify(maybeObj, null, 2);
-    } catch (_) {
-      pre.textContent = rawJson;
-    }
+    
+    // Update modal content with new data
+    updateXRayModalContent(modalEl, data);
+    
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
+  }
+  
+  function updateXRayModalContent(modalEl, data) {
+    // Update encryption status badge
+    const statusBadge = modalEl.querySelector('#encryptionStatus');
+    if (data.metadata && data.metadata.encryptionStatus) {
+      if (data.metadata.encryptionStatus === 'success') {
+        statusBadge.className = 'badge bg-success ms-2';
+        statusBadge.textContent = 'Decryption Success';
+      } else {
+        statusBadge.className = 'badge bg-danger ms-2';
+        statusBadge.textContent = 'Decryption Failed';
+      }
+    } else {
+      statusBadge.className = 'badge bg-warning ms-2';
+      statusBadge.textContent = 'Unknown Status';
+    }
+    
+    // Update metadata info
+    const metadataInfo = modalEl.querySelector('#metadataInfo');
+    if (data.metadata) {
+      metadataInfo.textContent = `Patient ID: ${data.metadata.patientId} | Generated: ${new Date(data.metadata.timestamp).toLocaleString()}`;
+    }
+    
+    // Format and display encrypted data
+    const encryptedPre = modalEl.querySelector('#encryptedJsonPre');
+    try {
+      const encryptedJson = JSON.stringify(data.encrypted, null, 2);
+      encryptedPre.textContent = encryptedJson;
+    } catch (e) {
+      encryptedPre.textContent = 'Error formatting encrypted data: ' + e.message;
+    }
+    
+    // Format and display decrypted data
+    const decryptedPre = modalEl.querySelector('#decryptedJsonPre');
+    try {
+      let decryptedJson;
+      if (data.decrypted && !data.decrypted.error) {
+        decryptedJson = JSON.stringify(data.decrypted, null, 2);
+      } else {
+        decryptedJson = JSON.stringify(data.decrypted, null, 2);
+      }
+      decryptedPre.textContent = decryptedJson;
+    } catch (e) {
+      decryptedPre.textContent = 'Error formatting decrypted data: ' + e.message;
+    }
+    
+    // Format comparison data
+    const comparisonEncryptedPre = modalEl.querySelector('#comparisonEncryptedPre');
+    const comparisonDecryptedPre = modalEl.querySelector('#comparisonDecryptedPre');
+    
+    try {
+      const encryptedJson = JSON.stringify(data.encrypted, null, 2);
+      comparisonEncryptedPre.textContent = encryptedJson;
+    } catch (e) {
+      comparisonEncryptedPre.textContent = 'Error formatting encrypted data: ' + e.message;
+    }
+    
+    try {
+      let decryptedJson;
+      if (data.decrypted && !data.decrypted.error) {
+        decryptedJson = JSON.stringify(data.decrypted, null, 2);
+      } else {
+        decryptedJson = JSON.stringify(data.decrypted, null, 2);
+      }
+      comparisonDecryptedPre.textContent = decryptedJson;
+    } catch (e) {
+      comparisonDecryptedPre.textContent = 'Error formatting decrypted data: ' + e.message;
+    }
   }
   </script>
   <!-- Bootstrap JS -->

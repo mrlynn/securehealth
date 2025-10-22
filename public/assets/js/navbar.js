@@ -166,6 +166,9 @@ class SecureHealthNavbar {
                     <li><a class="dropdown-item ${currentPage === '/queryable-encryption-search.html' ? 'active' : ''}" href="/queryable-encryption-search.html">
                         <i class="fas fa-search me-1"></i>Encryption Demo
                     </a></li>
+                    <li><a class="dropdown-item ${currentPage === '/wizard.html' ? 'active' : ''}" href="/wizard.html">
+                        <i class="fas fa-magic me-1"></i>Demo Wizard
+                    </a></li>
                 </ul>
             </li>
         `;

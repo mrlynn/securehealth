@@ -52,9 +52,15 @@ security:
         - { path: ^/admin, roles: ROLE_ADMIN }
         # Appointments API access control - allow healthcare staff
         - { path: ^/api/appointments, roles: [ROLE_RECEPTIONIST, ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
+        # Audit logs API access control - allow doctors and admins
+        - { path: ^/api/audit-logs, roles: [ROLE_DOCTOR, ROLE_ADMIN] }
         # Role-specific documentation API access control
         - { path: ^/api/role-documentation, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/role-features, roles: IS_AUTHENTICATED_FULLY }
+        # Wizard API access control - all authenticated users
+        - { path: ^/api/wizard, roles: IS_AUTHENTICATED_FULLY }
+        # Wizard web interface access control
+        - { path: ^/wizard.html, roles: IS_AUTHENTICATED_FULLY }
 
     role_hierarchy:
         # Doctor has all permissions
