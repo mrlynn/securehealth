@@ -11,27 +11,27 @@
         "doctrine/mongodb-odm-bundle": "^5.0",
         "league/commonmark": "*",
         "nelmio/cors-bundle": "^2.5",
-        "symfony/asset": "7.0.*",
-        "symfony/console": "7.0.*",
-        "symfony/dotenv": "7.0.*",
+        "symfony/asset": "7.3.*",
+        "symfony/console": "7.3.*",
+        "symfony/dotenv": "7.3.*",
         "symfony/flex": "^2",
-        "symfony/framework-bundle": "7.0.*",
-        "symfony/http-client": "7.0.*",
-        "symfony/runtime": "7.0.*",
-        "symfony/security-bundle": "7.0.*",
-        "symfony/serializer": "7.0.*",
-        "symfony/twig-bundle": "7.0.*",
-        "symfony/validator": "7.0.*",
-        "symfony/yaml": "7.0.*"
+        "symfony/framework-bundle": "7.3.*",
+        "symfony/http-client": "7.3.*",
+        "symfony/runtime": "7.3.*",
+        "symfony/security-bundle": "7.3.*",
+        "symfony/serializer": "7.3.*",
+        "symfony/twig-bundle": "7.3.*",
+        "symfony/validator": "7.3.*",
+        "symfony/yaml": "7.3.*"
     },
     "require-dev": {
-        "symfony/browser-kit": "7.0.*",
-        "symfony/css-selector": "7.0.*",
-        "symfony/debug-bundle": "7.0.*",
+        "symfony/browser-kit": "7.3.*",
+        "symfony/css-selector": "7.3.*",
+        "symfony/debug-bundle": "7.3.*",
         "symfony/maker-bundle": "^1.0",
         "symfony/phpunit-bridge": "^7.0",
-        "symfony/stopwatch": "7.0.*",
-        "symfony/web-profiler-bundle": "7.0.*"
+        "symfony/stopwatch": "7.3.*",
+        "symfony/web-profiler-bundle": "7.3.*"
     },
     "config": {
         "allow-plugins": {
