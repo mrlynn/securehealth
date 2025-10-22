@@ -28,6 +28,12 @@ services:
         arguments: ['%env(resolve:MONGODB_URI)%']
         public: false
 
+    # Robust MongoDB service for handling replica set issues
+    App\Service\RobustMongoDBService:
+        arguments:
+            $connectionString: '%env(resolve:MONGODB_URI)%'
+            $databaseName: '%env(resolve:MONGODB_DB)%'
+
     # Medical Knowledge Services
     App\Service\EmbeddingService:
         arguments:

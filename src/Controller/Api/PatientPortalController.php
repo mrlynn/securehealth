@@ -20,6 +20,7 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Service\RobustMongoDBService;
 
 #[Route('/api/patient-portal')]
 class PatientPortalController extends AbstractController
@@ -33,6 +34,7 @@ class PatientPortalController extends AbstractController
     private ValidatorInterface $validator;
     private MessageRepository $messageRepository;
     private UserPasswordHasherInterface $passwordHasher;
+    private RobustMongoDBService $robustMongoDB;
 
     public function __construct(
         PatientRepository $patientRepository,
@@ -43,7 +45,8 @@ class PatientPortalController extends AbstractController
         AuthorizationCheckerInterface $authorizationChecker,
         ValidatorInterface $validator,
         MessageRepository $messageRepository,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        RobustMongoDBService $robustMongoDB
     ) {
         $this->patientRepository = $patientRepository;
         $this->userRepository = $userRepository;
@@ -54,6 +57,7 @@ class PatientPortalController extends AbstractController
         $this->validator = $validator;
         $this->messageRepository = $messageRepository;
         $this->passwordHasher = $passwordHasher;
+        $this->robustMongoDB = $robustMongoDB;
     }
 
     /**
@@ -294,7 +298,9 @@ class PatientPortalController extends AbstractController
             }
             
             if (!$flushSuccess) {
-                throw new \Exception('Failed to save patient after multiple retries');
+                // Fallback to direct MongoDB operations
+                error_log('Doctrine flush failed, trying direct MongoDB operations');
+                $this->createPatientWithDirectMongoDB($data);
             }
 
             // Create user account linked to patient
@@ -376,6 +382,55 @@ class PatientPortalController extends AbstractController
                     'line' => $e->getLine()
                 ]
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Fallback method to create patient using direct MongoDB operations
+     */
+    private function createPatientWithDirectMongoDB(array $data): void
+    {
+        try {
+            // Create patient document
+            $patientDoc = [
+                'firstName' => $data['firstName'],
+                'lastName' => $data['lastName'],
+                'email' => $data['email'],
+                'birthDate' => new \MongoDB\BSON\UTCDateTime(new \DateTime($data['birthDate'])),
+                'createdAt' => new \MongoDB\BSON\UTCDateTime(),
+                'updatedAt' => new \MongoDB\BSON\UTCDateTime()
+            ];
+
+            if (isset($data['phoneNumber'])) {
+                $patientDoc['phoneNumber'] = $data['phoneNumber'];
+            }
+
+            // Insert patient using robust MongoDB service
+            $patientResult = $this->robustMongoDB->insertOne('patients', $patientDoc);
+            $patientId = $patientResult->getInsertedId();
+
+            // Create user document
+            $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+            $userDoc = [
+                'email' => $data['email'],
+                'username' => $data['firstName'] . ' ' . $data['lastName'],
+                'password' => $hashedPassword,
+                'roles' => ['ROLE_PATIENT'],
+                'isAdmin' => false,
+                'isPatient' => true,
+                'patientId' => $patientId,
+                'createdAt' => new \MongoDB\BSON\UTCDateTime(),
+                'updatedAt' => new \MongoDB\BSON\UTCDateTime()
+            ];
+
+            // Insert user using robust MongoDB service
+            $userResult = $this->robustMongoDB->insertOne('users', $userDoc);
+
+            error_log('Successfully created patient and user using direct MongoDB operations');
+
+        } catch (\Exception $e) {
+            error_log('Direct MongoDB operations also failed: ' . $e->getMessage());
+            throw new \Exception('Failed to create patient account using fallback method: ' . $e->getMessage());
         }
     }
 
