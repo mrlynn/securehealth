@@ -281,16 +281,21 @@ class PatientPortalController extends AbstractController
             $this->documentManager->persist($user);
             $this->documentManager->flush();
 
-            // Log the registration
-            $this->auditLogService->log(
-                $user,
-                'patient_portal_registration',
-                [
-                    'action' => 'register',
-                    'patientId' => (string)$patient->getId(),
-                    'email' => $data['email']
-                ]
-            );
+            // Log the registration (non-blocking - don't fail registration if audit logging fails)
+            try {
+                $this->auditLogService->log(
+                    $user,
+                    'patient_portal_registration',
+                    [
+                        'action' => 'register',
+                        'patientId' => (string)$patient->getId(),
+                        'email' => $data['email']
+                    ]
+                );
+            } catch (\Exception $auditError) {
+                // Log audit error but don't fail the registration
+                error_log('Audit logging failed for patient registration: ' . $auditError->getMessage());
+            }
 
             return $this->json([
                 'success' => true,
