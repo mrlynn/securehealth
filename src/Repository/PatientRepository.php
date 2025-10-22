@@ -173,7 +173,12 @@ class PatientRepository
      */
     public function count(array $criteria = []): int
     {
-        return $this->collection->countDocuments($criteria);
+        try {
+            return $this->collection->countDocuments($criteria);
+        } catch (\Exception $e) {
+            // MongoDB connection failed, return 0
+            return 0;
+        }
     }
 
     /**

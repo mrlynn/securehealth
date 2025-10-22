@@ -24,7 +24,8 @@
                         </a>
                     </li>
 
-                    {# Patients dropdown - all authenticated users with role-specific options #}
+                    {# Patients dropdown - healthcare staff only (not admins) #}
+                    {% if not is_granted('ROLE_ADMIN') %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="patientsDropdown" role="button" data-toggle="dropdown">
                             <i class="fas fa-users mr-1"></i>Patients
@@ -50,6 +51,7 @@
                             {% endif %}
                         </div>
                     </li>
+                    {% endif %}
 
                     {# Doctor-specific clinical tools dropdown #}
                     {% if is_granted('ROLE_DOCTOR') %}

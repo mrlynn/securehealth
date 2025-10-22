@@ -65,7 +65,10 @@ class WizardController extends AbstractController
     {
         $user = $this->getUser();
         $request = $this->container->get('request_stack')->getCurrentRequest();
-        $stepId = $request->request->get('stepId');
+        
+        // Get stepId from JSON request body
+        $data = json_decode($request->getContent(), true);
+        $stepId = $data['stepId'] ?? null;
         
         if (!$stepId) {
             return $this->json([
@@ -77,8 +80,12 @@ class WizardController extends AbstractController
         // Store completion in session for now (could be moved to database)
         $session = $request->getSession();
         $completedSteps = $session->get('wizard_completed_steps', []);
-        $completedSteps[] = $stepId;
-        $session->set('wizard_completed_steps', $completedSteps);
+        
+        // Only add if not already completed
+        if (!in_array($stepId, $completedSteps)) {
+            $completedSteps[] = $stepId;
+            $session->set('wizard_completed_steps', $completedSteps);
+        }
         
         return $this->json([
             'success' => true,
@@ -369,17 +376,18 @@ class WizardController extends AbstractController
                     [
                         'id' => 'patient_management_admin',
                         'title' => 'Patient Management (Admin View)',
-                        'description' => 'View patient management from an administrative perspective',
-                        'url' => '/patients.html',
+                        'description' => 'View patient management from an administrative perspective with filtered data access',
+                        'url' => '/api/admin/patients',
                         'icon' => 'fas fa-users',
                         'screenshot' => '/images/wizard-screenshots/admin-patient-management.png',
                         'features' => [
-                            'View all patient records',
+                            'View basic patient information (no medical data)',
+                            'Access insurance details for administrative purposes',
                             'Monitor data access patterns',
                             'Review patient data integrity',
                             'System-wide patient overview'
                         ],
-                        'encryption_demo' => 'See how encrypted PHI is displayed and managed at the system level'
+                        'encryption_demo' => 'See how encrypted PHI is filtered for administrative access - medical data excluded for HIPAA compliance'
                     ]
                 ];
                 

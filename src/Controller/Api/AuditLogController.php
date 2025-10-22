@@ -25,8 +25,10 @@ class AuditLogController extends AbstractController
     #[Route('', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
-        // Only allow administrators to view all audit logs
-        $this->denyAccessUnlessGranted('ROLE_DOCTOR');
+        // Only allow administrators and doctors to view all audit logs
+        if (!$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_DOCTOR')) {
+            throw $this->createAccessDeniedException('You do not have permission to view audit logs.');
+        }
         
         $limit = $request->query->getInt('limit', 100);
         $page = $request->query->getInt('page', 1);
@@ -51,14 +53,19 @@ class AuditLogController extends AbstractController
             $criteria['entityId'] = $entityId;
         }
         
-        // Get logs
-        $repository = $this->dm->getRepository(AuditLog::class);
-        $logs = $repository->findBy(
-            $criteria,
-            ['timestamp' => 'DESC'],
-            $limit,
-            $skip
-        );
+        // Get logs - handle MongoDB connection issues gracefully
+        try {
+            $repository = $this->dm->getRepository(AuditLog::class);
+            $logs = $repository->findBy(
+                $criteria,
+                ['timestamp' => 'DESC'],
+                $limit,
+                $skip
+            );
+        } catch (\Exception $e) {
+            // MongoDB connection failed, return empty array
+            $logs = [];
+        }
         
         // Convert to array format
         $result = [];
@@ -78,10 +85,10 @@ class AuditLogController extends AbstractController
         
         // Log this audit log access (meta!)
         $this->auditLogService->logSecurityEvent(
-            $this->getUser()->getUserIdentifier(),
+            $this->getUser(),
             'AUDIT_LOG_ACCESS',
-            'Accessed audit logs with filters: ' . json_encode($criteria),
             [
+                'description' => 'Accessed audit logs with filters: ' . json_encode($criteria),
                 'filters' => $criteria,
                 'page' => $page,
                 'limit' => $limit
@@ -116,7 +123,7 @@ class AuditLogController extends AbstractController
         
         // Log this audit log access
         $this->auditLogService->logSecurityEvent(
-            $this->getUser()->getUserIdentifier(),
+            $this->getUser(),
             'PATIENT_AUDIT_LOG_ACCESS',
             'Accessed audit logs for patient: ' . $id
         );
@@ -152,7 +159,7 @@ class AuditLogController extends AbstractController
         
         // Log this audit log access
         $this->auditLogService->logSecurityEvent(
-            $currentUser,
+            $this->getUser(),
             'USER_AUDIT_LOG_ACCESS',
             'Accessed audit logs for user: ' . $username
         );

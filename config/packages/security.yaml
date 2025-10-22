@@ -44,12 +44,12 @@ security:
         # Create operations allowed for healthcare staff
         - { path: ^/api/patients$, methods: [POST], roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
         - { path: '^/api/patients/[a-f0-9]{24}$', methods: [PUT, DELETE], roles: ROLE_DOCTOR }
-        # Read operations allowed for all authenticated healthcare staff
-        - { path: ^/api/patients, methods: [GET], roles: [IS_AUTHENTICATED_FULLY, ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST, ROLE_ADMIN] }
+        # Read operations allowed for healthcare staff (admins access through admin interface only)
+        - { path: ^/api/patients, methods: [GET], roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
         # Admin API access control
-        - { path: ^/api/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/admin, roles: [ROLE_ADMIN, ROLE_DOCTOR] }
         # Admin web interface access control
-        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/admin, roles: [ ROLE_ADMIN, ROLE_DOCTOR] }
         # Appointments API access control - allow healthcare staff
         - { path: ^/api/appointments, roles: [ROLE_RECEPTIONIST, ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
         # Audit logs API access control - allow doctors and admins
@@ -61,10 +61,18 @@ security:
         - { path: ^/api/wizard, roles: IS_AUTHENTICATED_FULLY }
         # Wizard web interface access control
         - { path: ^/wizard.html, roles: IS_AUTHENTICATED_FULLY }
+        # Medical Knowledge API access control
+        - { path: ^/api/medical-knowledge/search, roles: [ROLE_DOCTOR, ROLE_ADMIN] }
+        - { path: ^/api/medical-knowledge/clinical-decision-support, roles: ROLE_DOCTOR }
+        - { path: ^/api/medical-knowledge/drug-interactions, roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
+        - { path: ^/api/medical-knowledge/treatment-guidelines, roles: ROLE_DOCTOR }
+        - { path: ^/api/medical-knowledge/diagnostic-criteria, roles: ROLE_DOCTOR }
+        - { path: ^/api/medical-knowledge/stats, roles: [ROLE_DOCTOR, ROLE_ADMIN] }
+        - { path: ^/api/medical-knowledge, roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
 
     role_hierarchy:
         # Doctor has all permissions
-        ROLE_DOCTOR: [ROLE_NURSE, ROLE_RECEPTIONIST]
+        ROLE_DOCTOR: [ROLE_NURSE, ROLE_RECEPTIONIST, ROLE_ADMIN]
         # Nurse has more permissions than receptionist
         ROLE_NURSE: [ROLE_RECEPTIONIST]
         # Patients have their own separate role hierarchy

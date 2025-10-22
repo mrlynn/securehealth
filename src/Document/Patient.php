@@ -187,6 +187,11 @@ class Patient
         elseif (in_array('ROLE_RECEPTIONIST', $roles)) {
             $data['insuranceDetails'] = $this->getInsuranceDetails();
         }
+        // Admins can see basic patient info and insurance for administrative purposes but NOT medical data
+        elseif (in_array('ROLE_ADMIN', $roles)) {
+            $data['insuranceDetails'] = $this->getInsuranceDetails();
+            // Admins cannot see diagnosis, medications, SSN, or medical notes for HIPAA compliance
+        }
         // Patients can see their own basic info, medications, and appointments but not SSN or provider notes
         elseif (in_array('ROLE_PATIENT', $roles)) {
             $data['medications'] = $this->getMedications();

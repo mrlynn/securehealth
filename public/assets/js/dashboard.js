@@ -279,14 +279,7 @@ class DashboardManager {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <div class="card dashboard-card quick-action" onclick="window.location.href='patients.html'">
-                                        <div class="card-body">
-                                            <i class="fas fa-user-injured fa-2x text-success mb-2"></i>
-                                            <h6>Manage Patients</h6>
-                                        </div>
-                                    </div>
-                                </div>
+                        
                                 <div class="col-md-6 mb-3">
                                     <div class="card dashboard-card quick-action" onclick="window.location.href='medical-knowledge-search.html'">
                                         <div class="card-body">

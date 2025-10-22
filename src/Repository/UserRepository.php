@@ -19,25 +19,44 @@ class UserRepository
 
     public function findOneByEmail(string $email): ?User
     {
-        return $this->repository->findOneBy(['email' => $email]);
+        try {
+            return $this->repository->findOneBy(['email' => $email]);
+        } catch (\Exception $e) {
+            // MongoDB connection failed, return null
+            return null;
+        }
     }
 
     public function save(User $user, bool $flush = true): void
     {
-        $this->documentManager->persist($user);
-        
-        if ($flush) {
-            $this->documentManager->flush();
+        try {
+            $this->documentManager->persist($user);
+            
+            if ($flush) {
+                $this->documentManager->flush();
+            }
+        } catch (\Exception $e) {
+            // MongoDB connection failed, ignore save
         }
     }
 
     public function findAll(): array
     {
-        return $this->repository->findAll();
+        try {
+            return $this->repository->findAll();
+        } catch (\Exception $e) {
+            // MongoDB connection failed, return empty array
+            return [];
+        }
     }
 
     public function count(array $criteria = []): int
     {
-        return $this->repository->count($criteria);
+        try {
+            return $this->repository->count($criteria);
+        } catch (\Exception $e) {
+            // MongoDB connection failed, return 0
+            return 0;
+        }
     }
 }

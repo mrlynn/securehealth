@@ -500,14 +500,14 @@
                         const user = data.user;
                         const userRoles = user.roles || [];
                         
-                        // Check if user has required role
-                        if (userRoles.includes('ROLE_DOCTOR') || userRoles.includes('ROLE_ADMIN')) {
+                        // Check if user has required role (doctors, nurses, admins)
+                        if (userRoles.includes('ROLE_DOCTOR') || userRoles.includes('ROLE_NURSE') || userRoles.includes('ROLE_ADMIN')) {
                             // Store user data in localStorage for consistency
                             localStorage.setItem('securehealth_user', JSON.stringify(user));
                             console.log('Authentication successful via session API');
                             return true;
                         } else {
-                            alert('Access denied. This feature requires doctor or admin privileges.');
+                            alert('Access denied. This feature requires doctor, nurse, or admin privileges.');
                             window.location.href = 'login.html';
                             return false;
                         }
@@ -530,9 +530,9 @@
             const user = JSON.parse(userData);
             const userRoles = user.roles || [];
             
-            // Check if user has required role
-            if (!userRoles.includes('ROLE_DOCTOR') && !userRoles.includes('ROLE_ADMIN')) {
-                alert('Access denied. This feature requires doctor or admin privileges.');
+            // Check if user has required role (doctors, nurses, admins)
+            if (!userRoles.includes('ROLE_DOCTOR') && !userRoles.includes('ROLE_NURSE') && !userRoles.includes('ROLE_ADMIN')) {
+                alert('Access denied. This feature requires doctor, nurse, or admin privileges.');
                 window.location.href = 'login.html';
                 return false;
             }
@@ -546,9 +546,61 @@
                 // Load knowledge base stats on page load
                 document.addEventListener('DOMContentLoaded', function() {
                     loadKnowledgeBaseStats();
+                    setupRoleBasedUI();
                 });
             }
         });
+
+        // Setup role-based UI restrictions
+        function setupRoleBasedUI() {
+            const userData = localStorage.getItem('securehealth_user');
+            if (!userData) return;
+            
+            const user = JSON.parse(userData);
+            const userRoles = user.roles || [];
+            const isNurse = userRoles.includes('ROLE_NURSE') && !userRoles.includes('ROLE_DOCTOR');
+            
+            if (isNurse) {
+                // Hide doctor-only features for nurses
+                const doctorOnlyElements = [
+                    'semanticSearchTab',
+                    'clinicalDecisionTab', 
+                    'treatmentGuidelinesTab',
+                    'diagnosticCriteriaTab'
+                ];
+                
+                doctorOnlyElements.forEach(elementId => {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.style.display = 'none';
+                    }
+                });
+                
+                // Show only drug interactions tab for nurses
+                const drugInteractionsTab = document.getElementById('drugInteractionsTab');
+                if (drugInteractionsTab) {
+                    drugInteractionsTab.classList.add('active');
+                    drugInteractionsTab.style.display = 'block';
+                }
+                
+                // Hide other tabs
+                const allTabs = document.querySelectorAll('.nav-link[data-bs-toggle="tab"]');
+                allTabs.forEach(tab => {
+                    if (!tab.id.includes('drugInteractions')) {
+                        tab.style.display = 'none';
+                    }
+                });
+                
+                // Show nurse-specific message
+                const container = document.querySelector('.container');
+                if (container) {
+                    const nurseNotice = document.createElement('div');
+                    nurseNotice.className = 'alert alert-info mt-3';
+                    nurseNotice.innerHTML = '<i class="fas fa-info-circle me-2"></i><strong>Nurse Access:</strong> You have access to drug interaction checking. Other medical knowledge features require doctor privileges.';
+                    container.insertBefore(nurseNotice, container.firstChild);
+                }
+            }
+        }
 
         async function performSemanticSearch() {
             if (!(await checkAuthentication())) return;

@@ -99,9 +99,9 @@ class AuthController extends AbstractController
         // Define page access requirements
         $pagePermissions = [
             'calendar' => ['ROLE_USER'], // All authenticated users
-            'patients' => ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_RECEPTIONIST', 'ROLE_ADMIN'],
+            'patients' => ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_RECEPTIONIST'], // Admins access through admin interface
             'patient-add' => ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_RECEPTIONIST'],
-            'patient-detail' => ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_RECEPTIONIST', 'ROLE_ADMIN'],
+            'patient-detail' => ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_RECEPTIONIST'], // Admins access through admin interface
             'patient-edit' => ['ROLE_DOCTOR', 'ROLE_NURSE'],
             'patient-notes-demo' => ['ROLE_DOCTOR', 'ROLE_NURSE'],
             'scheduling' => ['ROLE_RECEPTIONIST', 'ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_ADMIN'],

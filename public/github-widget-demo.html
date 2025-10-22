@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Widget Demo - SecureHealth</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .demo-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .widget-demo {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h1 class="text-center mb-5">
+                    <i class="fab fa-github me-2"></i>GitHub Widget Demo
+                </h1>
+                
+                <div class="demo-section">
+                    <h3>Light Theme Widget</h3>
+                    <p>Default light theme widget:</p>
+                    <div class="widget-demo">
+                        <div data-securehealth-github-widget 
+                             data-repo-owner="yourusername" 
+                             data-repo-name="securehealth" 
+                             data-theme="light">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="demo-section">
+                    <h3>Dark Theme Widget</h3>
+                    <p>Dark theme widget:</p>
+                    <div class="widget-demo" style="background: #24292e;">
+                        <div data-securehealth-github-widget 
+                             data-repo-owner="yourusername" 
+                             data-repo-name="securehealth" 
+                             data-theme="dark">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="demo-section">
+                    <h3>Widget Without Stats</h3>
+                    <p>Widget with stats disabled:</p>
+                    <div class="widget-demo">
+                        <div data-securehealth-github-widget 
+                             data-repo-owner="yourusername" 
+                             data-repo-name="securehealth" 
+                             data-show-stats="false">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="demo-section">
+                    <h3>How to Use</h3>
+                    <p>Add the widget to any page with simple HTML:</p>
+                    
+                    <h5>1. Include the widget script:</h5>
+                    <div class="code-block">
+&lt;script src="/assets/js/github-widget.js"&gt;&lt;/script&gt;
+                    </div>
+                    
+                    <h5>2. Add the widget HTML:</h5>
+                    <div class="code-block">
+&lt;div data-securehealth-github-widget 
+     data-repo-owner="yourusername" 
+     data-repo-name="securehealth" 
+     data-theme="light"&gt;
+&lt;/div&gt;
+                    </div>
+                    
+                    <h5>3. Or use JavaScript:</h5>
+                    <div class="code-block">
+const widget = new SecureHealthGitHubWidget({
+    repoOwner: 'yourusername',
+    repoName: 'securehealth',
+    container: '#my-container',
+    theme: 'light',
+    showStats: true,
+    showButtons: true
+});
+                    </div>
+                    
+                    <h5>Configuration Options:</h5>
+                    <ul>
+                        <li><code>repoOwner</code> - GitHub username/organization</li>
+                        <li><code>repoName</code> - Repository name</li>
+                        <li><code>container</code> - DOM element or selector</li>
+                        <li><code>theme</code> - 'light' or 'dark'</li>
+                        <li><code>showStats</code> - Show/hide GitHub stats</li>
+                        <li><code>showButtons</code> - Show/hide action buttons</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-section">
+                    <h3>Event Handling</h3>
+                    <p>The widget fires custom events you can listen to:</p>
+                    <div class="code-block">
+document.addEventListener('securehealth-github-interaction', function(event) {
+    console.log('GitHub interaction:', event.detail.action);
+    // Handle the interaction
+});
+                    </div>
+                </div>
+                
+                <div class="text-center mt-5">
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Back to Home
+                    </a>
+                    <a href="/github.html" class="btn btn-outline-primary">
+                        <i class="fab fa-github me-2"></i>GitHub Community
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Include the widget script -->
+    <script src="/assets/js/github-widget.js"></script>
+    
+    <!-- Demo event listener -->
+    <script>
+        document.addEventListener('securehealth-github-interaction', function(event) {
+            console.log('GitHub interaction detected:', event.detail);
+            
+            // Show a demo message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-info position-fixed';
+            alert.style.cssText = 'top: 20px; left: 20px; z-index: 9999; max-width: 300px;';
+            alert.innerHTML = `
+                <strong>Event Fired!</strong><br>
+                Action: ${event.detail.action}<br>
+                Time: ${new Date(event.detail.timestamp).toLocaleTimeString()}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.remove();
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

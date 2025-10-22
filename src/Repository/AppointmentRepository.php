@@ -103,14 +103,19 @@ class AppointmentRepository
      */
     public function count(array $criteria = []): int
     {
-        $qb = $this->documentManager->createQueryBuilder(Appointment::class);
-        
-        if (!empty($criteria)) {
-            foreach ($criteria as $field => $value) {
-                $qb->field($field)->equals($value);
+        try {
+            $qb = $this->documentManager->createQueryBuilder(Appointment::class);
+            
+            if (!empty($criteria)) {
+                foreach ($criteria as $field => $value) {
+                    $qb->field($field)->equals($value);
+                }
             }
+            
+            return $qb->getQuery()->execute()->count();
+        } catch (\Exception $e) {
+            // MongoDB connection failed, return 0
+            return 0;
         }
-        
-        return $qb->getQuery()->execute()->count();
     }
 }

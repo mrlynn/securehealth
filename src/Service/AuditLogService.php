@@ -316,6 +316,29 @@ class AuditLogService
     }
     
     /**
+     * Get recent activity logs
+     *
+     * @param int $limit Maximum number of logs to return
+     * @return array Array of AuditLog objects
+     */
+    public function getRecentActivity(int $limit = 10): array
+    {
+        $collection = $this->mongoClient
+            ->selectDatabase($this->databaseName)
+            ->selectCollection($this->auditLogCollection);
+            
+        $cursor = $collection->find(
+            [],
+            [
+                'sort' => ['timestamp' => -1],
+                'limit' => $limit
+            ]
+        );
+        
+        return $this->cursorToAuditLogs($cursor);
+    }
+
+    /**
      * Convert MongoDB cursor to array of AuditLog objects
      */
     private function cursorToAuditLogs($cursor): array

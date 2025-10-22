@@ -153,7 +153,7 @@ class SecureHealthNavbar {
                     <li><a class="dropdown-item ${currentPage === '/role-documentation.html' ? 'active' : ''}" href="/role-documentation.html">
                         <i class="fas fa-user-md me-1"></i>My Documentation
                     </a></li>
-                    <li><a class="dropdown-item ${currentPage === '/documentation.html' ? 'active' : ''}" href="/documentation.html">
+                    <li><a class="dropdown-item" href="https://docs.securehealth.dev" target="_blank">
                         <i class="fas fa-book me-1"></i>Developer Docs
                     </a></li>
                     <li><a class="dropdown-item" href="/index.html#features">
@@ -189,32 +189,34 @@ class SecureHealthNavbar {
             </li>
         `;
 
-        // Patients dropdown - visible to all authenticated users with role-specific options
-        items += `
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle ${currentPage.includes('/patient') ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-users me-1"></i>Patients
-                </a>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item ${currentPage === '/patients.html' ? 'active' : ''}" href="/patients.html">
-                        <i class="fas fa-list me-1"></i>View All Patients
-                    </a></li>
-                    <li><a class="dropdown-item ${currentPage === '/patient-add.html' ? 'active' : ''}" href="/patient-add.html">
-                        <i class="fas fa-user-plus me-1"></i>Add New Patient
-                    </a></li>
-                    ${(this.isDoctor || this.isNurse) ? `
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item ${currentPage === '/patient-notes-demo.html' ? 'active' : ''}" href="/patient-notes-demo.html">
-                        <i class="fas fa-notes-medical me-1"></i>${this.isDoctor ? 'Manage' : 'View'} Patient Notes
-                    </a></li>` : ''}
-                    ${this.isReceptionist ? `
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item ${currentPage === '/scheduling.html' ? 'active' : ''}" href="/scheduling.html">
-                        <i class="fas fa-calendar-check me-1"></i>Scheduling
-                    </a></li>` : ''}
-                </ul>
-            </li>
-        `;
+        // Patients dropdown - visible to healthcare staff (not admins)
+        if (!this.isAdmin) {
+            items += `
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle ${currentPage.includes('/patient') ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-users me-1"></i>Patients
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item ${currentPage === '/patients.html' ? 'active' : ''}" href="/patients.html">
+                            <i class="fas fa-list me-1"></i>View All Patients
+                        </a></li>
+                        <li><a class="dropdown-item ${currentPage === '/patient-add.html' ? 'active' : ''}" href="/patient-add.html">
+                            <i class="fas fa-user-plus me-1"></i>Add New Patient
+                        </a></li>
+                        ${(this.isDoctor || this.isNurse) ? `
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item ${currentPage === '/patient-notes-demo.html' ? 'active' : ''}" href="/patient-notes-demo.html">
+                            <i class="fas fa-notes-medical me-1"></i>${this.isDoctor ? 'Manage' : 'View'} Patient Notes
+                        </a></li>` : ''}
+                        ${this.isReceptionist ? `
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item ${currentPage === '/scheduling.html' ? 'active' : ''}" href="/scheduling.html">
+                            <i class="fas fa-calendar-check me-1"></i>Scheduling
+                        </a></li>` : ''}
+                    </ul>
+                </li>
+            `;
+        }
 
         // Doctor-specific dropdown for clinical tools
         if (this.isDoctor) {
@@ -263,8 +265,8 @@ class SecureHealthNavbar {
                         <li><a class="dropdown-item" href="/medical-knowledge-search.html?tool=drug-interactions">
                             <i class="fas fa-pills me-1"></i>Drug Interactions
                         </a></li>
-                        <li><a class="dropdown-item ${currentPage === '/medical-knowledge-search.html' ? 'active' : ''}" href="/medical-knowledge-search.html">
-                            <i class="fas fa-book-medical me-1"></i>Medical Knowledge (View)
+                        <li><a class="dropdown-item" href="/medical-knowledge-search.html?tool=view-only">
+                            <i class="fas fa-eye me-1"></i>View Medical Knowledge
                         </a></li>
                     </ul>
                 </li>
