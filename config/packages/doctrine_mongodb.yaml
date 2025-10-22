@@ -9,10 +9,8 @@ doctrine_mongodb:
                 authSource: admin
                 retryWrites: true
                 readPreference: primary
-                writeConcern: 
-                    w: majority
-                    j: true
-                serverSelectionTimeoutMS: 30000
+                w: majority
+                journal: true
                 connectTimeoutMS: 30000
                 socketTimeoutMS: 30000
     default_database: '%env(resolve:MONGODB_DB)%'
