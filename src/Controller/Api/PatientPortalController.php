@@ -19,6 +19,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/api/patient-portal')]
 class PatientPortalController extends AbstractController
@@ -31,6 +32,7 @@ class PatientPortalController extends AbstractController
     private AuthorizationCheckerInterface $authorizationChecker;
     private ValidatorInterface $validator;
     private MessageRepository $messageRepository;
+    private UserPasswordHasherInterface $passwordHasher;
 
     public function __construct(
         PatientRepository $patientRepository,
@@ -40,7 +42,8 @@ class PatientPortalController extends AbstractController
         AuditLogService $auditLogService,
         AuthorizationCheckerInterface $authorizationChecker,
         ValidatorInterface $validator,
-        MessageRepository $messageRepository
+        MessageRepository $messageRepository,
+        UserPasswordHasherInterface $passwordHasher
     ) {
         $this->patientRepository = $patientRepository;
         $this->userRepository = $userRepository;
@@ -50,6 +53,7 @@ class PatientPortalController extends AbstractController
         $this->authorizationChecker = $authorizationChecker;
         $this->validator = $validator;
         $this->messageRepository = $messageRepository;
+        $this->passwordHasher = $passwordHasher;
     }
 
     /**
@@ -273,10 +277,13 @@ class PatientPortalController extends AbstractController
             $user = new User();
             $user->setEmail($data['email']);
             $user->setUsername($data['firstName'] . ' ' . $data['lastName']);
-            $user->setPassword($data['password']); // TODO: Hash password properly
             $user->setRoles(['ROLE_PATIENT']);
             $user->setIsPatient(true);
             $user->setPatientId($patient->getId());
+            
+            // Hash the password properly
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+            $user->setPassword($hashedPassword);
 
             $this->documentManager->persist($user);
             $this->documentManager->flush();
@@ -308,9 +315,18 @@ class PatientPortalController extends AbstractController
             ], Response::HTTP_CREATED);
 
         } catch (\Exception $e) {
+            // Log the full error for debugging
+            error_log('Patient registration error: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            
             return $this->json([
                 'success' => false,
-                'message' => 'Failed to create patient account: ' . $e->getMessage()
+                'message' => 'Failed to create patient account: ' . $e->getMessage(),
+                'debug' => [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
