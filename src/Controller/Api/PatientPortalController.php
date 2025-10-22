@@ -322,9 +322,15 @@ class PatientPortalController extends AbstractController
         try {
             error_log('Starting simple MongoDB operations for patient registration');
             
-            // Get MongoDB client directly
-            $client = new \MongoDB\Client($_ENV['MONGODB_URI'] ?? 'mongodb://localhost:27017');
-            $database = $client->selectDatabase($_ENV['MONGODB_DB'] ?? 'securehealth');
+            // Get MongoDB client directly using Symfony's parameter
+            $mongodbUri = $this->getParameter('mongodb_url');
+            $mongodbDb = $this->getParameter('mongodb_db');
+            
+            error_log('MongoDB URI: ' . substr($mongodbUri, 0, 50) . '...');
+            error_log('MongoDB DB: ' . $mongodbDb);
+            
+            $client = new \MongoDB\Client($mongodbUri);
+            $database = $client->selectDatabase($mongodbDb);
             
             // Create patient document
             $patientDoc = [
