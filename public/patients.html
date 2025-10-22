@@ -16,19 +16,26 @@
   <script src="/assets/js/patient-verification.js"></script>
   <style>
     :root {
-      --primary-color: #2c5aa0;
-      --secondary-color: #1e3a5f;
-      --accent-color: #4a90e2;
-      --success-color: #28a745;
+      --mongodb-green: #00ED64;
+      --mongodb-dark-green: #13AA52;
+      --mongodb-black: #001E2B;
+      --mongodb-gray: #6B7280;
+      --mongodb-light-gray: #F7FAFC;
+      --mongodb-white: #FFFFFF;
+      --mongodb-border: #E5E7EB;
+      --primary-color: var(--mongodb-black);
+      --secondary-color: var(--mongodb-gray);
+      --accent-color: var(--mongodb-green);
+      --success-color: var(--mongodb-green);
       --warning-color: #ffc107;
       --danger-color: #dc3545;
-      --light-bg: #f8f9fa;
-      --dark-text: #2c3e50;
+      --light-bg: var(--mongodb-light-gray);
+      --dark-text: var(--mongodb-black);
     }
     
     body { 
-      background-color: #f8f9fa; 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-bg); 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       padding-top: 80px;
     }
     

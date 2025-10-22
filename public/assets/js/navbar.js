@@ -217,10 +217,14 @@ class SecureHealthNavbar {
         if (this.isDoctor) {
             items += `
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle ${currentPage.includes('/medical-knowledge') || currentPage === '/admin.html' ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle ${currentPage.includes('/medical-knowledge') || currentPage === '/ai-documentation.html' || currentPage === '/admin.html' ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-stethoscope me-1"></i>Clinical Tools
                     </a>
                     <ul class="dropdown-menu">
+                        <li><a class="dropdown-item ${currentPage === '/ai-documentation.html' ? 'active' : ''}" href="/ai-documentation.html">
+                            <i class="fas fa-robot me-1"></i>AI Documentation
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item ${currentPage === '/medical-knowledge-search.html' ? 'active' : ''}" href="/medical-knowledge-search.html">
                             <i class="fas fa-book-medical me-1"></i>Medical Knowledge
                         </a></li>
@@ -291,7 +295,7 @@ class SecureHealthNavbar {
         if (this.isAdmin) {
             items += `
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle ${(currentPage.includes('/admin') || currentPage.includes('/queryable')) ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle ${(currentPage.includes('/admin') || currentPage.includes('/queryable') || currentPage === '/ai-documentation.html') ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-cog me-1"></i>Admin
                     </a>
                     <ul class="dropdown-menu">
@@ -302,6 +306,9 @@ class SecureHealthNavbar {
                             <i class="fas fa-database me-1"></i>Demo Data
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item ${currentPage === '/ai-documentation.html' ? 'active' : ''}" href="/ai-documentation.html">
+                            <i class="fas fa-robot me-1"></i>AI Documentation
+                        </a></li>
                         <li><a class="dropdown-item ${currentPage === '/medical-knowledge-search.html' ? 'active' : ''}" href="/medical-knowledge-search.html">
                             <i class="fas fa-book-medical me-1"></i>Medical Knowledge
                         </a></li>

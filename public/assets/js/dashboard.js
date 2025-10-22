@@ -406,9 +406,17 @@ class DashboardManager {
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
+                                    <div class="card dashboard-card quick-action" onclick="window.location.href='ai-documentation.html'">
+                                        <div class="card-body">
+                                            <i class="fas fa-robot fa-2x text-success mb-2"></i>
+                                            <h6>AI Documentation</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
                                     <div class="card dashboard-card quick-action" onclick="window.location.href='calendar.html'">
                                         <div class="card-body">
-                                            <i class="fas fa-calendar fa-2x text-success mb-2"></i>
+                                            <i class="fas fa-calendar fa-2x text-warning mb-2"></i>
                                             <h6>Appointments</h6>
                                         </div>
                                     </div>
@@ -416,7 +424,7 @@ class DashboardManager {
                                 <div class="col-md-6 mb-3">
                                     <div class="card dashboard-card quick-action" onclick="window.location.href='staff-messages.html'">
                                         <div class="card-body">
-                                            <i class="fas fa-envelope fa-2x text-warning mb-2"></i>
+                                            <i class="fas fa-envelope fa-2x text-danger mb-2"></i>
                                             <h6>Messages</h6>
                                         </div>
                                     </div>

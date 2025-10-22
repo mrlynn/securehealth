@@ -77,6 +77,13 @@ if (preg_match('/^\/staff\//', $uri)) {
     return true;
 }
 
+// If the request is for admin routes, route to index.php
+if (preg_match('/^\/admin\//', $uri)) {
+    $_SERVER['REQUEST_URI'] = $uri;
+    include __DIR__ . '/index.php';
+    return true;
+}
+
 // If the request is for a static file that exists, serve it
 if (file_exists(__DIR__ . $uri)) {
     // Set proper content type for JSON files

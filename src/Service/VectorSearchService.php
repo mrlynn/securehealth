@@ -40,25 +40,32 @@ class VectorSearchService
             $minConfidenceLevel = $filters['minConfidenceLevel'] ?? null;
             $minEvidenceLevel = $filters['minEvidenceLevel'] ?? null;
 
-            // Perform hybrid search
-            $results = $this->knowledgeRepository->hybridSearch(
-                $queryEmbedding,
-                $specialty,
-                $tags,
-                $minConfidenceLevel,
-                $minEvidenceLevel,
-                $limit,
-                $similarityThreshold
-            );
-
-            $this->logger->info('Performed semantic medical knowledge search', [
-                'query' => $query,
-                'filters' => $filters,
-                'resultsCount' => count($results),
-                'similarityThreshold' => $similarityThreshold
-            ]);
-
-            return $results;
+            // Try Atlas Search vector search first
+            try {
+                $results = $this->performAtlasVectorSearch(
+                    $queryEmbedding,
+                    $filters,
+                    $limit,
+                    0.3  // Lower similarity threshold
+                );
+                
+                if (!empty($results)) {
+                    $this->logger->info('Atlas vector search successful', [
+                        'query' => $query,
+                        'resultsCount' => count($results)
+                    ]);
+                    return $results;
+                }
+            } catch (\Exception $e) {
+                $this->logger->warning('Atlas vector search failed, falling back to text search', [
+                    'query' => $query,
+                    'error' => $e->getMessage()
+                ]);
+            }
+            
+            // Fallback to text search
+            $this->logger->info('Using text search fallback');
+            return $this->performTextSearch($query, $filters, $limit);
 
         } catch (\Exception $e) {
             $this->logger->error('Failed to perform semantic search', [
@@ -66,7 +73,293 @@ class VectorSearchService
                 'error' => $e->getMessage()
             ]);
 
-            throw new \Exception('Semantic search failed: ' . $e->getMessage());
+            // Final fallback to text search
+            try {
+                return $this->performTextSearch($query, $filters, $limit);
+            } catch (\Exception $textError) {
+                throw new \Exception('Search failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Test Atlas Search functionality
+     */
+    public function testAtlasSearch(): array
+    {
+        try {
+            // Simple test query with a basic embedding
+            $testEmbedding = array_fill(0, 1536, 0.1); // Simple test embedding
+            
+            $pipeline = [
+                [
+                    '$vectorSearch' => [
+                        'index' => 'vector_search_index',
+                        'path' => 'embedding',
+                        'queryVector' => $testEmbedding,
+                        'numCandidates' => 10,
+                        'limit' => 5
+                    ]
+                ],
+                [
+                    '$match' => [
+                        'isActive' => true
+                    ]
+                ]
+            ];
+
+            $collection = $this->knowledgeRepository->getDocumentManager()
+                ->getDocumentCollection(\App\Document\MedicalKnowledge::class);
+            
+            $this->logger->info('Testing Atlas Search', ['pipeline' => $pipeline]);
+            
+            $cursor = $collection->aggregate($pipeline);
+            $results = iterator_to_array($cursor);
+            
+            $this->logger->info('Atlas Search test results', [
+                'count' => count($results),
+                'results' => array_map(function($doc) {
+                    return [
+                        'id' => (string)$doc['_id'],
+                        'title' => $doc['title'] ?? 'No title'
+                    ];
+                }, $results)
+            ]);
+            
+            return $results;
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Atlas Search test failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Perform Atlas Search vector search
+     */
+    private function performAtlasVectorSearch(
+        array $queryEmbedding,
+        array $filters = [],
+        int $limit = 10,
+        float $similarityThreshold = 0.7
+    ): array {
+        $this->logger->info('Performing Atlas vector search', [
+            'embeddingLength' => count($queryEmbedding),
+            'filters' => $filters,
+            'limit' => $limit,
+            'similarityThreshold' => $similarityThreshold
+        ]);
+
+        try {
+            // Build simple Atlas Search aggregation pipeline - $vectorSearch must be first stage
+            $pipeline = [
+                [
+                    '$vectorSearch' => [
+                        'index' => 'vector_search_index', // This should match your Atlas Search index name
+                        'path' => 'embedding',
+                        'queryVector' => $queryEmbedding,
+                        'numCandidates' => $limit * 10, // Search more candidates than needed
+                        'limit' => $limit
+                    ]
+                ],
+                [
+                    '$match' => [
+                        'isActive' => true
+                    ]
+                ],
+                [
+                    '$addFields' => [
+                        'score' => ['$meta' => 'vectorSearchScore']
+                    ]
+                ],
+                [
+                    '$match' => [
+                        'score' => ['$gte' => $similarityThreshold]
+                    ]
+                ],
+                [
+                    '$sort' => ['score' => -1]
+                ]
+            ];
+
+            $this->logger->info('Atlas Search pipeline', ['pipeline' => $pipeline]);
+
+            // Execute the aggregation
+            $collection = $this->knowledgeRepository->getDocumentManager()
+                ->getDocumentCollection(\App\Document\MedicalKnowledge::class);
+            
+            $this->logger->info('Executing Atlas Search aggregation', [
+                'collection' => 'medical_knowledge',
+                'pipeline' => $pipeline
+            ]);
+            
+            $cursor = $collection->aggregate($pipeline);
+
+            $results = [];
+            foreach ($cursor as $document) {
+                $result = [
+                    'id' => (string)$document['_id'],
+                    'title' => $document['title'] ?? '',
+                    'summary' => $document['summary'] ?? '',
+                    'content' => $document['content'] ?? '',
+                    'source' => $document['source'] ?? '',
+                    'sourceUrl' => $document['sourceUrl'] ?? null,
+                    'confidenceLevel' => $document['confidenceLevel'] ?? 5,
+                    'evidenceLevel' => $document['evidenceLevel'] ?? 3,
+                    'tags' => $document['tags'] ?? [],
+                    'specialties' => $document['specialties'] ?? [],
+                    'relatedConditions' => $document['relatedConditions'] ?? [],
+                    'relatedMedications' => $document['relatedMedications'] ?? [],
+                    'relatedProcedures' => $document['relatedProcedures'] ?? [],
+                    'requiresReview' => $document['requiresReview'] ?? false,
+                    'isActive' => $document['isActive'] ?? true,
+                    'createdAt' => $this->formatDate($document['createdAt'] ?? null),
+                    'score' => $document['score'] ?? 0
+                ];
+                
+                $results[] = (object)$result;
+            }
+
+            $this->logger->info('Atlas vector search completed', [
+                'resultsCount' => count($results)
+            ]);
+
+            return $results;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Atlas vector search failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Helper method to format date objects
+     */
+    private function formatDate($date, string $format = 'Y-m-d H:i:s'): ?string
+    {
+        if (!$date) {
+            return null;
+        }
+        
+        if ($date instanceof \MongoDB\BSON\UTCDateTime) {
+            return $date->toDateTime()->format($format);
+        } elseif ($date instanceof \DateTime) {
+            return $date->format($format);
+        }
+        
+        return null;
+    }
+
+    /**
+     * Perform text-based search as fallback
+     */
+    private function performTextSearch(string $query, array $filters = [], int $limit = 10): array
+    {
+        $this->logger->info('Performing text search', [
+            'query' => $query,
+            'filters' => $filters,
+            'limit' => $limit
+        ]);
+
+        try {
+            // Use the repository to search for active medical knowledge
+            $allEntries = $this->knowledgeRepository->findAllActive();
+            
+            $this->logger->info('Found active entries', [
+                'count' => count($allEntries),
+                'query' => $query
+            ]);
+
+            // Filter results based on query
+            $filteredResults = [];
+            foreach ($allEntries as $entry) {
+                $matches = false;
+                
+                if (empty($query)) {
+                    $matches = true;
+                } else {
+                    $searchText = strtolower($query);
+                    $matches = strpos(strtolower($entry->getTitle()), $searchText) !== false ||
+                              strpos(strtolower($entry->getSummary() ?? ''), $searchText) !== false ||
+                              strpos(strtolower($entry->getContent()), $searchText) !== false ||
+                              in_array($searchText, array_map('strtolower', $entry->getTags())) ||
+                              in_array($searchText, array_map('strtolower', $entry->getRelatedConditions()));
+                }
+                
+                if ($matches) {
+                    // Apply additional filters
+                    if (isset($filters['specialty']) && $filters['specialty'] && !in_array($filters['specialty'], $entry->getSpecialties())) {
+                        continue;
+                    }
+                    
+                    if (isset($filters['minConfidenceLevel']) && $filters['minConfidenceLevel'] && $entry->getConfidenceLevel() < (int)$filters['minConfidenceLevel']) {
+                        continue;
+                    }
+                    
+                    if (isset($filters['minEvidenceLevel']) && $filters['minEvidenceLevel'] && $entry->getEvidenceLevel() < (int)$filters['minEvidenceLevel']) {
+                        continue;
+                    }
+                    
+                    // Convert to array format
+                    $result = [
+                        'id' => (string)$entry->getId(),
+                        'title' => $entry->getTitle(),
+                        'summary' => $entry->getSummary(),
+                        'content' => $entry->getContent(),
+                        'source' => $entry->getSource(),
+                        'sourceUrl' => $entry->getSourceUrl(),
+                        'confidenceLevel' => $entry->getConfidenceLevel(),
+                        'evidenceLevel' => $entry->getEvidenceLevel(),
+                        'tags' => $entry->getTags(),
+                        'specialties' => $entry->getSpecialties(),
+                        'relatedConditions' => $entry->getRelatedConditions(),
+                        'relatedMedications' => $entry->getRelatedMedications(),
+                        'relatedProcedures' => $entry->getRelatedProcedures(),
+                        'requiresReview' => $entry->getRequiresReview(),
+                        'isActive' => $entry->getIsActive(),
+                        'createdAt' => $this->formatDate($entry->getCreatedAt())
+                    ];
+                    
+                    $filteredResults[] = (object)$result;
+                }
+            }
+
+            // Sort by confidence level, evidence level, then creation date
+            usort($filteredResults, function($a, $b) {
+                if ($a->confidenceLevel != $b->confidenceLevel) {
+                    return $b->confidenceLevel - $a->confidenceLevel;
+                }
+                if ($a->evidenceLevel != $b->evidenceLevel) {
+                    return $b->evidenceLevel - $a->evidenceLevel;
+                }
+                return strtotime($b->createdAt) - strtotime($a->createdAt);
+            });
+
+            // Limit results
+            $results = array_slice($filteredResults, 0, $limit);
+
+            $this->logger->info('Text search completed', [
+                'query' => $query,
+                'resultsCount' => count($results)
+            ]);
+
+            return $results;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Text search failed', [
+                'query' => $query,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Fallback to empty results instead of mock data
+            return [];
         }
     }
 

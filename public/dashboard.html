@@ -11,6 +11,30 @@
     <link href="/assets/css/navbar.css" rel="stylesheet">
     
     <style>
+        :root {
+            --mongodb-green: #00ED64;
+            --mongodb-dark-green: #13AA52;
+            --mongodb-black: #001E2B;
+            --mongodb-gray: #6B7280;
+            --mongodb-light-gray: #F7FAFC;
+            --mongodb-white: #FFFFFF;
+            --mongodb-border: #E5E7EB;
+            --primary-color: var(--mongodb-black);
+            --secondary-color: var(--mongodb-gray);
+            --accent-color: var(--mongodb-green);
+            --success-color: var(--mongodb-green);
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: var(--mongodb-light-gray);
+            --dark-text: var(--mongodb-black);
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+        }
+        
         .dashboard-card {
             transition: transform 0.2s;
             cursor: pointer;
@@ -24,8 +48,8 @@
             padding: 0.25rem 0.5rem;
         }
         .stats-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--mongodb-black) 0%, #1a2a3a 100%);
+            color: var(--mongodb-white);
         }
         .quick-action {
             min-height: 120px;

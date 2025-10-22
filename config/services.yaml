@@ -46,6 +46,13 @@ services:
             $embeddingService: '@App\Service\EmbeddingService'
             $logger: '@logger'
 
+    App\Service\AIDocumentationService:
+        arguments:
+            $logger: '@logger'
+            $openaiApiKey: '%env(OPENAI_API_KEY)%'
+            $openaiApiUrl: '%env(OPENAI_API_URL)%'
+            $openaiModel: 'gpt-4'
+
     App\Repository\MedicalKnowledgeRepository:
         arguments:
             $dm: '@doctrine_mongodb.odm.default_document_manager'

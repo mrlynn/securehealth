@@ -427,12 +427,29 @@ class Patient
             $notesHistoryForJson = [];
             foreach ($this->notesHistory as $note) {
                 $noteForJson = $note;
-                if (isset($note['createdAt']) && $note['createdAt'] instanceof UTCDateTime) {
-                    $noteForJson['createdAt'] = $note['createdAt']->toDateTime()->format('Y-m-d H:i:s');
+                
+                // Handle createdAt
+                if (is_array($note) && isset($note['createdAt'])) {
+                    if ($note['createdAt'] instanceof UTCDateTime) {
+                        try {
+                            $noteForJson['createdAt'] = $note['createdAt']->toDateTime()->format('Y-m-d H:i:s');
+                        } catch (\Exception $e) {
+                            $noteForJson['createdAt'] = $note['createdAt']->__toString();
+                        }
+                    }
                 }
-                if (isset($note['updatedAt']) && $note['updatedAt'] instanceof UTCDateTime) {
-                    $noteForJson['updatedAt'] = $note['updatedAt']->toDateTime()->format('Y-m-d H:i:s');
+                
+                // Handle updatedAt
+                if (is_array($note) && isset($note['updatedAt'])) {
+                    if ($note['updatedAt'] instanceof UTCDateTime) {
+                        try {
+                            $noteForJson['updatedAt'] = $note['updatedAt']->toDateTime()->format('Y-m-d H:i:s');
+                        } catch (\Exception $e) {
+                            $noteForJson['updatedAt'] = $note['updatedAt']->__toString();
+                        }
+                    }
                 }
+                
                 $notesHistoryForJson[] = $noteForJson;
             }
             
@@ -703,6 +720,47 @@ class Patient
         ];
         
         $this->notesHistory[] = $note;
+        return $this;
+    }
+
+    /**
+     * Add an AI-generated note to the patient's notes history
+     * 
+     * @param string $content The AI-generated note content
+     * @param ObjectId $doctorId The ID of the doctor who requested the AI generation
+     * @param string $doctorName The name of the doctor who requested the AI generation
+     * @param string $aiType The type of AI generation (soap_note, visit_summary, enhanced_notes, etc.)
+     * @param float $confidenceScore The confidence score of the AI generation (0-1)
+     * @param array $metadata Additional metadata about the AI generation
+     * @return self
+     */
+    public function addAINote(
+        string $content, 
+        ObjectId $doctorId, 
+        string $doctorName, 
+        string $aiType, 
+        float $confidenceScore = 0.0,
+        array $metadata = []
+    ): self {
+        $now = new UTCDateTime();
+        $note = [
+            'id' => (string) new ObjectId(),
+            'content' => $content,
+            'doctorId' => (string) $doctorId,
+            'doctorName' => $doctorName,
+            'createdAt' => $now,
+            'updatedAt' => $now,
+            'aiGenerated' => true,
+            'aiType' => $aiType,
+            'confidenceScore' => $confidenceScore,
+            'metadata' => $metadata
+        ];
+        
+        $this->notesHistory[] = $note;
+        
+        // Update the patient's updatedAt timestamp
+        $this->updatedAt = $now;
+        
         return $this;
     }
 

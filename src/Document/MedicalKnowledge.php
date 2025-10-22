@@ -64,7 +64,7 @@ class MedicalKnowledge
      * Publication or update date of the source
      */
     #[ODM\Field(type: 'date', nullable: true)]
-    private ?UTCDateTime $sourceDate = null;
+    private $sourceDate = null;
 
     /**
      * Confidence level of the medical information (1-10)
@@ -114,13 +114,13 @@ class MedicalKnowledge
      * Created timestamp
      */
     #[ODM\Field(type: 'date')]
-    private UTCDateTime $createdAt;
+    private $createdAt;
 
     /**
      * Last updated timestamp
      */
     #[ODM\Field(type: 'date', nullable: true)]
-    private ?UTCDateTime $updatedAt = null;
+    private $updatedAt = null;
 
     /**
      * Created by user ID
@@ -145,6 +145,24 @@ class MedicalKnowledge
     }
 
     /**
+     * Helper method to format date objects
+     */
+    private function formatDate($date, string $format = 'Y-m-d H:i:s'): ?string
+    {
+        if (!$date) {
+            return null;
+        }
+        
+        if ($date instanceof \MongoDB\BSON\UTCDateTime) {
+            return $date->toDateTime()->format($format);
+        } elseif ($date instanceof \DateTime) {
+            return $date->format($format);
+        }
+        
+        return null;
+    }
+
+    /**
      * Convert to array with role-based access control
      */
     public function toArray($userOrRole = null): array
@@ -158,7 +176,7 @@ class MedicalKnowledge
             'evidenceLevel' => $this->getEvidenceLevel(),
             'tags' => $this->getTags(),
             'specialties' => $this->getSpecialties(),
-            'createdAt' => $this->getCreatedAt() ? $this->getCreatedAt()->toDateTime()->format('Y-m-d H:i:s') : null,
+            'createdAt' => $this->formatDate($this->getCreatedAt()),
             'isActive' => $this->getIsActive()
         ];
 
@@ -174,12 +192,12 @@ class MedicalKnowledge
         if (in_array('ROLE_DOCTOR', $roles) || in_array('ROLE_ADMIN', $roles)) {
             $data['content'] = $this->getContent();
             $data['sourceUrl'] = $this->getSourceUrl();
-            $data['sourceDate'] = $this->getSourceDate() ? $this->getSourceDate()->toDateTime()->format('Y-m-d') : null;
+            $data['sourceDate'] = $this->formatDate($this->getSourceDate(), 'Y-m-d');
             $data['relatedConditions'] = $this->getRelatedConditions();
             $data['relatedMedications'] = $this->getRelatedMedications();
             $data['relatedProcedures'] = $this->getRelatedProcedures();
             $data['requiresReview'] = $this->getRequiresReview();
-            $data['updatedAt'] = $this->getUpdatedAt() ? $this->getUpdatedAt()->toDateTime()->format('Y-m-d H:i:s') : null;
+            $data['updatedAt'] = $this->formatDate($this->getUpdatedAt());
         }
         // Nurses get limited content access
         elseif (in_array('ROLE_NURSE', $roles)) {
@@ -356,12 +374,12 @@ class MedicalKnowledge
         return $this;
     }
 
-    public function getSourceDate(): ?UTCDateTime
+    public function getSourceDate()
     {
         return $this->sourceDate;
     }
 
-    public function setSourceDate(?UTCDateTime $sourceDate): self
+    public function setSourceDate($sourceDate): self
     {
         $this->sourceDate = $sourceDate;
         return $this;
@@ -468,23 +486,23 @@ class MedicalKnowledge
         return $this;
     }
 
-    public function getCreatedAt(): UTCDateTime
+    public function getCreatedAt()
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(UTCDateTime $createdAt): self
+    public function setCreatedAt($createdAt): self
     {
         $this->createdAt = $createdAt;
         return $this;
     }
 
-    public function getUpdatedAt(): ?UTCDateTime
+    public function getUpdatedAt()
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(?UTCDateTime $updatedAt): self
+    public function setUpdatedAt($updatedAt): self
     {
         $this->updatedAt = $updatedAt;
         return $this;

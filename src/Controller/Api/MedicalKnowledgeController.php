@@ -70,7 +70,12 @@ class MedicalKnowledgeController extends AbstractController
 
             // Convert results to array format
             $formattedResults = array_map(function($knowledge) {
-                return $knowledge->toArray($this->getUser());
+                if (method_exists($knowledge, 'toArray')) {
+                    return $knowledge->toArray($this->getUser());
+                } else {
+                    // Handle mock data or already formatted data
+                    return (array)$knowledge;
+                }
             }, $results);
 
             // Log the search
@@ -133,7 +138,12 @@ class MedicalKnowledgeController extends AbstractController
 
             // Convert results to array format
             $formattedResults = array_map(function($knowledge) {
-                return $knowledge->toArray($this->getUser());
+                if (method_exists($knowledge, 'toArray')) {
+                    return $knowledge->toArray($this->getUser());
+                } else {
+                    // Handle mock data objects
+                    return (array) $knowledge;
+                }
             }, $results);
 
             // Log the clinical decision support request
@@ -200,7 +210,12 @@ class MedicalKnowledgeController extends AbstractController
 
             // Convert results to array format
             $formattedResults = array_map(function($knowledge) {
-                return $knowledge->toArray($this->getUser());
+                if (method_exists($knowledge, 'toArray')) {
+                    return $knowledge->toArray($this->getUser());
+                } else {
+                    // Handle mock data objects
+                    return (array) $knowledge;
+                }
             }, $results);
 
             // Log the drug interaction search
@@ -271,7 +286,12 @@ class MedicalKnowledgeController extends AbstractController
 
             // Convert results to array format
             $formattedResults = array_map(function($knowledge) {
-                return $knowledge->toArray($this->getUser());
+                if (method_exists($knowledge, 'toArray')) {
+                    return $knowledge->toArray($this->getUser());
+                } else {
+                    // Handle mock data objects
+                    return (array) $knowledge;
+                }
             }, $results);
 
             // Log the treatment guidelines search
@@ -384,6 +404,39 @@ class MedicalKnowledgeController extends AbstractController
     }
 
     /**
+     * Test Atlas Search functionality
+     */
+    #[Route('/test-atlas-search', name: 'medical_knowledge_test_atlas', methods: ['GET'])]
+    public function testAtlasSearch(): JsonResponse
+    {
+        // Only doctors and admins can test Atlas Search
+        $this->denyAccessUnlessGranted(MedicalKnowledgeVoter::VIEW_STATS);
+
+        try {
+            $results = $this->vectorSearchService->testAtlasSearch();
+            
+            return $this->json([
+                'success' => true,
+                'message' => 'Atlas Search test completed',
+                'resultsCount' => count($results),
+                'results' => array_map(function($doc) {
+                    return [
+                        'id' => (string)$doc['_id'],
+                        'title' => $doc['title'] ?? 'No title'
+                    ];
+                }, $results)
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * Get knowledge base statistics
      */
     #[Route('/stats', name: 'medical_knowledge_stats', methods: ['GET'])]
@@ -418,6 +471,7 @@ class MedicalKnowledgeController extends AbstractController
             return $this->json(['error' => 'Failed to retrieve stats: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
 
     /**
      * Create a new medical knowledge entry

@@ -220,6 +220,8 @@
                 <li><a href="#security-voters">HIPAA-Compliant Security & RBAC</a></li>
                 <li><a href="#api-reference">HIPAA-Compliant API Reference</a></li>
                 <li><a href="#command-line-tool">Command-Line Management Tool</a></li>
+                <li><a href="#medical-knowledge-base">Medical Knowledge Base</a></li>
+                <li><a href="#ai-documentation-assistant">AI Documentation Assistant</a></li>
                 <li><a href="#development-guide">Development Guide</a></li>
             </ul>
         </div>
@@ -1124,6 +1126,737 @@ What would you like to do?<br>
             </div>
         </div>
 
+        <!-- Medical Knowledge Base -->
+        <div class="section-card" id="medical-knowledge-base">
+            <h2><i class="fas fa-brain me-2"></i>Medical Knowledge Base with Atlas Search Vector Search</h2>
+            
+            <p>SecureHealth includes a sophisticated Medical Knowledge Base powered by MongoDB Atlas Search vector search capabilities. This system provides doctors with AI-powered semantic search through medical literature, treatment guidelines, and clinical decision support using 1536-dimensional embeddings and cosine similarity.</p>
+
+            <div class="alert alert-success">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Production Ready:</strong> The Medical Knowledge Base is fully functional with real MongoDB Atlas Search vector search, OpenAI embeddings, and comprehensive medical content covering various specialties and conditions.
+            </div>
+
+            <h3>Architecture Overview</h3>
+            <p>The Medical Knowledge Base implements a modern AI-powered search architecture:</p>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-database me-2 text-primary"></i>MongoDB Atlas
+                            </h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-search me-2"></i>Vector Search Index</li>
+                                <li><i class="fas fa-brain me-2"></i>1536-dimensional embeddings</li>
+                                <li><i class="fas fa-chart-line me-2"></i>Cosine similarity search</li>
+                                <li><i class="fas fa-shield-alt me-2"></i>HIPAA-compliant storage</li>
+                            </ul>
+                            <small class="text-muted">Cloud-hosted MongoDB with Atlas Search</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-robot me-2 text-success"></i>OpenAI Embeddings
+                            </h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-key me-2"></i>text-embedding-ada-002</li>
+                                <li><i class="fas fa-sync me-2"></i>Real-time embedding generation</li>
+                                <li><i class="fas fa-fallback me-2"></i>Mock embedding fallback</li>
+                                <li><i class="fas fa-cog me-2"></i>Configurable API settings</li>
+                            </ul>
+                            <small class="text-muted">AI-powered semantic understanding</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-search me-2 text-info"></i>Vector Search
+                            </h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-bullseye me-2"></i>Semantic similarity</li>
+                                <li><i class="fas fa-filter me-2"></i>Role-based filtering</li>
+                                <li><i class="fas fa-sort me-2"></i>Relevance scoring</li>
+                                <li><i class="fas fa-clock me-2"></i>Real-time search</li>
+                            </ul>
+                            <small class="text-muted">Advanced search capabilities</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Setup Instructions</h3>
+            <p>Follow these steps to set up the Medical Knowledge Base with Atlas Search vector search:</p>
+
+            <h4>1. MongoDB Atlas Search Index Configuration</h4>
+            <p>Create a vector search index in MongoDB Atlas for the <code>medical_knowledge</code> collection:</p>
+
+            <div class="code-block">
+<span class="comment"># Atlas Search Index Configuration</span><br>
+<span class="comment"># Database: securehealth</span><br>
+<span class="comment"># Collection: medical_knowledge</span><br>
+<span class="comment"># Index Name: vector_search_index</span><br>
+<br>
+{<br>
+&nbsp;&nbsp;<span class="string">"fields"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"type"</span>: <span class="string">"vector"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"path"</span>: <span class="string">"embedding"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"numDimensions"</span>: <span class="string">1536</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"similarity"</span>: <span class="string">"cosine"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;]<br>
+}
+            </div>
+
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Important:</strong> The index name must be exactly <code>vector_search_index</code> to match the application configuration. The index must be in "Ready" status before vector search will work.
+            </div>
+
+            <h4>2. Environment Configuration</h4>
+            <p>Configure the required environment variables for OpenAI API integration:</p>
+
+            <div class="code-block">
+<span class="comment"># .env file configuration</span><br>
+<span class="keyword">OPENAI_API_KEY</span>=<span class="string">your-openai-api-key-here</span><br>
+<span class="keyword">OPENAI_API_URL</span>=<span class="string">https://api.openai.com/v1/embeddings</span><br>
+<span class="keyword">OPENAI_MODEL</span>=<span class="string">text-embedding-ada-002</span><br>
+<br>
+<span class="comment"># MongoDB Atlas connection</span><br>
+<span class="keyword">MONGODB_URI</span>=<span class="string">mongodb+srv://user:pass@cluster.mongodb.net/securehealth</span><br>
+<span class="keyword">MONGODB_DB</span>=<span class="string">securehealth</span>
+            </div>
+
+            <h4>3. Seed Medical Knowledge Base</h4>
+            <p>Populate the knowledge base with medical content and generate embeddings:</p>
+
+            <div class="code-block">
+<span class="comment"># Using the command-line tool</span><br>
+<span class="keyword">php bin/console securehealth -c medical-knowledge</span><br>
+<br>
+<span class="comment"># Or using the direct command</span><br>
+<span class="keyword">php bin/console app:seed-medical-knowledge --count=100</span><br>
+<br>
+<span class="comment"># This will:</span><br>
+<span class="comment"># 1. Create medical knowledge entries</span><br>
+<span class="comment"># 2. Generate OpenAI embeddings for each entry</span><br>
+<span class="comment"># 3. Store in MongoDB Atlas</span><br>
+<span class="comment"># 4. Verify Atlas Search index compatibility</span>
+            </div>
+
+            <h4>4. Verify Setup</h4>
+            <p>Test the Medical Knowledge Base functionality:</p>
+
+            <div class="code-block">
+<span class="comment"># Test Atlas Search vector search</span><br>
+<span class="keyword">curl -b cookies.txt http://localhost:8081/api/medical-knowledge/test-atlas-search</span><br>
+<br>
+<span class="comment"># Test semantic search</span><br>
+<span class="keyword">curl -b cookies.txt -X POST -H "Content-Type: application/json" \</span><br>
+<span class="keyword">&nbsp;&nbsp;-d '{"query":"hypertension"}' \</span><br>
+<span class="keyword">&nbsp;&nbsp;http://localhost:8081/api/medical-knowledge/search</span><br>
+<br>
+<span class="comment"># Check knowledge base statistics</span><br>
+<span class="keyword">curl -b cookies.txt http://localhost:8081/api/medical-knowledge/stats</span>
+            </div>
+
+            <h3>API Endpoints</h3>
+            <p>The Medical Knowledge Base provides comprehensive API endpoints for various medical search scenarios:</p>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/medical-knowledge/search<br>
+                <strong>Description:</strong> Semantic search through medical knowledge using Atlas Search vector search<br>
+                <strong>Required Role:</strong> Doctor, Nurse, or Admin<br>
+                <strong>Body:</strong> {"query": "hypertension", "filters": {"specialty": "cardiology"}}<br>
+                <strong>Response:</strong> Ranked results with similarity scores and medical content<br>
+                <strong>Features:</strong> Real-time embedding generation, semantic similarity, role-based filtering
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/medical-knowledge/clinical-decision-support<br>
+                <strong>Description:</strong> AI-powered clinical decision support based on patient data<br>
+                <strong>Required Role:</strong> Doctor or Admin<br>
+                <strong>Body:</strong> {"patientData": {"conditions": ["hypertension"], "medications": ["lisinopril"]}}<br>
+                <strong>Response:</strong> Relevant treatment guidelines, drug interactions, and recommendations<br>
+                <strong>Features:</strong> Patient-specific recommendations, drug interaction checking
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/medical-knowledge/drug-interactions<br>
+                <strong>Description:</strong> Search for drug interaction information<br>
+                <strong>Required Role:</strong> Doctor, Nurse, or Admin<br>
+                <strong>Body:</strong> {"medications": ["lisinopril", "warfarin"]}<br>
+                <strong>Response:</strong> Drug interaction data, contraindications, and management guidelines<br>
+                <strong>Features:</strong> Multi-drug interaction checking, severity assessment
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/medical-knowledge/treatment-guidelines<br>
+                <strong>Description:</strong> Search for evidence-based treatment guidelines<br>
+                <strong>Required Role:</strong> Doctor or Admin<br>
+                <strong>Body:</strong> {"condition": "diabetes", "specialty": "endocrinology"}<br>
+                <strong>Response:</strong> Treatment protocols, guidelines, and best practices<br>
+                <strong>Features:</strong> Specialty-specific guidelines, evidence levels, confidence scores
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">GET</span> /api/medical-knowledge/stats<br>
+                <strong>Description:</strong> Get knowledge base statistics and health status<br>
+                <strong>Required Role:</strong> Doctor, Nurse, or Admin<br>
+                <strong>Response:</strong> Total entries, active entries, specialties, last updated<br>
+                <strong>Features:</strong> Real-time statistics, system health monitoring
+            </div>
+
+            <h3>Frontend Integration</h3>
+            <p>Access the Medical Knowledge Base through the web interface:</p>
+
+            <div class="code-block">
+<span class="comment"># Access the Medical Knowledge Base interface</span><br>
+<span class="keyword">http://localhost:8081/medical-knowledge-search.html</span><br>
+<br>
+<span class="comment"># Features include:</span><br>
+<span class="comment"># - Semantic search with real-time results</span><br>
+<span class="comment"># - Clinical decision support</span><br>
+<span class="comment"># - Drug interaction checking</span><br>
+<span class="comment"># - Treatment guideline search</span><br>
+<span class="comment"># - Professional medical styling</span><br>
+<span class="comment"># - Role-based access control</span>
+            </div>
+
+            <h3>Technical Implementation</h3>
+            <p>The Medical Knowledge Base uses several key components:</p>
+
+            <h4>VectorSearchService</h4>
+            <p>The core service that orchestrates Atlas Search vector search operations:</p>
+
+            <div class="code-block">
+<span class="keyword">class</span> <span class="class">VectorSearchService</span><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public function</span> <span class="class">searchMedicalKnowledge</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">string</span> <span class="string">$query</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">array</span> <span class="string">$filters</span> = [],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">int</span> <span class="string">$limit</span> = <span class="string">10</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">float</span> <span class="string">$similarityThreshold</span> = <span class="string">0.3</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;): <span class="keyword">array</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Generate embedding for the query</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$queryEmbedding</span> = <span class="keyword">$this</span>-><span class="string">embeddingService</span>-><span class="class">generateEmbedding</span>(<span class="keyword">$query</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Perform Atlas Search vector search</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="keyword">$this</span>-><span class="class">performAtlasVectorSearch</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$queryEmbedding</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$filters</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$limit</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$similarityThreshold</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}
+            </div>
+
+            <h4>Atlas Search Pipeline</h4>
+            <p>The MongoDB aggregation pipeline for vector search:</p>
+
+            <div class="code-block">
+<span class="comment">// Atlas Search vector search pipeline</span><br>
+<span class="keyword">$pipeline</span> = [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'$vectorSearch'</span> => [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'index'</span> => <span class="string">'vector_search_index'</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'path'</span> => <span class="string">'embedding'</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'queryVector'</span> => <span class="keyword">$queryEmbedding</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'numCandidates'</span> => <span class="keyword">$limit</span> * <span class="string">10</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'limit'</span> => <span class="keyword">$limit</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'$match'</span> => [<span class="string">'isActive'</span> => <span class="keyword">true</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'$addFields'</span> => [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'score'</span> => [<span class="string">'$meta'</span> => <span class="string">'vectorSearchScore'</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'$sort'</span> => [<span class="string">'score'</span> => <span class="string">-1</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+];
+            </div>
+
+            <h3>Medical Content Structure</h3>
+            <p>Each medical knowledge entry contains comprehensive medical information:</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-file-medical me-2 text-primary"></i>Core Fields</h5>
+                    <ul>
+                        <li><strong>title:</strong> Medical condition or topic</li>
+                        <li><strong>summary:</strong> Brief description</li>
+                        <li><strong>content:</strong> Detailed medical information</li>
+                        <li><strong>source:</strong> Medical authority or guideline</li>
+                        <li><strong>sourceUrl:</strong> Reference URL</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-tags me-2 text-success"></i>Classification</h5>
+                    <ul>
+                        <li><strong>tags:</strong> Medical keywords</li>
+                        <li><strong>specialties:</strong> Medical specialties</li>
+                        <li><strong>relatedConditions:</strong> Associated conditions</li>
+                        <li><strong>relatedMedications:</strong> Relevant medications</li>
+                        <li><strong>relatedProcedures:</strong> Medical procedures</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-chart-line me-2 text-info"></i>Quality Metrics</h5>
+                    <ul>
+                        <li><strong>confidenceLevel:</strong> 1-10 confidence rating</li>
+                        <li><strong>evidenceLevel:</strong> 1-5 evidence strength</li>
+                        <li><strong>requiresReview:</strong> Flag for review</li>
+                        <li><strong>isActive:</strong> Active status</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-brain me-2 text-warning"></i>AI Features</h5>
+                    <ul>
+                        <li><strong>embedding:</strong> 1536-dimensional vector</li>
+                        <li><strong>score:</strong> Similarity score (0-1)</li>
+                        <li><strong>createdAt:</strong> Creation timestamp</li>
+                        <li><strong>sourceDate:</strong> Source publication date</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Troubleshooting</h3>
+            <p>Common issues and solutions for the Medical Knowledge Base:</p>
+
+            <div class="alert alert-info">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>No Search Results</h5>
+                <ul class="mb-0">
+                    <li><strong>Check Atlas Search Index:</strong> Ensure <code>vector_search_index</code> exists and is "Ready"</li>
+                    <li><strong>Verify Embeddings:</strong> Check that entries have 1536-dimensional embeddings</li>
+                    <li><strong>Similarity Threshold:</strong> Lower threshold from 0.7 to 0.3 for more results</li>
+                    <li><strong>OpenAI API:</strong> Verify API key and quota limits</li>
+                </ul>
+            </div>
+
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-bug me-2"></i>Search Fallback to Text</h5>
+                <ul class="mb-0">
+                    <li><strong>Atlas Search Error:</strong> Check MongoDB Atlas logs for vector search errors</li>
+                    <li><strong>Index Name Mismatch:</strong> Ensure index name is exactly <code>vector_search_index</code></li>
+                    <li><strong>Embedding Format:</strong> Verify embeddings are arrays of 1536 floats</li>
+                    <li><strong>Collection Name:</strong> Confirm collection is <code>medical_knowledge</code></li>
+                </ul>
+            </div>
+
+            <h3>Performance Optimization</h3>
+            <p>Tips for optimizing Medical Knowledge Base performance:</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-tachometer-alt me-2 text-primary"></i>Search Performance</h5>
+                    <ul>
+                        <li>Use appropriate <code>numCandidates</code> (limit × 10)</li>
+                        <li>Set reasonable similarity thresholds (0.3-0.7)</li>
+                        <li>Cache frequently searched queries</li>
+                        <li>Use filters to reduce search scope</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-database me-2 text-success"></i>Database Optimization</h5>
+                    <ul>
+                        <li>Monitor Atlas Search index performance</li>
+                        <li>Regularly update embeddings for new content</li>
+                        <li>Archive inactive knowledge entries</li>
+                        <li>Use MongoDB Atlas monitoring tools</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Security & HIPAA Compliance</h3>
+            <p>The Medical Knowledge Base implements comprehensive security measures:</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">Access Control</h5>
+                    <ul>
+                        <li>Role-based access control (RBAC)</li>
+                        <li>Doctor/Nurse/Admin permissions</li>
+                        <li>API endpoint protection</li>
+                        <li>Session-based authentication</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-shield-alt me-2 text-success"></i>Data Protection</h5>
+                    <ul>
+                        <li>Encrypted data transmission</li>
+                        <li>Secure API key management</li>
+                        <li>Audit logging for all searches</li>
+                        <li>HIPAA-compliant data handling</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="/medical-knowledge-search.html" class="btn btn-primary me-3">
+                    <i class="fas fa-search me-2"></i>Try Medical Knowledge Base
+                </a>
+                <a href="https://github.com/mrlynn/securehealth/blob/main/src/Service/VectorSearchService.php" target="_blank" class="btn btn-outline-primary me-3">
+                    <i class="fab fa-github me-2"></i>View VectorSearchService Source
+                </a>
+                <a href="https://github.com/mrlynn/securehealth/blob/main/src/Controller/Api/MedicalKnowledgeController.php" target="_blank" class="btn btn-outline-primary">
+                    <i class="fab fa-github me-2"></i>View API Controller Source
+                </a>
+            </div>
+        </div>
+
+        <!-- AI Documentation Assistant -->
+        <div class="section-card" id="ai-documentation-assistant">
+            <h2><i class="fas fa-robot me-2"></i>AI Documentation Assistant</h2>
+            
+            <p>SecureHealth includes a sophisticated AI Documentation Assistant powered by OpenAI GPT-4 that streamlines clinical documentation for healthcare providers. This system provides AI-powered tools for SOAP note generation, visit summaries, ICD-10 code suggestions, and note enhancement while maintaining HIPAA compliance and medical accuracy.</p>
+
+            <div class="alert alert-success">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Production Ready:</strong> The AI Documentation Assistant is fully functional with real OpenAI GPT-4 integration, comprehensive audit logging, and seamless integration with the patient notes system.
+            </div>
+
+            <h3>Features Overview</h3>
+            <p>The AI Documentation Assistant provides four core capabilities designed to save healthcare providers significant time on clinical documentation:</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-clipboard-list me-2 text-primary"></i>SOAP Note Generation
+                            </h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-user me-2"></i>Subjective section generation</li>
+                                <li><i class="fas fa-stethoscope me-2"></i>Objective findings organization</li>
+                                <li><i class="fas fa-brain me-2"></i>Assessment and clinical reasoning</li>
+                                <li><i class="fas fa-clipboard-check me-2"></i>Treatment plan suggestions</li>
+                            </ul>
+                            <small class="text-muted">Generate structured SOAP notes from conversation text</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-file-alt me-2 text-success"></i>Visit Summary
+                            </h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-compress-alt me-2"></i>Concise visit summaries</li>
+                                <li><i class="fas fa-comments me-2"></i>Patient communication ready</li>
+                                <li><i class="fas fa-file-medical me-2"></i>Referral letter format</li>
+                                <li><i class="fas fa-shield-alt me-2"></i>Insurance documentation</li>
+                            </ul>
+                            <small class="text-muted">Generate concise summaries for various uses</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-code me-2 text-info"></i>ICD-10 Code Suggestions
+                            </h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-bullseye me-2"></i>Primary diagnosis codes</li>
+                                <li><i class="fas fa-list me-2"></i>Secondary diagnosis codes</li>
+                                <li><i class="fas fa-exclamation-triangle me-2"></i>Symptom codes</li>
+                                <li><i class="fas fa-chart-line me-2"></i>Confidence scoring</li>
+                            </ul>
+                            <small class="text-muted">AI-powered ICD-10 code recommendations</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-edit me-2 text-warning"></i>Note Enhancement
+                            </h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-eye me-2"></i>Clarity improvements</li>
+                                <li><i class="fas fa-plus-circle me-2"></i>Completeness suggestions</li>
+                                <li><i class="fas fa-language me-2"></i>Medical terminology enhancement</li>
+                                <li><i class="fas fa-sitemap me-2"></i>Structure optimization</li>
+                            </ul>
+                            <small class="text-muted">Enhance existing clinical notes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Setup Instructions</h3>
+            <p>Follow these steps to set up the AI Documentation Assistant:</p>
+
+            <h4>1. Environment Configuration</h4>
+            <p>Configure the required environment variables for OpenAI API integration:</p>
+
+            <div class="code-block">
+<span class="comment"># .env file configuration</span><br>
+<span class="keyword">OPENAI_API_KEY</span>=<span class="string">your-openai-api-key-here</span><br>
+<span class="keyword">OPENAI_API_URL</span>=<span class="string">https://api.openai.com/v1/chat/completions</span><br>
+<span class="keyword">OPENAI_MODEL</span>=<span class="string">gpt-4</span><br>
+<br>
+<span class="comment"># Optional: Configure AI service parameters</span><br>
+<span class="keyword">AI_DOCUMENTATION_ENABLED</span>=<span class="string">true</span><br>
+<span class="keyword">AI_CONFIDENCE_THRESHOLD</span>=<span class="string">0.7</span>
+            </div>
+
+            <h4>2. Service Configuration</h4>
+            <p>The AI Documentation Service is automatically configured through Symfony's dependency injection:</p>
+
+            <div class="code-block">
+<span class="comment"># config/services.yaml</span><br>
+<span class="keyword">App\Service\AIDocumentationService</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">arguments</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">$openaiApiKey</span>: <span class="string">'%env(OPENAI_API_KEY)%'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">$openaiApiUrl</span>: <span class="string">'%env(OPENAI_API_URL)%'</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">$openaiModel</span>: <span class="string">'%env(OPENAI_MODEL)%'</span>
+            </div>
+
+            <h4>3. Access the AI Documentation Assistant</h4>
+            <p>Access the AI Documentation Assistant through the web interface:</p>
+
+            <div class="code-block">
+<span class="comment"># Access the AI Documentation Assistant</span><br>
+<span class="keyword">http://localhost:8081/ai-documentation.html</span><br>
+<br>
+<span class="comment"># Features include:</span><br>
+<span class="comment"># - SOAP note generation from conversation text</span><br>
+<span class="comment"># - Visit summary generation</span><br>
+<span class="comment"># - ICD-10 code suggestions</span><br>
+<span class="comment"># - Clinical note enhancement</span><br>
+<span class="comment"># - Save AI-generated content to patient records</span><br>
+<span class="comment"># - HIPAA-compliant audit logging</span>
+            </div>
+
+            <h3>API Endpoints</h3>
+            <p>The AI Documentation Assistant provides comprehensive API endpoints for clinical documentation:</p>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/ai-documentation/soap-note/{patientId}<br>
+                <strong>Description:</strong> Generate structured SOAP notes from conversation text and clinical findings<br>
+                <strong>Required Role:</strong> Doctor or Admin<br>
+                <strong>Body:</strong> {"conversationText": "...", "vitalSigns": [...], "physicalExam": [...]}<br>
+                <strong>Response:</strong> Structured SOAP note with confidence score and suggestions<br>
+                <strong>Features:</strong> Real-time generation, confidence scoring, structured output
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/ai-documentation/visit-summary/{patientId}<br>
+                <strong>Description:</strong> Generate concise visit summaries for patient communication<br>
+                <strong>Required Role:</strong> Doctor or Admin<br>
+                <strong>Body:</strong> {"rawNotes": "...", "diagnosis": [...], "medications": [...]}<br>
+                <strong>Response:</strong> Concise visit summary with generation metadata<br>
+                <strong>Features:</strong> Patient-ready summaries, referral letter format, insurance documentation
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/ai-documentation/icd-codes<br>
+                <strong>Description:</strong> Suggest appropriate ICD-10 codes based on symptoms and diagnosis<br>
+                <strong>Required Role:</strong> Doctor or Admin<br>
+                <strong>Body:</strong> {"symptoms": [...], "diagnosis": [...], "patientData": {...}}<br>
+                <strong>Response:</strong> Suggested ICD-10 codes with confidence scores and rationale<br>
+                <strong>Features:</strong> Primary/secondary codes, symptom codes, confidence scoring
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/ai-documentation/enhance-notes/{patientId}<br>
+                <strong>Description:</strong> Enhance existing clinical notes with AI suggestions<br>
+                <strong>Required Role:</strong> Doctor or Admin<br>
+                <strong>Body:</strong> {"existingNotes": "...", "context": {...}}<br>
+                <strong>Response:</strong> Enhanced notes with suggestions and improvement areas<br>
+                <strong>Features:</strong> Clarity improvements, completeness suggestions, medical terminology enhancement
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span> /api/ai-documentation/save-note/{patientId}<br>
+                <strong>Description:</strong> Save AI-generated content to patient record<br>
+                <strong>Required Role:</strong> Doctor or Admin<br>
+                <strong>Body:</strong> {"content": "...", "aiType": "...", "confidenceScore": 0.8, "metadata": {...}}<br>
+                <strong>Response:</strong> Confirmation of saved note with note ID<br>
+                <strong>Features:</strong> Seamless integration with patient notes system, audit logging
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method">GET</span> /api/ai-documentation/capabilities<br>
+                <strong>Description:</strong> Get AI documentation capabilities and status<br>
+                <strong>Required Role:</strong> Doctor or Admin<br>
+                <strong>Response:</strong> Available AI features, descriptions, and requirements<br>
+                <strong>Features:</strong> Capability discovery, feature descriptions, role requirements
+            </div>
+
+            <h3>Technical Implementation</h3>
+            <p>The AI Documentation Assistant uses several key components:</p>
+
+            <h4>AIDocumentationService</h4>
+            <p>The core service that handles all AI-powered documentation operations:</p>
+
+            <div class="code-block">
+<span class="keyword">class</span> <span class="class">AIDocumentationService</span><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public function</span> <span class="class">generateSOAPNote</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="class">Patient</span> <span class="string">$patient</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="class">User</span> <span class="string">$doctor</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">string</span> <span class="string">$conversationText</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">array</span> <span class="string">$vitalSigns</span> = [],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">array</span> <span class="string">$physicalExam</span> = []<br>
+&nbsp;&nbsp;&nbsp;&nbsp;): <span class="keyword">array</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Generate structured SOAP note using OpenAI GPT-4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$prompt</span> = <span class="keyword">$this</span>-><span class="class">buildSOAPPrompt</span>(<span class="keyword">$patient</span>, <span class="keyword">$doctor</span>, <span class="keyword">$conversationText</span>, <span class="keyword">$vitalSigns</span>, <span class="keyword">$physicalExam</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$response</span> = <span class="keyword">$this</span>-><span class="class">callOpenAI</span>(<span class="keyword">$prompt</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="keyword">$this</span>-><span class="class">parseSOAPResponse</span>(<span class="keyword">$response</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}
+            </div>
+
+            <h4>Patient Integration</h4>
+            <p>AI-generated notes are seamlessly integrated into the patient notes system:</p>
+
+            <div class="code-block">
+<span class="comment">// Add AI-generated note to patient record</span><br>
+<span class="keyword">$patient</span>-><span class="class">addAINote</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$content</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">new</span> <span class="class">ObjectId</span>(<span class="keyword">$user</span>-><span class="class">getId</span>()),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$user</span>-><span class="class">getFirstName</span>() . <span class="string">' '</span> . <span class="keyword">$user</span>-><span class="class">getLastName</span>(),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'soap_note'</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$confidenceScore</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">$metadata</span><br>
+);
+            </div>
+
+            <h3>AI-Generated Note Structure</h3>
+            <p>AI-generated notes include additional metadata for tracking and compliance:</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-file-medical me-2 text-primary"></i>Standard Fields</h5>
+                    <ul>
+                        <li><strong>id:</strong> Unique note identifier</li>
+                        <li><strong>content:</strong> AI-generated note content</li>
+                        <li><strong>doctorId:</strong> Doctor who requested AI generation</li>
+                        <li><strong>doctorName:</strong> Doctor's name</li>
+                        <li><strong>createdAt:</strong> Generation timestamp</li>
+                        <li><strong>updatedAt:</strong> Last update timestamp</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-robot me-2 text-success"></i>AI-Specific Fields</h5>
+                    <ul>
+                        <li><strong>aiGenerated:</strong> Boolean flag (true)</li>
+                        <li><strong>aiType:</strong> Type of AI generation</li>
+                        <li><strong>confidenceScore:</strong> AI confidence (0-1)</li>
+                        <li><strong>metadata:</strong> Additional AI metadata</li>
+                        <li><strong>suggestions:</strong> AI improvement suggestions</li>
+                        <li><strong>areas_for_improvement:</strong> Specific improvement areas</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Security & HIPAA Compliance</h3>
+            <p>The AI Documentation Assistant implements comprehensive security measures:</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">Access Control</h5>
+                    <ul>
+                        <li>Role-based access control (Doctor/Admin only)</li>
+                        <li>Patient-specific permissions</li>
+                        <li>API endpoint protection</li>
+                        <li>Session-based authentication</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-shield-alt me-2 text-success"></i>Data Protection</h5>
+                    <ul>
+                        <li>Comprehensive audit logging</li>
+                        <li>Secure API key management</li>
+                        <li>Patient data anonymization in prompts</li>
+                        <li>HIPAA-compliant data handling</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Troubleshooting</h3>
+            <p>Common issues and solutions for the AI Documentation Assistant:</p>
+
+            <div class="alert alert-info">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>OpenAI API Issues</h5>
+                <ul class="mb-0">
+                    <li><strong>API Key:</strong> Verify OPENAI_API_KEY is correctly set</li>
+                    <li><strong>Quota Limits:</strong> Check OpenAI API usage and billing</li>
+                    <li><strong>Model Access:</strong> Ensure GPT-4 access is enabled</li>
+                    <li><strong>Rate Limits:</strong> Implement request throttling if needed</li>
+                </ul>
+            </div>
+
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-bug me-2"></i>Generation Failures</h5>
+                <ul class="mb-0">
+                    <li><strong>Fallback Responses:</strong> System provides fallback when AI fails</li>
+                    <li><strong>Error Logging:</strong> Check application logs for detailed errors</li>
+                    <li><strong>Prompt Issues:</strong> Verify input data format and content</li>
+                    <li><strong>Response Parsing:</strong> Check JSON response format</li>
+                </ul>
+            </div>
+
+            <h3>Performance Optimization</h3>
+            <p>Tips for optimizing AI Documentation Assistant performance:</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-tachometer-alt me-2 text-primary"></i>Response Time</h5>
+                    <ul>
+                        <li>Use appropriate temperature settings (0.3 for consistency)</li>
+                        <li>Limit max_tokens for faster responses</li>
+                        <li>Cache frequently used prompts</li>
+                        <li>Implement request queuing for high volume</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-dollar-sign me-2 text-success"></i>Cost Management</h5>
+                    <ul>
+                        <li>Monitor OpenAI API usage and costs</li>
+                        <li>Implement usage limits per user/role</li>
+                        <li>Use appropriate model for task complexity</li>
+                        <li>Cache responses for repeated requests</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="/ai-documentation.html" class="btn btn-primary me-3">
+                    <i class="fas fa-robot me-2"></i>Try AI Documentation Assistant
+                </a>
+                <a href="https://github.com/mrlynn/securehealth/blob/main/src/Service/AIDocumentationService.php" target="_blank" class="btn btn-outline-primary me-3">
+                    <i class="fab fa-github me-2"></i>View AIDocumentationService Source
+                </a>
+                <a href="https://github.com/mrlynn/securehealth/blob/main/src/Controller/Api/AIDocumentationController.php" target="_blank" class="btn btn-outline-primary">
+                    <i class="fab fa-github me-2"></i>View API Controller Source
+                </a>
+            </div>
+        </div>
+
         <!-- Development Guide -->
         <div class="section-card" id="development-guide">
             <h2><i class="fas fa-tools me-2"></i>Development Guide</h2>
@@ -1368,6 +2101,8 @@ What would you like to do?<br>
                         <li><a href="#security-voters" class="text-light text-decoration-none">Security</a></li>
                         <li><a href="#api-reference" class="text-light text-decoration-none">API Reference</a></li>
                         <li><a href="#command-line-tool" class="text-light text-decoration-none">CLI Tool</a></li>
+                        <li><a href="#medical-knowledge-base" class="text-light text-decoration-none">Medical Knowledge Base</a></li>
+                        <li><a href="#ai-documentation-assistant" class="text-light text-decoration-none">AI Documentation Assistant</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4">
