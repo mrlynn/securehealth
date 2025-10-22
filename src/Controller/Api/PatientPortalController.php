@@ -323,14 +323,36 @@ class PatientPortalController extends AbstractController
             error_log('Starting simple MongoDB operations for patient registration');
             
             // Get MongoDB client directly using Symfony's parameter
-            $mongodbUri = $this->getParameter('mongodb_url');
-            $mongodbDb = $this->getParameter('mongodb_db');
-            
-            error_log('MongoDB URI: ' . substr($mongodbUri, 0, 50) . '...');
-            error_log('MongoDB DB: ' . $mongodbDb);
-            
-            $client = new \MongoDB\Client($mongodbUri);
-            $database = $client->selectDatabase($mongodbDb);
+            try {
+                $mongodbUri = $this->getParameter('mongodb_url');
+                $mongodbDb = $this->getParameter('mongodb_db');
+                
+                error_log('MongoDB URI: ' . substr($mongodbUri, 0, 50) . '...');
+                error_log('MongoDB DB: ' . $mongodbDb);
+                
+                if (empty($mongodbUri) || strpos($mongodbUri, 'localhost') !== false) {
+                    throw new \Exception('MongoDB URI is not properly configured: ' . $mongodbUri);
+                }
+                
+                $client = new \MongoDB\Client($mongodbUri);
+                $database = $client->selectDatabase($mongodbDb);
+                
+            } catch (\Exception $e) {
+                error_log('MongoDB parameter error: ' . $e->getMessage());
+                // Fallback to environment variables
+                $mongodbUri = $_ENV['MONGODB_URI'] ?? null;
+                $mongodbDb = $_ENV['MONGODB_DB'] ?? 'securehealth';
+                
+                error_log('Fallback MongoDB URI: ' . substr($mongodbUri ?? 'null', 0, 50) . '...');
+                error_log('Fallback MongoDB DB: ' . $mongodbDb);
+                
+                if (empty($mongodbUri)) {
+                    throw new \Exception('MongoDB URI is not configured in parameters or environment variables');
+                }
+                
+                $client = new \MongoDB\Client($mongodbUri);
+                $database = $client->selectDatabase($mongodbDb);
+            }
             
             // Create patient document
             $patientDoc = [
