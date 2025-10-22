@@ -271,7 +271,31 @@ class PatientPortalController extends AbstractController
             }
 
             $this->documentManager->persist($patient);
-            $this->documentManager->flush();
+            
+            // Try to flush with retry logic for "not primary" errors
+            $maxRetries = 3;
+            $retryCount = 0;
+            $flushSuccess = false;
+            
+            while ($retryCount < $maxRetries && !$flushSuccess) {
+                try {
+                    $this->documentManager->flush();
+                    $flushSuccess = true;
+                } catch (\Exception $flushError) {
+                    $retryCount++;
+                    if (strpos($flushError->getMessage(), 'not primary') !== false && $retryCount < $maxRetries) {
+                        // Wait a bit before retrying
+                        usleep(500000); // 0.5 seconds
+                        error_log("MongoDB 'not primary' error, retry $retryCount/$maxRetries");
+                    } else {
+                        throw $flushError;
+                    }
+                }
+            }
+            
+            if (!$flushSuccess) {
+                throw new \Exception('Failed to save patient after multiple retries');
+            }
 
             // Create user account linked to patient
             $user = new User();
@@ -286,7 +310,31 @@ class PatientPortalController extends AbstractController
             $user->setPassword($hashedPassword);
 
             $this->documentManager->persist($user);
-            $this->documentManager->flush();
+            
+            // Try to flush user with retry logic for "not primary" errors
+            $maxRetries = 3;
+            $retryCount = 0;
+            $flushSuccess = false;
+            
+            while ($retryCount < $maxRetries && !$flushSuccess) {
+                try {
+                    $this->documentManager->flush();
+                    $flushSuccess = true;
+                } catch (\Exception $flushError) {
+                    $retryCount++;
+                    if (strpos($flushError->getMessage(), 'not primary') !== false && $retryCount < $maxRetries) {
+                        // Wait a bit before retrying
+                        usleep(500000); // 0.5 seconds
+                        error_log("MongoDB 'not primary' error for user, retry $retryCount/$maxRetries");
+                    } else {
+                        throw $flushError;
+                    }
+                }
+            }
+            
+            if (!$flushSuccess) {
+                throw new \Exception('Failed to save user after multiple retries');
+            }
 
             // Log the registration (non-blocking - don't fail registration if audit logging fails)
             try {
