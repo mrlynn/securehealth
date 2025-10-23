@@ -239,6 +239,55 @@ class PatientRepository
     }
 
     /**
+     * Find patients by name (first and/or last name)
+     */
+    public function findByName(string $firstName = '', string $lastName = ''): array
+    {
+        $query = [];
+        
+        if (!empty($firstName)) {
+            $encryptedFirstName = $this->encryptionService->encrypt('patient', 'firstName', $firstName);
+            $query['firstName'] = $encryptedFirstName;
+        }
+        
+        if (!empty($lastName)) {
+            $encryptedLastName = $this->encryptionService->encrypt('patient', 'lastName', $lastName);
+            $query['lastName'] = $encryptedLastName;
+        }
+        
+        if (empty($query)) {
+            return [];
+        }
+        
+        $cursor = $this->collection->find($query);
+        
+        $patients = [];
+        foreach ($cursor as $document) {
+            $patients[] = Patient::fromDocument((array) $document, $this->encryptionService);
+        }
+        
+        return $patients;
+    }
+
+    /**
+     * Find patients by medical condition/diagnosis
+     */
+    public function findByCondition(string $condition): array
+    {
+        // Encrypt the condition for searching
+        $encryptedCondition = $this->encryptionService->encrypt('patient', 'diagnosis', $condition);
+        
+        $cursor = $this->collection->find(['diagnosis' => $encryptedCondition]);
+        
+        $patients = [];
+        foreach ($cursor as $document) {
+            $patients[] = Patient::fromDocument((array) $document, $this->encryptionService);
+        }
+        
+        return $patients;
+    }
+
+    /**
      * Find patients by birthDate range
      * Note: This uses range encryption
      */

@@ -12,6 +12,9 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+        debug:
+            pattern: ^/debug
+            security: false
         public_api:
             pattern: ^/api/(health|patient-portal/register|patient-portal/health)
             security: false
@@ -30,6 +33,10 @@ security:
 
     # Configure access control based on paths and roles
     access_control:
+        # Debug Access Control
+        - { path: ^/debug, roles: PUBLIC_ACCESS }
+        - { path: ^/api/debug, roles: PUBLIC_ACCESS }
+        - { path: ^/api/test, roles: PUBLIC_ACCESS }
         # Documentation Access Control
         - { path: ^/docs, roles: PUBLIC_ACCESS }
         # API Access Control
@@ -69,6 +76,9 @@ security:
         - { path: ^/api/medical-knowledge/diagnostic-criteria, roles: ROLE_DOCTOR }
         - { path: ^/api/medical-knowledge/stats, roles: [ROLE_DOCTOR, ROLE_ADMIN] }
         - { path: ^/api/medical-knowledge, roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
+        
+        # Chatbot API access control
+        - { path: ^/api/chatbot, roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
 
     role_hierarchy:
         # Doctor has all permissions

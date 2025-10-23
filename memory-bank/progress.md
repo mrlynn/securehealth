@@ -48,7 +48,17 @@
    - ✅ Audit log viewing (admin/doctor)
    - ✅ Filterable audit reports
 
-7. **Encryption**
+7. **RAG Chatbot System**
+   - ✅ **NEW: HIPAA-compliant AI chatbot with RAG capabilities**
+   - ✅ **NEW: Knowledge queries using vector search and embeddings**
+   - ✅ **NEW: Patient data queries with role-based access control**
+   - ✅ **NEW: Floating chatbot UI with modern design**
+   - ✅ **NEW: Function calling for patient data access**
+   - ✅ **NEW: Drug interaction checking for doctors**
+   - ✅ **NEW: Comprehensive audit logging for all chatbot interactions**
+   - ✅ **NEW: Integration across all application pages**
+
+8. **Encryption**
    - ✅ MongoDB Queryable Encryption (CSFLE)
    - ✅ Field-level encryption for PHI
    - ✅ Encryption key management

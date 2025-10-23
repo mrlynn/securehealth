@@ -11,6 +11,8 @@
         "doctrine/mongodb-odm-bundle": "^5.0",
         "league/commonmark": "*",
         "nelmio/cors-bundle": "^2.5",
+        "nyholm/psr7": "^1.8",
+        "openai-php/client": "^0.17.1",
         "symfony/asset": "7.0.*",
         "symfony/console": "7.0.*",
         "symfony/dotenv": "7.0.*",

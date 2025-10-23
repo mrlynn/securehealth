@@ -36,6 +36,7 @@ services:
 
     # Medical Knowledge Services
     App\Service\EmbeddingService:
+        public: true
         arguments:
             $openaiApiKey: '%env(OPENAI_API_KEY)%'
             $openaiApiUrl: '%env(OPENAI_API_URL)%'
@@ -47,6 +48,7 @@ services:
             $logger: '@logger'
 
     App\Service\VectorSearchService:
+        public: true
         arguments:
             $knowledgeRepository: '@App\Repository\MedicalKnowledgeRepository'
             $embeddingService: '@App\Service\EmbeddingService'
@@ -70,3 +72,32 @@ services:
             $mongoClient: '@MongoDB\Client'
             $projectDir: '%kernel.project_dir%'
             $openaiApiKey: '%env(OPENAI_API_KEY)%'
+
+    # RAG Chatbot Service
+    App\Service\RAGChatbotService:
+        public: true
+        arguments:
+            $openaiApiKey: '%env(OPENAI_API_KEY)%'
+            $mongoClient: '@MongoDB\Client'
+            $patientRepo: '@App\Repository\PatientRepository'
+            $authChecker: '@security.authorization_checker'
+            $auditLog: '@App\Service\AuditLogService'
+            $encryption: '@App\Service\MongoDBEncryptionService'
+            $vectorSearch: '@App\Service\VectorSearchService'
+
+    # Make SessionAuthenticator public to prevent inlining
+    App\Security\SessionAuthenticator:
+        public: true
+
+    # Make JsonLoginAuthenticator public to prevent inlining
+    App\Security\JsonLoginAuthenticator:
+        public: true
+
+    # Make SessionUserProvider public to prevent inlining
+    App\Security\SessionUserProvider:
+        public: true
+
+    # Make DocumentUserProvider public to prevent inlining
+    App\Security\DocumentUserProvider:
+        public: true
+

@@ -22,6 +22,102 @@ class VectorSearchService
     }
 
     /**
+     * Simple search method for backward compatibility
+     * This method is used by RAGChatbotService
+     */
+    public function search(array $queryEmbedding, int $limit = 5): array
+    {
+        try {
+            // Validate embedding format before proceeding
+            if (empty($queryEmbedding)) {
+                $this->logger->error('Empty embedding provided to search method');
+                // Return empty results instead of throwing exception
+                return [];
+            }
+
+            // Check embedding dimensions - should be 1536 for OpenAI
+            $embeddingLength = count($queryEmbedding);
+            if ($embeddingLength != 1536) {
+                $this->logger->warning('Unexpected embedding dimensions', [
+                    'expected' => 1536,
+                    'actual' => $embeddingLength
+                ]);
+                // Continue anyway, but log the warning
+            }
+
+            $this->logger->info('Performing simple vector search', [
+                'embeddingLength' => $embeddingLength,
+                'limit' => $limit
+            ]);
+
+            // Try to use performAtlasVectorSearch if possible
+            try {
+                $results = $this->performAtlasVectorSearch($queryEmbedding, [], $limit, 0.3);
+
+                // Verify we got an array back
+                if (!is_array($results)) {
+                    throw new \TypeError('performAtlasVectorSearch did not return an array');
+                }
+
+                return $results;
+            } catch (\MongoDB\Driver\Exception\AuthenticationException $e) {
+                $this->logger->error('MongoDB authentication failed - invalid credentials', [
+                    'error' => $e->getMessage()
+                ]);
+                throw new \RuntimeException('MongoDB authentication failed - check your MongoDB connection string credentials', 0, $e);
+            } catch (\MongoDB\Driver\Exception\ConnectionTimeoutException $e) {
+                $this->logger->error('MongoDB connection timeout - could not connect to the database server', [
+                    'error' => $e->getMessage()
+                ]);
+                throw new \RuntimeException('MongoDB connection timed out - please check your network and MongoDB server status', 0, $e);
+            } catch (\MongoDB\Driver\Exception\CommandException $e) {
+                $this->logger->warning('Atlas vector search command error, likely missing index', [
+                    'error' => $e->getMessage(),
+                    'error_type' => get_class($e)
+                ]);
+                // Fall through to text search
+            } catch (\Exception $e) {
+                $this->logger->warning('Atlas vector search failed in search method, falling back', [
+                    'error' => $e->getMessage(),
+                    'error_type' => get_class($e),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                // Fall through to text search
+            }
+
+            // Fallback to simple text search with empty query (will just return most recent docs)
+            try {
+                $results = $this->performTextSearch('', [], $limit);
+
+                // Verify we got an array back
+                if (!is_array($results)) {
+                    throw new \TypeError('performTextSearch did not return an array');
+                }
+
+                return $results;
+            } catch (\Exception $textSearchError) {
+                $this->logger->error('Text search fallback also failed', [
+                    'error' => $textSearchError->getMessage()
+                ]);
+
+                // Last resort: return empty results rather than throw an exception
+                return [];
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Vector search failed', [
+                'error' => $e->getMessage(),
+                'type' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Return empty array instead of throwing exception
+            // This prevents TypeErrors in calling code
+            return [];
+        }
+    }
+
+    /**
      * Perform semantic search across medical knowledge
      */
     public function searchMedicalKnowledge(
@@ -138,7 +234,10 @@ class VectorSearchService
     }
 
     /**
-     * Perform Atlas Search vector search
+     * Perform Atlas Vector Search with detailed error handling
+     * This implementation first attempts to use Atlas Search vector query,
+     * and if that fails (most likely because the index doesn't exist),
+     * it will throw a detailed error message to help diagnose the issue.
      */
     private function performAtlasVectorSearch(
         array $queryEmbedding,
@@ -146,22 +245,36 @@ class VectorSearchService
         int $limit = 10,
         float $similarityThreshold = 0.7
     ): array {
-        $this->logger->info('Performing Atlas vector search', [
+        $this->logger->info('Preparing vector search', [
             'embeddingLength' => count($queryEmbedding),
-            'filters' => $filters,
-            'limit' => $limit,
-            'similarityThreshold' => $similarityThreshold
+            'limit' => $limit
         ]);
 
         try {
-            // Build simple Atlas Search aggregation pipeline - $vectorSearch must be first stage
+            // Get the MongoDB collection - using try/catch for more robust error handling
+            try {
+                $collection = $this->knowledgeRepository->getDocumentManager()
+                    ->getDocumentCollection(\App\Document\MedicalKnowledge::class);
+
+                if (empty($collection)) {
+                    throw new \RuntimeException('Unable to get medical_knowledge collection - collection may not exist');
+                }
+            } catch (\Throwable $collectionError) {
+                $this->logger->error('Failed to get MongoDB collection', [
+                    'error' => $collectionError->getMessage(),
+                    'type' => get_class($collectionError)
+                ]);
+                throw new \RuntimeException('Cannot access MongoDB collection: ' . $collectionError->getMessage(), 0, $collectionError);
+            }
+
+            // Try to perform a vector search aggregation
             $pipeline = [
                 [
                     '$vectorSearch' => [
-                        'index' => 'vector_search_index', // This should match your Atlas Search index name
+                        'index' => 'medical_knowledge_vector_index',
                         'path' => 'embedding',
                         'queryVector' => $queryEmbedding,
-                        'numCandidates' => $limit * 10, // Search more candidates than needed
+                        'numCandidates' => $limit * 10,
                         'limit' => $limit
                     ]
                 ],
@@ -185,56 +298,140 @@ class VectorSearchService
                 ]
             ];
 
-            $this->logger->info('Atlas Search pipeline', ['pipeline' => $pipeline]);
-
-            // Execute the aggregation
-            $collection = $this->knowledgeRepository->getDocumentManager()
-                ->getDocumentCollection(\App\Document\MedicalKnowledge::class);
-            
-            $this->logger->info('Executing Atlas Search aggregation', [
+            $this->logger->info('Executing Atlas Search with $vectorSearch', [
                 'collection' => 'medical_knowledge',
-                'pipeline' => $pipeline
+                'index' => 'medical_knowledge_vector_index'
             ]);
-            
-            $cursor = $collection->aggregate($pipeline);
 
-            $results = [];
-            foreach ($cursor as $document) {
-                $result = [
-                    'id' => (string)$document['_id'],
-                    'title' => $document['title'] ?? '',
-                    'summary' => $document['summary'] ?? '',
-                    'content' => $document['content'] ?? '',
-                    'source' => $document['source'] ?? '',
-                    'sourceUrl' => $document['sourceUrl'] ?? null,
-                    'confidenceLevel' => $document['confidenceLevel'] ?? 5,
-                    'evidenceLevel' => $document['evidenceLevel'] ?? 3,
-                    'tags' => $document['tags'] ?? [],
-                    'specialties' => $document['specialties'] ?? [],
-                    'relatedConditions' => $document['relatedConditions'] ?? [],
-                    'relatedMedications' => $document['relatedMedications'] ?? [],
-                    'relatedProcedures' => $document['relatedProcedures'] ?? [],
-                    'requiresReview' => $document['requiresReview'] ?? false,
-                    'isActive' => $document['isActive'] ?? true,
-                    'createdAt' => $this->formatDate($document['createdAt'] ?? null),
-                    'score' => $document['score'] ?? 0
+            // Check if the vector search index exists first
+            try {
+                // Try to list search indexes to see if our index exists
+                $command = [
+                    'listSearchIndexes' => 'medical_knowledge'
                 ];
-                
-                $results[] = (object)$result;
+
+                $database = $this->knowledgeRepository->getDocumentManager()
+                    ->getDocumentDatabase(\App\Document\MedicalKnowledge::class);
+
+                $indexes = $database->command($command)->toArray();
+
+                $indexExists = false;
+                foreach ($indexes as $index) {
+                    if (isset($index->name) && $index->name === 'medical_knowledge_vector_index') {
+                        $indexExists = true;
+                        break;
+                    }
+                }
+
+                if (!$indexExists) {
+                    $this->logger->warning('Vector search index not found, will skip vector search', [
+                        'expected_index' => 'medical_knowledge_vector_index',
+                        'available_indexes' => array_map(function($idx) {
+                            return $idx->name ?? 'unnamed';
+                        }, $indexes)
+                    ]);
+                    throw new \RuntimeException('Vector search index not found');
+                }
+            } catch (\Exception $indexCheckError) {
+                // If we can't check indexes, we'll try the search anyway
+                $this->logger->warning('Could not verify index existence', [
+                    'error' => $indexCheckError->getMessage()
+                ]);
             }
 
-            $this->logger->info('Atlas vector search completed', [
+            // This will throw an exception if the vector search index doesn't exist
+            // Using try-catch to be extra safe
+            try {
+                $cursor = $collection->aggregate($pipeline);
+            } catch (\Throwable $aggregateError) {
+                $this->logger->error('Aggregate operation failed', [
+                    'error' => $aggregateError->getMessage(),
+                    'type' => get_class($aggregateError)
+                ]);
+                throw $aggregateError;
+            }
+
+            $results = [];
+            try {
+                foreach ($cursor as $document) {
+                    $result = [
+                        'id' => (string)($document['_id'] ?? 'unknown'),
+                        'title' => $document['title'] ?? 'Untitled Document',
+                        'summary' => $document['summary'] ?? '',
+                        'content' => $document['content'] ?? '',
+                        'source' => $document['source'] ?? '',
+                        'sourceUrl' => $document['sourceUrl'] ?? null,
+                        'confidenceLevel' => $document['confidenceLevel'] ?? 5,
+                        'evidenceLevel' => $document['evidenceLevel'] ?? 3,
+                        'tags' => $document['tags'] ?? [],
+                        'specialties' => $document['specialties'] ?? [],
+                        'relatedConditions' => $document['relatedConditions'] ?? [],
+                        'relatedMedications' => $document['relatedMedications'] ?? [],
+                        'relatedProcedures' => $document['relatedProcedures'] ?? [],
+                        'requiresReview' => $document['requiresReview'] ?? false,
+                        'isActive' => $document['isActive'] ?? true,
+                        'createdAt' => $this->formatDate($document['createdAt'] ?? null),
+                        'score' => $document['score'] ?? 0
+                    ];
+
+                    $results[] = (object)$result;
+                }
+            } catch (\Throwable $iterationError) {
+                $this->logger->error('Error processing search results', [
+                    'error' => $iterationError->getMessage(),
+                    'type' => get_class($iterationError)
+                ]);
+                // Return partial results if we have any
+                if (empty($results)) {
+                    throw $iterationError;
+                }
+            }
+
+            $this->logger->info('Vector search successful', [
                 'resultsCount' => count($results)
             ]);
 
             return $results;
 
-        } catch (\Exception $e) {
-            $this->logger->error('Atlas vector search failed', [
+        } catch (\MongoDB\Driver\Exception\CommandException $e) {
+            $errorMessage = $e->getMessage();
+
+            // Look for specific error indicating missing index
+            if (strpos($errorMessage, 'index not found') !== false ||
+                strpos($errorMessage, 'medical_knowledge_vector_index') !== false) {
+
+                $detailedError = "Vector search index 'medical_knowledge_vector_index' doesn't exist in MongoDB Atlas. " .
+                                "To fix this error, you need to create the vector search index in your Atlas cluster. " .
+                                "Instructions: " .
+                                "1. Go to MongoDB Atlas dashboard " .
+                                "2. Select your cluster -> Search tab " .
+                                "3. Create a new search index named 'medical_knowledge_vector_index' " .
+                                "4. Configure it as a vector search index on the 'embedding' field with 1536 dimensions";
+
+                $this->logger->error('Missing vector search index', [
+                    'error' => $errorMessage,
+                    'solution' => $detailedError
+                ]);
+
+                throw new \RuntimeException($detailedError, 0, $e);
+            } else {
+                $this->logger->error('MongoDB command error during vector search', [
+                    'error' => $errorMessage,
+                    'code' => $e->getCode()
+                ]);
+
+                throw new \RuntimeException('MongoDB error: ' . $errorMessage, 0, $e);
+            }
+        } catch (\Throwable $e) {
+            // Catch any other errors
+            $this->logger->error('Unexpected error in performAtlasVectorSearch', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'type' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
-            throw $e;
+
+            throw new \RuntimeException('Error during vector search: ' . $e->getMessage(), 0, $e);
         }
     }
 

@@ -9,8 +9,14 @@
 
         {% block javascripts %}
         {% endblock %}
+        
+        <!-- Chatbot Integration -->
+        <link rel="stylesheet" href="{{ asset('assets/css/chatbot.css') }}">
     </head>
     <body>
         {% block body %}{% endblock %}
+        
+        <!-- Chatbot Script -->
+        <script src="{{ asset('assets/js/chatbot.js') }}"></script>
     </body>
 </html>

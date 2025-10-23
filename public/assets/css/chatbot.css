@@ -1,0 +1,727 @@
+/* MongoDB Branded HIPAA-Compliant Chatbot UI Styles */
+
+:root {
+    /* MongoDB Brand Colors */
+    --mongodb-green: #00ED64;
+    --mongodb-dark-green: #13AA52;
+    --mongodb-black: #001E2B;
+    --mongodb-gray: #6B7280;
+    --mongodb-light-gray: #F7FAFC;
+    --mongodb-white: #FFFFFF;
+    --mongodb-border: #E5E7EB;
+    
+    /* Additional MongoDB Colors */
+    --mongodb-blue: #00684A;
+    --mongodb-teal: #00ED64;
+    --mongodb-orange: #FF6B35;
+    --mongodb-purple: #5F3DC4;
+    
+    /* Chatbot Specific Colors */
+    --chatbot-primary: var(--mongodb-green);
+    --chatbot-secondary: var(--mongodb-dark-green);
+    --chatbot-accent: var(--mongodb-teal);
+    --chatbot-background: var(--mongodb-white);
+    --chatbot-surface: var(--mongodb-light-gray);
+    --chatbot-text: var(--mongodb-black);
+    --chatbot-text-secondary: var(--mongodb-gray);
+    --chatbot-border: var(--mongodb-border);
+}
+
+.chatbot-container {
+    position: fixed;
+    bottom: 90px; /* Increased to avoid overlap with activity timer */
+    right: 20px;
+    z-index: 1000;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* MongoDB Branding Elements */
+.chatbot-container::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    background: linear-gradient(45deg, var(--mongodb-green), var(--mongodb-dark-green), var(--mongodb-blue));
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chatbot-toggle:hover ~ .chatbot-container::before {
+    opacity: 0.1;
+}
+
+/* Toggle Button - MongoDB Branded */
+.chatbot-toggle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--mongodb-green) 0%, var(--mongodb-dark-green) 100%);
+    border: 2px solid var(--mongodb-white);
+    color: var(--mongodb-white);
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 237, 100, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.chatbot-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(0, 237, 100, 0.4);
+    background: linear-gradient(135deg, var(--mongodb-dark-green) 0%, var(--mongodb-green) 100%);
+}
+
+.chatbot-toggle.active {
+    background: linear-gradient(135deg, var(--mongodb-dark-green) 0%, var(--mongodb-blue) 100%);
+    transform: scale(0.95);
+    box-shadow: 0 2px 15px rgba(0, 237, 100, 0.5);
+}
+
+/* Notification Badge - MongoDB Branded */
+.chatbot-notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--mongodb-orange);
+    color: var(--mongodb-white);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+    border: 2px solid var(--mongodb-white);
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Chatbot Window - MongoDB Branded */
+.chatbot-window {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 380px; /* Slightly reduced width */
+    height: 600px; /* Slightly reduced height */
+    background: var(--chatbot-background);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 30, 43, 0.15);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    border: 2px solid var(--chatbot-border);
+    transition: opacity 0.3s ease; /* Added for smooth animations */
+}
+
+@media (max-width: 768px) {
+    .chatbot-window {
+        width: 350px;
+        height: 500px;
+        bottom: 70px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chatbot-container {
+        bottom: 80px; /* Increased to avoid activity timer */
+        right: 10px;
+    }
+
+    .chatbot-window {
+        width: calc(100vw - 20px);
+        height: calc(100vh - 160px); /* More space for activity timer */
+        bottom: 80px;
+        right: 10px;
+        border-radius: 12px;
+    }
+}
+
+/* Header - MongoDB Branded */
+.chatbot-header {
+    background: linear-gradient(135deg, var(--mongodb-green) 0%, var(--mongodb-dark-green) 100%);
+    color: var(--mongodb-white);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    border-bottom: 2px solid var(--mongodb-dark-green);
+    position: relative;
+}
+
+.chatbot-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--mongodb-green), var(--mongodb-teal), var(--mongodb-blue));
+}
+
+.chatbot-title {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.chatbot-title i {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+.chatbot-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.chatbot-btn-clear,
+.chatbot-btn-examples,
+.chatbot-btn-close {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--mongodb-white);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.chatbot-btn-clear:hover,
+.chatbot-btn-examples:hover,
+.chatbot-btn-close:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+}
+
+/* Body */
+.chatbot-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chatbot-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: var(--chatbot-surface);
+    scroll-behavior: smooth; /* Improved scrolling */
+    -webkit-overflow-scrolling: touch; /* Better mobile scrolling */
+}
+
+.chatbot-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chatbot-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.chatbot-messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.chatbot-messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Welcome Message - MongoDB Branded */
+.chatbot-welcome {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--chatbot-text-secondary);
+}
+
+.chatbot-welcome-icon {
+    font-size: 48px;
+    color: var(--mongodb-green);
+    margin-bottom: 16px;
+}
+
+.chatbot-welcome-text h4 {
+    color: var(--chatbot-text);
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.chatbot-welcome-text ul {
+    text-align: left;
+    margin: 16px 0;
+    padding-left: 20px;
+}
+
+.chatbot-welcome-text li {
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.chatbot-welcome-text p {
+    font-size: 14px;
+    margin: 12px 0;
+}
+
+/* Messages */
+.chatbot-message {
+    display: flex;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+.user-message .message-avatar {
+    background: var(--mongodb-blue);
+    color: var(--mongodb-white);
+}
+
+.assistant-message .message-avatar {
+    background: var(--mongodb-green);
+    color: var(--mongodb-white);
+}
+
+.error-message .message-avatar {
+    background: var(--mongodb-orange);
+    color: var(--mongodb-white);
+}
+
+.message-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.message-text {
+    background: var(--chatbot-background);
+    padding: 12px 16px;
+    border-radius: 18px;
+    box-shadow: 0 2px 8px rgba(0, 30, 43, 0.1);
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    border: 1px solid var(--chatbot-border);
+}
+
+.user-message .message-text {
+    background: var(--mongodb-blue);
+    color: var(--mongodb-white);
+    border-bottom-right-radius: 4px;
+    border-color: var(--mongodb-blue);
+}
+
+.assistant-message .message-text {
+    border-bottom-left-radius: 4px;
+}
+
+.warning-message .message-text {
+    background: #fff3cd;
+    border-left: 4px solid var(--mongodb-orange);
+    color: #856404;
+}
+
+.error-message .message-text {
+    background: #f8d7da;
+    border-left: 4px solid var(--mongodb-orange);
+    color: #721c24;
+}
+
+.success-message .message-text {
+    background: #d4edda;
+    border-left: 4px solid var(--mongodb-green);
+    color: #155724;
+}
+
+.message-time {
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 4px;
+    text-align: right;
+}
+
+.user-message .message-time {
+    text-align: left;
+}
+
+/* Sources */
+.message-sources {
+    margin-top: 12px;
+    padding: 12px;
+    background: #e9ecef;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.message-sources h6 {
+    margin: 0 0 8px 0;
+    color: #495057;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.message-sources ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.message-sources li {
+    margin-bottom: 4px;
+    color: #6c757d;
+}
+
+.source-category {
+    font-style: italic;
+    margin: 0 8px;
+}
+
+.source-relevance {
+    color: #667eea;
+    font-weight: 500;
+}
+
+/* Data Display */
+.message-data {
+    margin-top: 12px;
+}
+
+.message-data details {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.message-data summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: #495057;
+    font-size: 12px;
+}
+
+.message-data pre {
+    margin: 8px 0 0 0;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 11px;
+    overflow-x: auto;
+}
+
+.message-data code {
+    color: #495057;
+}
+
+/* Examples Panel - MongoDB Branded */
+.chatbot-examples-panel {
+    background: var(--chatbot-background);
+    border-top: 2px solid var(--chatbot-border);
+    padding: 16px 20px;
+    max-height: 200px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.chatbot-examples-panel h5 {
+    margin: 0 0 12px 0;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.example-category {
+    margin-bottom: 16px;
+}
+
+.example-category h6 {
+    margin: 0 0 8px 0;
+    color: #6c757d;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.example-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    background: var(--chatbot-surface);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    color: var(--chatbot-text);
+    border: 1px solid var(--chatbot-border);
+}
+
+.example-item:hover {
+    background: var(--mongodb-light-gray);
+    border-color: var(--mongodb-green);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 237, 100, 0.1);
+}
+
+.example-item i {
+    margin-right: 8px;
+    color: var(--mongodb-green);
+    font-size: 12px;
+}
+
+/* Input Container - MongoDB Branded */
+.chatbot-input-container {
+    padding: 16px 20px;
+    background: var(--chatbot-background);
+    border-top: 2px solid var(--chatbot-border);
+    flex-shrink: 0;
+}
+
+.chatbot-input-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.chatbot-input {
+    flex: 1;
+    border: 2px solid var(--chatbot-border);
+    border-radius: 20px;
+    padding: 12px 16px;
+    font-size: 14px;
+    resize: none;
+    min-height: 20px;
+    max-height: 120px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease;
+    background: var(--chatbot-background);
+    color: var(--chatbot-text);
+}
+
+.chatbot-input:focus {
+    border-color: var(--mongodb-green);
+    box-shadow: 0 0 0 3px rgba(0, 237, 100, 0.1);
+}
+
+.chatbot-input:disabled {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.chatbot-send {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--mongodb-green);
+    border: 2px solid var(--mongodb-green);
+    color: var(--mongodb-white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    font-weight: 600;
+}
+
+.chatbot-send:hover:not(:disabled) {
+    background: var(--mongodb-dark-green);
+    border-color: var(--mongodb-dark-green);
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 237, 100, 0.3);
+}
+
+.chatbot-send:disabled {
+    background: var(--chatbot-text-secondary);
+    border-color: var(--chatbot-text-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.chatbot-character-count {
+    text-align: right;
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+/* Footer - MongoDB Branded */
+.chatbot-footer {
+    background: var(--chatbot-surface);
+    padding: 8px 20px;
+    border-top: 2px solid var(--chatbot-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--chatbot-text-secondary);
+    flex-shrink: 0;
+}
+
+.chatbot-status {
+    font-weight: 500;
+}
+
+.chatbot-privacy {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--mongodb-green);
+    font-weight: 500;
+}
+
+.chatbot-privacy i {
+    font-size: 10px;
+}
+
+/* Loading Animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .chatbot-toggle {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .chatbot-header {
+        padding: 12px 16px;
+    }
+    
+    .chatbot-messages {
+        padding: 16px;
+    }
+    
+    .chatbot-input-container {
+        padding: 12px 16px;
+    }
+    
+    .chatbot-footer {
+        padding: 6px 16px;
+    }
+}
+
+/* Dark Mode Support - MongoDB Branded */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --chatbot-background: #1a1a1a;
+        --chatbot-surface: #2d2d2d;
+        --chatbot-text: #ffffff;
+        --chatbot-text-secondary: #a0a0a0;
+        --chatbot-border: #404040;
+    }
+    
+    .chatbot-window {
+        background: var(--chatbot-background);
+        border-color: var(--chatbot-border);
+        box-shadow: 0 10px 40px rgba(0, 30, 43, 0.3);
+    }
+    
+    .chatbot-messages {
+        background: var(--chatbot-surface);
+    }
+    
+    .chatbot-welcome {
+        color: var(--chatbot-text-secondary);
+    }
+    
+    .chatbot-welcome-text h4 {
+        color: var(--chatbot-text);
+    }
+    
+    .message-text {
+        background: var(--chatbot-background);
+        color: var(--chatbot-text);
+        border-color: var(--chatbot-border);
+    }
+    
+    .user-message .message-text {
+        background: var(--mongodb-blue);
+        color: var(--mongodb-white);
+    }
+    
+    .chatbot-input {
+        background: var(--chatbot-surface);
+        border-color: var(--chatbot-border);
+        color: var(--chatbot-text);
+    }
+    
+    .chatbot-input:focus {
+        border-color: var(--mongodb-green);
+    }
+    
+    .chatbot-footer {
+        background: var(--chatbot-surface);
+        border-color: var(--chatbot-border);
+    }
+    
+    .chatbot-examples-panel {
+        background: var(--chatbot-background);
+        border-color: var(--chatbot-border);
+    }
+    
+    .example-item {
+        background: var(--chatbot-surface);
+        color: var(--chatbot-text);
+        border-color: var(--chatbot-border);
+    }
+    
+    .example-item:hover {
+        background: var(--mongodb-light-gray);
+        border-color: var(--mongodb-green);
+    }
+}

@@ -347,9 +347,28 @@
               <div class="card shadow-sm">
                 <div class="card-header bg-white d-flex align-items-center justify-content-between">
                   <strong>Medical Notes <span class="encryption-badge encryption-standard">S</span></strong>
-                  <button class="btn btn-sm btn-primary" onclick="openAddNoteModal('${patient.id}')">
-                    <i class="fas fa-plus me-1"></i>Add Note
-                  </button>
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-primary" onclick="openAddNoteModal('${patient.id}')">
+                      <i class="fas fa-plus me-1"></i>Add Note
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="fas fa-robot me-1"></i>AI Assistant
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li><a class="dropdown-item" href="#" onclick="openAISoapModal('${patient.id}')">
+                        <i class="fas fa-clipboard-list me-2"></i>Generate SOAP Note
+                      </a></li>
+                      <li><a class="dropdown-item" href="#" onclick="openAISummaryModal('${patient.id}')">
+                        <i class="fas fa-file-alt me-2"></i>Generate Visit Summary
+                      </a></li>
+                      <li><a class="dropdown-item" href="#" onclick="openAIEnhancementModal('${patient.id}')">
+                        <i class="fas fa-magic me-2"></i>Enhance Notes
+                      </a></li>
+                      <li><a class="dropdown-item" href="#" onclick="openAICodesModal('${patient.id}')">
+                        <i class="fas fa-code me-2"></i>Suggest ICD Codes
+                      </a></li>
+                    </ul>
+                  </div>
                 </div>
                 <div class="card-body">
                   <div id="notesLoading" class="text-center py-3">
@@ -744,6 +763,212 @@
     </div>
   </div>
 
+  <!-- AI SOAP Note Modal -->
+  <div class="modal fade" id="aiSoapModal" tabindex="-1" aria-labelledby="aiSoapModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="aiSoapModalLabel">
+            <i class="fas fa-robot me-2"></i>AI SOAP Note Generation
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="aiSoapAlert" class="alert d-none" role="alert"></div>
+          <form id="aiSoapForm">
+            <div class="row">
+              <div class="col-md-6">
+                <label for="aiConversationText" class="form-label">Conversation/Interview Text</label>
+                <textarea class="form-control" id="aiConversationText" rows="6" 
+                          placeholder="Enter the patient conversation, interview notes, or clinical discussion..."></textarea>
+              </div>
+              <div class="col-md-6">
+                <div class="row">
+                  <div class="col-12 mb-3">
+                    <label for="aiVitalSigns" class="form-label">Vital Signs</label>
+                    <textarea class="form-control" id="aiVitalSigns" rows="3" 
+                              placeholder="BP: 120/80, HR: 72, Temp: 98.6°F, RR: 16..."></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label for="aiPhysicalExam" class="form-label">Physical Examination</label>
+                    <textarea class="form-control" id="aiPhysicalExam" rows="3" 
+                              placeholder="Physical examination findings..."></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+          <div id="aiSoapLoading" class="text-center py-4 d-none">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Generating SOAP note...</span>
+            </div>
+            <p class="mt-2 text-muted">AI is generating your SOAP note...</p>
+          </div>
+          <div id="aiSoapResult" class="d-none">
+            <h6><i class="fas fa-file-medical me-2"></i>Generated SOAP Note</h6>
+            <div id="aiSoapContent" class="border rounded p-3 bg-light"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="generateSoapBtn">
+            <i class="fas fa-magic me-1"></i>Generate SOAP Note
+          </button>
+          <button type="button" class="btn btn-success d-none" id="saveSoapBtn">
+            <i class="fas fa-save me-1"></i>Save to Patient Record
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Visit Summary Modal -->
+  <div class="modal fade" id="aiSummaryModal" tabindex="-1" aria-labelledby="aiSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="aiSummaryModalLabel">
+            <i class="fas fa-robot me-2"></i>AI Visit Summary Generation
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="aiSummaryAlert" class="alert d-none" role="alert"></div>
+          <form id="aiSummaryForm">
+            <div class="row">
+              <div class="col-md-8">
+                <label for="aiRawNotes" class="form-label">Raw Notes</label>
+                <textarea class="form-control" id="aiRawNotes" rows="4" 
+                          placeholder="Enter raw clinical notes or visit details..."></textarea>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="aiDiagnosis" class="form-label">Diagnosis</label>
+                  <textarea class="form-control" id="aiDiagnosis" rows="2" 
+                            placeholder="Primary diagnosis..."></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="aiMedications" class="form-label">Medications</label>
+                  <textarea class="form-control" id="aiMedications" rows="2" 
+                            placeholder="Current medications..."></textarea>
+                </div>
+              </div>
+            </div>
+          </form>
+          <div id="aiSummaryLoading" class="text-center py-4 d-none">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Generating summary...</span>
+            </div>
+            <p class="mt-2 text-muted">AI is generating your visit summary...</p>
+          </div>
+          <div id="aiSummaryResult" class="d-none">
+            <h6><i class="fas fa-file-alt me-2"></i>Generated Summary</h6>
+            <div id="aiSummaryContent" class="border rounded p-3 bg-light"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="generateSummaryBtn">
+            <i class="fas fa-compress-alt me-1"></i>Generate Summary
+          </button>
+          <button type="button" class="btn btn-success d-none" id="saveSummaryBtn">
+            <i class="fas fa-save me-1"></i>Save to Patient Record
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Note Enhancement Modal -->
+  <div class="modal fade" id="aiEnhancementModal" tabindex="-1" aria-labelledby="aiEnhancementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="aiEnhancementModalLabel">
+            <i class="fas fa-robot me-2"></i>AI Note Enhancement
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="aiEnhancementAlert" class="alert d-none" role="alert"></div>
+          <form id="aiEnhancementForm">
+            <div class="mb-3">
+              <label for="aiExistingNotes" class="form-label">Existing Notes</label>
+              <textarea class="form-control" id="aiExistingNotes" rows="6" 
+                        placeholder="Enter existing clinical notes to enhance..."></textarea>
+            </div>
+          </form>
+          <div id="aiEnhancementLoading" class="text-center py-4 d-none">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Enhancing notes...</span>
+            </div>
+            <p class="mt-2 text-muted">AI is enhancing your clinical notes...</p>
+          </div>
+          <div id="aiEnhancementResult" class="d-none">
+            <h6><i class="fas fa-edit me-2"></i>Enhanced Notes</h6>
+            <div id="aiEnhancementContent" class="border rounded p-3 bg-light"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="enhanceNotesBtn">
+            <i class="fas fa-magic me-1"></i>Enhance Notes
+          </button>
+          <button type="button" class="btn btn-success d-none" id="saveEnhancementBtn">
+            <i class="fas fa-save me-1"></i>Save to Patient Record
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI ICD Codes Modal -->
+  <div class="modal fade" id="aiCodesModal" tabindex="-1" aria-labelledby="aiCodesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="aiCodesModalLabel">
+            <i class="fas fa-robot me-2"></i>AI ICD-10 Code Suggestions
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="aiCodesAlert" class="alert d-none" role="alert"></div>
+          <form id="aiCodesForm">
+            <div class="row">
+              <div class="col-md-6">
+                <label for="aiSymptoms" class="form-label">Symptoms</label>
+                <textarea class="form-control" id="aiSymptoms" rows="4" 
+                          placeholder="Enter patient symptoms (comma-separated)..."></textarea>
+              </div>
+              <div class="col-md-6">
+                <label for="aiDiagnosisCodes" class="form-label">Diagnosis</label>
+                <textarea class="form-control" id="aiDiagnosisCodes" rows="4" 
+                          placeholder="Enter clinical diagnosis (comma-separated)..."></textarea>
+              </div>
+            </div>
+          </form>
+          <div id="aiCodesLoading" class="text-center py-4 d-none">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Analyzing...</span>
+            </div>
+            <p class="mt-2 text-muted">AI is analyzing symptoms and diagnosis...</p>
+          </div>
+          <div id="aiCodesResult" class="d-none">
+            <h6><i class="fas fa-code me-2"></i>Suggested ICD-10 Codes</h6>
+            <div id="aiCodesContent"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="suggestCodesBtn">
+            <i class="fas fa-search me-1"></i>Suggest ICD Codes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let currentPatientId = null;
     let currentNotes = [];
@@ -835,6 +1060,14 @@
                       <li><a class="dropdown-item" href="#" onclick="editNote('${note.id}')">
                         <i class="fas fa-edit me-2"></i>Edit
                       </a></li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li><a class="dropdown-item" href="#" onclick="enhanceNoteWithAI('${note.id}', '${escapeHtml(note.content)}')">
+                        <i class="fas fa-robot me-2"></i>Enhance with AI
+                      </a></li>
+                      <li><a class="dropdown-item" href="#" onclick="generateSoapFromNote('${note.id}', '${escapeHtml(note.content)}')">
+                        <i class="fas fa-clipboard-list me-2"></i>Generate SOAP
+                      </a></li>
+                      <li><hr class="dropdown-divider"></li>
                       <li><a class="dropdown-item text-danger" href="#" onclick="deleteNote('${note.id}')">
                         <i class="fas fa-trash me-2"></i>Delete
                       </a></li>
@@ -1064,6 +1297,514 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    // AI Modal Functions
+    function openAISoapModal(patientId) {
+      currentPatientId = patientId;
+      document.getElementById('aiSoapForm').reset();
+      document.getElementById('aiSoapAlert').classList.add('d-none');
+      document.getElementById('aiSoapLoading').classList.add('d-none');
+      document.getElementById('aiSoapResult').classList.add('d-none');
+      document.getElementById('saveSoapBtn').classList.add('d-none');
+      
+      const modal = new bootstrap.Modal(document.getElementById('aiSoapModal'));
+      modal.show();
+      
+      setTimeout(() => {
+        document.getElementById('aiConversationText').focus();
+      }, 500);
+    }
+
+    function openAISummaryModal(patientId) {
+      currentPatientId = patientId;
+      document.getElementById('aiSummaryForm').reset();
+      document.getElementById('aiSummaryAlert').classList.add('d-none');
+      document.getElementById('aiSummaryLoading').classList.add('d-none');
+      document.getElementById('aiSummaryResult').classList.add('d-none');
+      document.getElementById('saveSummaryBtn').classList.add('d-none');
+      
+      const modal = new bootstrap.Modal(document.getElementById('aiSummaryModal'));
+      modal.show();
+      
+      setTimeout(() => {
+        document.getElementById('aiRawNotes').focus();
+      }, 500);
+    }
+
+    function openAIEnhancementModal(patientId) {
+      currentPatientId = patientId;
+      document.getElementById('aiEnhancementForm').reset();
+      document.getElementById('aiEnhancementAlert').classList.add('d-none');
+      document.getElementById('aiEnhancementLoading').classList.add('d-none');
+      document.getElementById('aiEnhancementResult').classList.add('d-none');
+      document.getElementById('saveEnhancementBtn').classList.add('d-none');
+      
+      const modal = new bootstrap.Modal(document.getElementById('aiEnhancementModal'));
+      modal.show();
+      
+      setTimeout(() => {
+        document.getElementById('aiExistingNotes').focus();
+      }, 500);
+    }
+
+    function openAICodesModal(patientId) {
+      currentPatientId = patientId;
+      document.getElementById('aiCodesForm').reset();
+      document.getElementById('aiCodesAlert').classList.add('d-none');
+      document.getElementById('aiCodesLoading').classList.add('d-none');
+      document.getElementById('aiCodesResult').classList.add('d-none');
+      
+      const modal = new bootstrap.Modal(document.getElementById('aiCodesModal'));
+      modal.show();
+      
+      setTimeout(() => {
+        document.getElementById('aiSymptoms').focus();
+      }, 500);
+    }
+
+    // AI Functions for individual notes
+    function enhanceNoteWithAI(noteId, noteContent) {
+      currentPatientId = currentPatientId; // Ensure we have the patient ID
+      document.getElementById('aiExistingNotes').value = noteContent;
+      openAIEnhancementModal(currentPatientId);
+    }
+
+    function generateSoapFromNote(noteId, noteContent) {
+      currentPatientId = currentPatientId; // Ensure we have the patient ID
+      document.getElementById('aiConversationText').value = noteContent;
+      openAISoapModal(currentPatientId);
+    }
+
+    // AI Event Listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      // SOAP Note Generation
+      document.getElementById('generateSoapBtn').addEventListener('click', async function() {
+        const conversationText = document.getElementById('aiConversationText').value.trim();
+        if (!conversationText) {
+          showAIAlert('aiSoapAlert', 'danger', 'Please enter conversation text');
+          return;
+        }
+
+        const vitalSigns = document.getElementById('aiVitalSigns').value;
+        const physicalExam = document.getElementById('aiPhysicalExam').value;
+
+        try {
+          showAILoading('aiSoapLoading');
+          hideAIResult('aiSoapResult');
+
+          const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/ai-documentation/soap-note/${currentPatientId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              conversationText: conversationText,
+              vitalSigns: vitalSigns ? vitalSigns.split('\n') : [],
+              physicalExam: physicalExam ? physicalExam.split('\n') : []
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            displayAISoapNote(data.data);
+            document.getElementById('saveSoapBtn').classList.remove('d-none');
+          } else {
+            throw new Error(data.message);
+          }
+
+        } catch (error) {
+          console.error('Error generating SOAP note:', error);
+          showAIAlert('aiSoapAlert', 'danger', 'Failed to generate SOAP note: ' + error.message);
+        } finally {
+          hideAILoading('aiSoapLoading');
+        }
+      });
+
+      // Visit Summary Generation
+      document.getElementById('generateSummaryBtn').addEventListener('click', async function() {
+        const rawNotes = document.getElementById('aiRawNotes').value.trim();
+        if (!rawNotes) {
+          showAIAlert('aiSummaryAlert', 'danger', 'Please enter raw notes');
+          return;
+        }
+
+        const diagnosis = document.getElementById('aiDiagnosis').value;
+        const medications = document.getElementById('aiMedications').value;
+
+        try {
+          showAILoading('aiSummaryLoading');
+          hideAIResult('aiSummaryResult');
+
+          const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/ai-documentation/visit-summary/${currentPatientId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              rawNotes: rawNotes,
+              diagnosis: diagnosis ? diagnosis.split(',').map(d => d.trim()) : [],
+              medications: medications ? medications.split(',').map(m => m.trim()) : []
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            displayAISummary(data.data);
+            document.getElementById('saveSummaryBtn').classList.remove('d-none');
+          } else {
+            throw new Error(data.message);
+          }
+
+        } catch (error) {
+          console.error('Error generating visit summary:', error);
+          showAIAlert('aiSummaryAlert', 'danger', 'Failed to generate visit summary: ' + error.message);
+        } finally {
+          hideAILoading('aiSummaryLoading');
+        }
+      });
+
+      // Note Enhancement
+      document.getElementById('enhanceNotesBtn').addEventListener('click', async function() {
+        const existingNotes = document.getElementById('aiExistingNotes').value.trim();
+        if (!existingNotes) {
+          showAIAlert('aiEnhancementAlert', 'danger', 'Please enter existing notes');
+          return;
+        }
+
+        try {
+          showAILoading('aiEnhancementLoading');
+          hideAIResult('aiEnhancementResult');
+
+          const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/ai-documentation/enhance-notes/${currentPatientId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              existingNotes: existingNotes,
+              context: {}
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            displayAIEnhancement(data.data);
+            document.getElementById('saveEnhancementBtn').classList.remove('d-none');
+          } else {
+            throw new Error(data.message);
+          }
+
+        } catch (error) {
+          console.error('Error enhancing notes:', error);
+          showAIAlert('aiEnhancementAlert', 'danger', 'Failed to enhance notes: ' + error.message);
+        } finally {
+          hideAILoading('aiEnhancementLoading');
+        }
+      });
+
+      // ICD Code Suggestions
+      document.getElementById('suggestCodesBtn').addEventListener('click', async function() {
+        const symptoms = document.getElementById('aiSymptoms').value;
+        const diagnosis = document.getElementById('aiDiagnosisCodes').value;
+
+        if (!symptoms.trim() && !diagnosis.trim()) {
+          showAIAlert('aiCodesAlert', 'danger', 'Please enter symptoms or diagnosis');
+          return;
+        }
+
+        try {
+          showAILoading('aiCodesLoading');
+          hideAIResult('aiCodesResult');
+
+          const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/ai-documentation/icd-codes`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              symptoms: symptoms ? symptoms.split(',').map(s => s.trim()) : [],
+              diagnosis: diagnosis ? diagnosis.split(',').map(d => d.trim()) : [],
+              patientData: {}
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            displayAICodes(data.data.icdCodes);
+          } else {
+            throw new Error(data.message);
+          }
+
+        } catch (error) {
+          console.error('Error suggesting ICD codes:', error);
+          showAIAlert('aiCodesAlert', 'danger', 'Failed to suggest ICD codes: ' + error.message);
+        } finally {
+          hideAILoading('aiCodesLoading');
+        }
+      });
+
+      // Save AI Notes
+      document.getElementById('saveSoapBtn').addEventListener('click', () => saveAINote('soap'));
+      document.getElementById('saveSummaryBtn').addEventListener('click', () => saveAINote('summary'));
+      document.getElementById('saveEnhancementBtn').addEventListener('click', () => saveAINote('enhancement'));
+    });
+
+    // AI Display Functions
+    function displayAISoapNote(soapNote) {
+      const soapContent = document.getElementById('aiSoapContent');
+      
+      let confidenceClass = 'badge bg-warning';
+      if (soapNote.confidence_score >= 0.8) confidenceClass = 'badge bg-success';
+      else if (soapNote.confidence_score >= 0.6) confidenceClass = 'badge bg-warning';
+      else confidenceClass = 'badge bg-danger';
+
+      soapContent.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6>SOAP Note</h6>
+          <span class="${confidenceClass}">
+            Confidence: ${Math.round(soapNote.confidence_score * 100)}%
+          </span>
+        </div>
+        
+        <div class="mb-3">
+          <h6 class="text-primary"><i class="fas fa-user me-2"></i>SUBJECTIVE</h6>
+          <p class="mb-0">${soapNote.subjective || 'No subjective information provided'}</p>
+        </div>
+        
+        <div class="mb-3">
+          <h6 class="text-primary"><i class="fas fa-stethoscope me-2"></i>OBJECTIVE</h6>
+          <p class="mb-0">${soapNote.objective || 'No objective findings provided'}</p>
+        </div>
+        
+        <div class="mb-3">
+          <h6 class="text-primary"><i class="fas fa-brain me-2"></i>ASSESSMENT</h6>
+          <p class="mb-0">${soapNote.assessment || 'No assessment provided'}</p>
+        </div>
+        
+        <div class="mb-3">
+          <h6 class="text-primary"><i class="fas fa-clipboard-check me-2"></i>PLAN</h6>
+          <p class="mb-0">${soapNote.plan || 'No plan provided'}</p>
+        </div>
+        
+        ${soapNote.suggestions && soapNote.suggestions.length > 0 ? `
+          <div class="mt-3">
+            <h6 class="text-info"><i class="fas fa-lightbulb me-2"></i>Suggestions</h6>
+            <ul class="mb-0">
+              ${soapNote.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+      `;
+      
+      showAIResult('aiSoapResult');
+    }
+
+    function displayAISummary(summaryData) {
+      const summaryContent = document.getElementById('aiSummaryContent');
+      
+      summaryContent.innerHTML = `
+        <div class="alert alert-success">
+          <h6><i class="fas fa-file-alt me-2"></i>Generated Summary</h6>
+          <p class="mb-0">${summaryData.summary}</p>
+        </div>
+        <div class="text-muted small">
+          <i class="fas fa-user-md me-1"></i>Generated by: ${summaryData.generatedBy}<br>
+          <i class="fas fa-clock me-1"></i>Generated at: ${new Date(summaryData.generatedAt).toLocaleString()}
+        </div>
+      `;
+      
+      showAIResult('aiSummaryResult');
+    }
+
+    function displayAIEnhancement(enhancedData) {
+      const enhancementContent = document.getElementById('aiEnhancementContent');
+      
+      let confidenceClass = 'badge bg-danger';
+      if (enhancedData.confidence >= 0.8) confidenceClass = 'badge bg-success';
+      else if (enhancedData.confidence >= 0.6) confidenceClass = 'badge bg-warning';
+
+      enhancementContent.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6>Enhanced Notes</h6>
+          <span class="${confidenceClass}">
+            Confidence: ${Math.round(enhancedData.confidence * 100)}%
+          </span>
+        </div>
+        
+        <div class="alert alert-success">
+          <h6><i class="fas fa-edit me-2"></i>Enhanced Version</h6>
+          <p class="mb-0">${enhancedData.enhanced_notes}</p>
+        </div>
+        
+        ${enhancedData.suggestions && enhancedData.suggestions.length > 0 ? `
+          <div class="mt-3">
+            <h6 class="text-info"><i class="fas fa-lightbulb me-2"></i>Suggestions</h6>
+            <ul class="mb-0">
+              ${enhancedData.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        
+        ${enhancedData.areas_for_improvement && enhancedData.areas_for_improvement.length > 0 ? `
+          <div class="mt-3">
+            <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Areas for Improvement</h6>
+            <ul class="mb-0">
+              ${enhancedData.areas_for_improvement.map(area => `<li>${area}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+      `;
+      
+      showAIResult('aiEnhancementResult');
+    }
+
+    function displayAICodes(icdCodes) {
+      const icdContent = document.getElementById('aiCodesContent');
+      
+      icdContent.innerHTML = icdCodes.map(code => `
+        <div class="card mb-2">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <span class="badge bg-primary me-2">${code.code}</span>
+                <span class="badge bg-${code.category === 'Primary' ? 'success' : code.category === 'Secondary' ? 'info' : 'secondary'}">
+                  ${code.category}
+                </span>
+              </div>
+              <span class="badge bg-${code.confidence >= 0.8 ? 'success' : code.confidence >= 0.6 ? 'warning' : 'danger'}">
+                ${Math.round(code.confidence * 100)}%
+              </span>
+            </div>
+            <p class="mb-1 mt-2">${code.description}</p>
+            <small class="text-muted">${code.rationale}</small>
+          </div>
+        </div>
+      `).join('');
+      
+      showAIResult('aiCodesResult');
+    }
+
+    // AI Utility Functions
+    function showAILoading(elementId) {
+      document.getElementById(elementId).classList.remove('d-none');
+    }
+
+    function hideAILoading(elementId) {
+      document.getElementById(elementId).classList.add('d-none');
+    }
+
+    function showAIResult(elementId) {
+      document.getElementById(elementId).classList.remove('d-none');
+    }
+
+    function hideAIResult(elementId) {
+      document.getElementById(elementId).classList.add('d-none');
+    }
+
+    function showAIAlert(alertId, type, message) {
+      const alertDiv = document.getElementById(alertId);
+      alertDiv.className = `alert alert-${type}`;
+      alertDiv.textContent = message;
+      alertDiv.classList.remove('d-none');
+    }
+
+    // Save AI Note to Patient Record
+    async function saveAINote(type) {
+      if (!currentPatientId) {
+        showAIAlert('aiSoapAlert', 'warning', 'No patient selected');
+        return;
+      }
+
+      let content = '';
+      let aiType = '';
+      let confidenceScore = 0.0;
+      let metadata = {};
+
+      // Get content based on type
+      switch (type) {
+        case 'soap':
+          const soapContent = document.getElementById('aiSoapContent');
+          if (!soapContent.innerHTML.trim()) {
+            showAIAlert('aiSoapAlert', 'warning', 'No SOAP note to save');
+            return;
+          }
+          content = soapContent.innerText;
+          aiType = 'soap_note';
+          confidenceScore = 0.8;
+          metadata = { type: 'SOAP Note Generation' };
+          break;
+        case 'summary':
+          const summaryContent = document.getElementById('aiSummaryContent');
+          if (!summaryContent.innerHTML.trim()) {
+            showAIAlert('aiSummaryAlert', 'warning', 'No visit summary to save');
+            return;
+          }
+          content = summaryContent.innerText;
+          aiType = 'visit_summary';
+          confidenceScore = 0.8;
+          metadata = { type: 'Visit Summary Generation' };
+          break;
+        case 'enhancement':
+          const enhancementContent = document.getElementById('aiEnhancementContent');
+          if (!enhancementContent.innerHTML.trim()) {
+            showAIAlert('aiEnhancementAlert', 'warning', 'No enhanced notes to save');
+            return;
+          }
+          content = enhancementContent.innerText;
+          aiType = 'enhanced_notes';
+          confidenceScore = 0.7;
+          metadata = { type: 'Note Enhancement' };
+          break;
+        default:
+          showAIAlert('aiSoapAlert', 'error', 'Unknown AI note type');
+          return;
+      }
+
+      try {
+        const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/ai-documentation/save-note/${currentPatientId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            content: content,
+            aiType: aiType,
+            confidenceScore: confidenceScore,
+            metadata: metadata
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAIAlert('aiSoapAlert', 'success', 'AI-generated note saved to patient record successfully!');
+          
+          // Reload notes to show the new AI note
+          await loadPatientNotes(currentPatientId);
+          
+          // Close modal after a short delay
+          setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('aiSoapModal'));
+            if (modal) modal.hide();
+          }, 2000);
+        } else {
+          throw new Error(data.message);
+        }
+
+      } catch (error) {
+        console.error('Error saving AI note:', error);
+        showAIAlert('aiSoapAlert', 'danger', 'Failed to save AI note: ' + error.message);
+      }
     }
   </script>
 </body>
