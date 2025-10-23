@@ -21,7 +21,7 @@ class AuditLogService
         Client $mongoClient,
         RequestStack $requestStack,
         string $databaseName = 'securehealth',
-        string $auditLogCollection = 'audit_log'
+        string $auditLogCollection = 'audit_logs'
     ) {
         $this->mongoClient = $mongoClient;
         $this->requestStack = $requestStack;
@@ -221,7 +221,7 @@ class AuditLogService
                     ]);
                     
                     $database = $client->selectDatabase($mongoDb);
-                    $collection = $database->selectCollection($this->auditLogCollection);
+                    $collection = $database->selectCollection('audit_logs');
                     
                     $result = $collection->insertOne($document);
                     

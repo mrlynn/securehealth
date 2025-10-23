@@ -119,7 +119,7 @@ class SecureHealthNavbar {
         return `
             <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
                 <div class="container">
-                    <a class="navbar-brand fw-bold fs-3" href="/dashboard.html">
+                    <a class="navbar-brand" href="/dashboard.html">
                         <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">SecureHealth
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -343,9 +343,9 @@ class SecureHealthNavbar {
             <li class="nav-item d-flex align-items-center ms-3">
                 <span class="text-white me-2">${userName}</span>
                 <span class="role-badge ${roleClass} me-2">${this.userRole}</span>
-                <button id="logoutBtn" class="btn btn-primary-custom btn-custom">
-                    <i class="fas fa-sign-out-alt me-2"></i>Logout
-                </button>
+                <a class="nav-link" href="#" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
             </li>
         `;
     }
@@ -356,8 +356,8 @@ class SecureHealthNavbar {
     getLoginNavItem() {
         return `
             <li class="nav-item">
-                <a class="btn btn-primary-custom btn-custom ms-3" href="/login.html">
-                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                <a class="nav-link" href="/login.html">
+                    <i class="fas fa-sign-in-alt me-1"></i>Login
                 </a>
             </li>
         `;

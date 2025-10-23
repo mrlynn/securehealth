@@ -4,18 +4,18 @@
  */
 
 :root {
-  --primary-color: #2c5aa0;
-  --secondary-color: #1e3a5f;
-  --accent-color: #4a90e2;
-  --success-color: #28a745;
+  --primary-color: #001E2B;
+  --secondary-color: #6B7280;
+  --accent-color: #00ED64;
+  --success-color: #00ED64;
   --warning-color: #ffc107;
   --danger-color: #dc3545;
-  --light-bg: #f8f9fa;
-  --dark-text: #2c3e50;
-  --navbar-bg: #2c3e50;
+  --light-bg: #F7FAFC;
+  --dark-text: #001E2B;
+  --navbar-bg: #001E2B;
   --navbar-text: #ecf0f1;
   --navbar-hover: #34495e;
-  --navbar-active: #1abc9c;
+  --navbar-active: #00ED64;
 }
 
 /* Navbar base styles */

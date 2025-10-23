@@ -43,8 +43,14 @@ class AuditLog
     
     #[ODM\Field(type: "string", nullable: true)]
     private ?string $status = null;
+    
+    #[ODM\Field(type: "string", nullable: true)]
     private ?string $requestMethod = null;
+    
+    #[ODM\Field(type: "string", nullable: true)]
     private ?string $requestUrl = null;
+    
+    #[ODM\Field(type: "string", nullable: true)]
     private ?string $userAgent = null;
 
     public function __construct()

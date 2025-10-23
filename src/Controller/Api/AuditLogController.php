@@ -53,17 +53,12 @@ class AuditLogController extends AbstractController
             $criteria['entityId'] = $entityId;
         }
         
-        // Get logs - handle MongoDB connection issues gracefully
+        // Get logs using AuditLogService to avoid Doctrine hydration issues
         try {
-            $repository = $this->dm->getRepository(AuditLog::class);
-            $logs = $repository->findBy(
-                $criteria,
-                ['timestamp' => 'DESC'],
-                $limit,
-                $skip
-            );
+            $logs = $this->auditLogService->searchLogs($criteria, $limit, $skip);
         } catch (\Exception $e) {
             // MongoDB connection failed, return empty array
+            error_log('Audit log retrieval error: ' . $e->getMessage());
             $logs = [];
         }
         
@@ -75,7 +70,7 @@ class AuditLogController extends AbstractController
                 'username' => $log->getUsername(),
                 'actionType' => $log->getActionType(),
                 'description' => $log->getDescription(),
-                'timestamp' => $log->getTimestamp()->format('Y-m-d H:i:s'),
+                'timestamp' => $log->getTimestamp()->toDateTime()->format('Y-m-d H:i:s'),
                 'ipAddress' => $log->getIpAddress(),
                 'entityId' => $log->getEntityId(),
                 'entityType' => $log->getEntityType(),
@@ -115,7 +110,7 @@ class AuditLogController extends AbstractController
                 'username' => $log->getUsername(),
                 'actionType' => $log->getActionType(),
                 'description' => $log->getDescription(),
-                'timestamp' => $log->getTimestamp()->format('Y-m-d H:i:s'),
+                'timestamp' => $log->getTimestamp()->toDateTime()->format('Y-m-d H:i:s'),
                 'ipAddress' => $log->getIpAddress(),
                 'metadata' => $log->getMetadata()
             ];
@@ -150,7 +145,7 @@ class AuditLogController extends AbstractController
                 'id' => $log->getId(),
                 'actionType' => $log->getActionType(),
                 'description' => $log->getDescription(),
-                'timestamp' => $log->getTimestamp()->format('Y-m-d H:i:s'),
+                'timestamp' => $log->getTimestamp()->toDateTime()->format('Y-m-d H:i:s'),
                 'ipAddress' => $log->getIpAddress(),
                 'entityId' => $log->getEntityId(),
                 'entityType' => $log->getEntityType()
