@@ -96,8 +96,9 @@ class PatientVerificationService
     {
         $roles = $user->getRoles();
         
-        // Doctors and nurses require verification for sensitive operations
-        // Admins and receptionists may have different requirements
+        // Only doctors and nurses require verification for sensitive operations
+        // This method is called in conjunction with isSensitiveOperation()
+        // to determine if verification is needed for specific operations
         return in_array('ROLE_DOCTOR', $roles) || in_array('ROLE_NURSE', $roles);
     }
 

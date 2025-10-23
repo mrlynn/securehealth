@@ -130,10 +130,26 @@ class PatientVerification {
     }
 
     /**
-     * Check if patient verification is required
+     * Check if patient verification is required for a specific operation
      */
-    async checkVerificationRequired(patientId) {
+    async checkVerificationRequired(patientId, operation = 'view') {
+        console.log(`checkVerificationRequired called with patientId: ${patientId}, operation: "${operation}"`);
+        
         try {
+            // For simple operations like viewing, basic editing, or note management, verification is not required
+            // Only sensitive operations like editing medical data require verification
+            const sensitiveOperations = ['edit_medical', 'edit_diagnosis', 'edit_medications', 'edit_ssn', 'edit_insurance'];
+            console.log(`Sensitive operations: ${JSON.stringify(sensitiveOperations)}`);
+            console.log(`Operation "${operation}" in sensitive operations: ${sensitiveOperations.includes(operation)}`);
+            
+            if (!sensitiveOperations.includes(operation)) {
+                console.log(`Verification not required for operation: "${operation}"`);
+                return false;
+            }
+            
+            console.log(`Operation "${operation}" IS sensitive, checking backend API`);
+
+            // Only call the backend API for sensitive operations
             const response = await fetch(`/api/patients/${patientId}/verify/check`, {
                 method: 'GET',
                 headers: {
@@ -518,20 +534,29 @@ class PatientVerification {
     /**
      * Enhanced fetch with verification
      */
-    async fetchWithVerification(url, options = {}) {
+    async fetchWithVerification(url, options = {}, operation = 'view') {
+        console.log(`fetchWithVerification called with URL: ${url}, operation: ${operation}`);
+        
         // Extract patient ID from URL
         const patientIdMatch = url.match(/\/api\/patients\/([^\/]+)/);
         if (!patientIdMatch) {
+            console.log(`No patient ID found in URL: ${url}, proceeding without verification`);
             return fetch(url, options);
         }
 
         const patientId = patientIdMatch[1];
-
-        // Check if verification is required
-        const verificationRequired = await this.checkVerificationRequired(patientId);
+        console.log(`Patient ID extracted: ${patientId}`);
+        
+        // Check if verification is required for this operation
+        const verificationRequired = await this.checkVerificationRequired(patientId, operation);
+        console.log(`Verification required result: ${verificationRequired}`);
+        
         if (!verificationRequired) {
+            console.log(`Proceeding without verification for operation: ${operation}`);
             return fetch(url, options);
         }
+        
+        console.log(`Verification IS required for operation: ${operation}`);
 
         // Check if already verified
         if (this.isPatientVerified(patientId)) {

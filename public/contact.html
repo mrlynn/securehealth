@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - SecureHealth</title>
+    <meta name="description" content="Get in touch with our team to learn more about MongoDB Queryable Encryption for healthcare applications.">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* MongoDB Brand Colors */
+            --mongodb-green: #00ed64;
+            --mongodb-green-dark: #00d151;
+            --mongodb-green-darker: #00b444;
+            --mongodb-dark-green: #13aa52;
+            --mongodb-teal: #00d4aa;
+            --mongodb-blue: #001e2b;
+            --mongodb-gray: #001e2b;
+            --mongodb-light-gray: #f7f7f7;
+            --mongodb-white: #ffffff;
+            --mongodb-text-dark: #001e2b;
+            --mongodb-text-light: #5e6b73;
+            --mongodb-border: #e8e8e8;
+            
+            /* Legacy variables for compatibility */
+            --primary-color: var(--mongodb-green);
+            --primary-dark: var(--mongodb-green-dark);
+            --secondary-color: var(--mongodb-teal);
+            --accent-color: var(--mongodb-green-darker);
+            --text-dark: var(--mongodb-text-dark);
+            --text-light: var(--mongodb-text-light);
+            --bg-light: var(--mongodb-light-gray);
+            --bg-white: var(--mongodb-white);
+            --border-color: var(--mongodb-border);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+
+        .hero-contact {
+            background: linear-gradient(135deg, var(--mongodb-blue) 0%, var(--mongodb-dark-green) 100%);
+            color: white;
+            padding: 120px 0 80px;
+        }
+
+        .contact-form {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--mongodb-green);
+            box-shadow: 0 0 0 0.2rem rgba(0, 237, 100, 0.25);
+        }
+
+        .btn-primary {
+            background: var(--mongodb-green);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: var(--mongodb-blue);
+        }
+
+        .btn-primary:hover {
+            background: var(--mongodb-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 237, 100, 0.3);
+            color: var(--mongodb-blue);
+        }
+
+        .contact-info {
+            background: var(--bg-light);
+            border-radius: 20px;
+            padding: 3rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .contact-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--mongodb-green), var(--mongodb-teal));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--mongodb-blue);
+            font-size: 1.5rem;
+            margin-right: 1.5rem;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .faq-answer {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="/secure-health-marketing.html" style="color: var(--mongodb-green);">
+                <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                <small class="text-muted ms-2" style="font-size: 0.7rem;">Powered by MongoDB</small>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/secure-health-marketing.html#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/secure-health-marketing.html#security">Security</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/secure-health-marketing.html#demo">Demo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/secure-health-marketing.html#testimonials">Testimonials</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#contact">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-contact">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-4">Get in Touch</h1>
+                    <p class="lead">Ready to secure your patient data with MongoDB Queryable Encryption? Our team is here to help you get started.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-8">
+                    <div class="contact-form">
+                        <h3 class="mb-4">Send us a Message</h3>
+                        <form id="contactForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="firstName" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="firstName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="lastName" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="lastName" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="organization" class="form-label">Organization</label>
+                                <input type="text" class="form-control" id="organization" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="role" class="form-label">Role</label>
+                                <select class="form-control" id="role" required>
+                                    <option value="">Select your role</option>
+                                    <option value="cto">Chief Technology Officer</option>
+                                    <option value="it-director">IT Director</option>
+                                    <option value="developer">Developer</option>
+                                    <option value="security-officer">Security Officer</option>
+                                    <option value="compliance-officer">Compliance Officer</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="interest" class="form-label">Area of Interest</label>
+                                <select class="form-control" id="interest" required>
+                                    <option value="">Select your interest</option>
+                                    <option value="hipaa-compliance">HIPAA Compliance</option>
+                                    <option value="queryable-encryption">MongoDB Queryable Encryption</option>
+                                    <option value="security-architecture">Security Architecture</option>
+                                    <option value="implementation">Implementation Support</option>
+                                    <option value="training">Training & Consulting</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label for="message" class="form-label">Message</label>
+                                <textarea class="form-control" id="message" rows="5" placeholder="Tell us about your project and how we can help..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i>Send Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="contact-info">
+                        <h4 class="mb-4">Contact Information</h4>
+                        
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Email Us</h6>
+                                <p class="mb-0 text-muted">contact@securehealth.dev</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Call Us</h6>
+                                <p class="mb-0 text-muted">+1 (555) 123-4567</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Visit Us</h6>
+                                <p class="mb-0 text-muted">123 Healthcare Plaza<br>San Francisco, CA 94105</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Business Hours</h6>
+                                <p class="mb-0 text-muted">Monday - Friday<br>9:00 AM - 6:00 PM PST</p>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="mb-3">Quick Links</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <a href="/secure-health-marketing.html#demo" class="text-decoration-none">
+                                    <i class="fas fa-play me-2"></i>View Demo
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="/docs/" class="text-decoration-none">
+                                    <i class="fas fa-book me-2"></i>Documentation
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="/login.html" class="text-decoration-none">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login to Demo
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">What is MongoDB Queryable Encryption?</div>
+                        <div class="faq-answer">
+                            MongoDB Queryable Encryption is a client-side encryption feature that allows you to encrypt sensitive data before it reaches the database server, while still maintaining the ability to perform queries on the encrypted data. This provides maximum security for healthcare applications while preserving functionality.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">How does it ensure HIPAA compliance?</div>
+                        <div class="faq-answer">
+                            Our implementation includes comprehensive audit logging, role-based access control, data encryption at rest and in transit, and automatic compliance reporting. All PHI access is logged and monitored to meet HIPAA requirements for administrative, physical, and technical safeguards.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">What types of queries can I perform on encrypted data?</div>
+                        <div class="faq-answer">
+                            MongoDB Queryable Encryption supports equality queries and range queries on encrypted fields. This means you can search for exact matches, perform comparisons (greater than, less than), and maintain full search functionality while keeping your data encrypted.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">How does performance compare to unencrypted data?</div>
+                        <div class="faq-answer">
+                            Queryable Encryption is optimized for performance and typically adds minimal overhead to your queries. The encryption/decryption happens client-side, and MongoDB's query engine is designed to efficiently handle encrypted data operations.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">Can I integrate this with my existing healthcare system?</div>
+                        <div class="faq-answer">
+                            Yes! Our solution is designed to integrate with existing healthcare applications. We provide APIs, SDKs, and implementation guides to help you add Queryable Encryption to your current MongoDB-based systems with minimal disruption.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">What support do you provide during implementation?</div>
+                        <div class="faq-answer">
+                            We offer comprehensive support including implementation consulting, code reviews, security audits, training for your development team, and ongoing technical support. Our team has extensive experience with healthcare compliance and MongoDB implementations.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h2 class="mb-4">Ready to Get Started?</h2>
+                    <p class="lead mb-4">Join the growing number of healthcare organizations securing their patient data with MongoDB Queryable Encryption.</p>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="/login.html" class="btn btn-primary btn-lg">
+                            <i class="fas fa-rocket me-2"></i>Try Free Demo
+                        </a>
+                        <a href="/secure-health-marketing.html" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-info-circle me-2"></i>Learn More
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5>
+                        <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                    </h5>
+                    <p class="text-muted">Building secure, HIPAA-compliant healthcare applications with MongoDB Queryable Encryption technology.</p>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Product</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/secure-health-marketing.html#features" class="text-muted text-decoration-none">Features</a></li>
+                        <li><a href="/secure-health-marketing.html#security" class="text-muted text-decoration-none">Security</a></li>
+                        <li><a href="/secure-health-marketing.html#demo" class="text-muted text-decoration-none">Demo</a></li>
+                        <li><a href="/login.html" class="text-muted text-decoration-none">Login</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/docs/" class="text-muted text-decoration-none">Documentation</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">API Reference</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Tutorials</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Support</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Company</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">About</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Careers</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Blog</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Press</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Legal</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">Privacy Policy</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Terms of Service</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">HIPAA Compliance</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center text-muted">
+                <p>&copy; 2024 SecureHealth. All rights reserved. Built with MongoDB Queryable Encryption. MongoDB is a trademark of MongoDB, Inc.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Form submission handling
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Show success message (in a real implementation, this would send to a server)
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                alert('Thank you for your message! We\'ll get back to you within 24 hours.');
+                this.reset();
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 2000);
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                navbar.style.backdropFilter = 'blur(10px)';
+            } else {
+                navbar.style.background = 'white';
+                navbar.style.backdropFilter = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

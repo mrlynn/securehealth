@@ -13,7 +13,7 @@
   <!-- Role-aware navbar script -->
   <script src="/assets/js/navbar.js"></script>
   <!-- Patient verification script -->
-  <script src="/assets/js/patient-verification.js"></script>
+  <script src="/assets/js/patient-verification.js?v=2"></script>
   <style>
     :root {
       --mongodb-green: #00ED64;
@@ -726,8 +726,8 @@
     async function viewPatient(id) {
       console.log('Attempting to view patient detail page for ID:', id);
       
-      // Check if verification is required
-      const verificationRequired = await window.patientVerification.checkVerificationRequired(id);
+      // Check if verification is required for viewing (not required for basic viewing)
+      const verificationRequired = await window.patientVerification.checkVerificationRequired(id, 'view');
       if (verificationRequired && !window.patientVerification.isPatientVerified(id)) {
         // Show verification modal
         window.patientVerification.showVerificationModal(id, (success, patientData) => {
@@ -747,8 +747,8 @@
     async function editPatient(id) {
       console.log('Attempting to edit patient for ID:', id);
       
-      // Check if verification is required
-      const verificationRequired = await window.patientVerification.checkVerificationRequired(id);
+      // Check if verification is required for editing (not required for basic editing)
+      const verificationRequired = await window.patientVerification.checkVerificationRequired(id, 'edit');
       if (verificationRequired && !window.patientVerification.isPatientVerified(id)) {
         // Show verification modal
         window.patientVerification.showVerificationModal(id, (success, patientData) => {
@@ -775,7 +775,9 @@
   // Show raw MongoDB document in a Bootstrap modal (X-Ray)
   async function viewRaw(id) {
     try {
-      const res = await fetch(`/api_mongo_patient_xray.php?id=${encodeURIComponent(id)}`, {
+      // Use the current host and port for the API call
+      const baseUrl = `${window.location.protocol}//${window.location.host}`;
+      const res = await fetch(`${baseUrl}/api_mongo_patient_xray.php?id=${encodeURIComponent(id)}`, {
         credentials: 'include'
       });
       

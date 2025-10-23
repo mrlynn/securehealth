@@ -204,40 +204,78 @@
       flex-direction: column;
       justify-content: center;
       gap: 8px;
-      padding: 12px;
-      font-size: 0.85rem;
+      padding: 16px 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .role-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .role-btn:hover::before {
+      left: 100%;
     }
 
     .role-btn.doctor {
-      background-color: #4361ee;
+      background: linear-gradient(135deg, var(--mongodb-green), var(--mongodb-dark-green));
+      color: var(--mongodb-black);
     }
 
     .role-btn.nurse {
-      background-color: #3a86ff;
+      background: linear-gradient(135deg, var(--mongodb-dark-green), #0d9488);
+      color: white;
     }
 
     .role-btn.receptionist {
-      background-color: #4895ef;
+      background: linear-gradient(135deg, #0d9488, #0891b2);
+      color: white;
     }
 
     .role-btn.admin {
-      background-color: #6f42c1;
+      background: linear-gradient(135deg, var(--mongodb-black), #374151);
+      color: white;
     }
 
     .role-btn:hover {
       transform: translateY(-3px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 8px 20px rgba(0, 237, 100, 0.3);
+    }
+
+    .role-btn.doctor:hover {
+      box-shadow: 0 8px 20px rgba(0, 237, 100, 0.4);
+    }
+
+    .role-btn.nurse:hover {
+      box-shadow: 0 8px 20px rgba(19, 170, 82, 0.4);
+    }
+
+    .role-btn.receptionist:hover {
+      box-shadow: 0 8px 20px rgba(13, 148, 136, 0.4);
+    }
+
+    .role-btn.admin:hover {
+      box-shadow: 0 8px 20px rgba(0, 30, 43, 0.4);
     }
 
     .role-icon {
-      font-style: normal;
-      font-size: 1.5rem;
+      font-size: 1.8rem;
+      margin-bottom: 4px;
     }
 
     .portal-button {
@@ -327,16 +365,16 @@
             
             <div class="role-grid">
               <button class="role-btn doctor" data-email="doctor@example.com" data-password="doctor">
-                <i class="role-icon">👨‍⚕️</i> Doctor
+                <i class="role-icon fas fa-user-md"></i> Doctor
               </button>
               <button class="role-btn nurse" data-email="nurse@example.com" data-password="nurse">
-                <i class="role-icon">👩‍⚕️</i> Nurse
+                <i class="role-icon fas fa-user-nurse"></i> Nurse
               </button>
               <button class="role-btn receptionist" data-email="receptionist@example.com" data-password="receptionist">
-                <i class="role-icon">👩‍💼</i> Receptionist
+                <i class="role-icon fas fa-user-tie"></i> Receptionist
               </button>
               <button class="role-btn admin" data-email="admin@securehealth.com" data-password="admin123">
-                <i class="role-icon">🤖</i> Admin
+                <i class="role-icon fas fa-cog"></i> Admin
               </button>
             </div>
           </div>

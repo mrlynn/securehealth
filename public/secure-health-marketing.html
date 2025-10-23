@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureHealth - HIPAA-Compliant Patient Data System with MongoDB Queryable Encryption</title>
+    <meta name="description" content="Build secure, HIPAA-compliant healthcare applications with MongoDB Queryable Encryption. Protect patient data while maintaining query performance and regulatory compliance.">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* MongoDB Brand Colors */
+            --mongodb-green: #00ed64;
+            --mongodb-green-dark: #00d151;
+            --mongodb-green-darker: #00b444;
+            --mongodb-dark-green: #13aa52;
+            --mongodb-teal: #00d4aa;
+            --mongodb-blue: #001e2b;
+            --mongodb-gray: #001e2b;
+            --mongodb-light-gray: #f7f7f7;
+            --mongodb-white: #ffffff;
+            --mongodb-text-dark: #001e2b;
+            --mongodb-text-light: #5e6b73;
+            --mongodb-border: #e8e8e8;
+            
+            /* Legacy variables for compatibility */
+            --primary-color: var(--mongodb-green);
+            --primary-dark: var(--mongodb-green-dark);
+            --secondary-color: var(--mongodb-teal);
+            --accent-color: var(--mongodb-green-darker);
+            --text-dark: var(--mongodb-text-dark);
+            --text-light: var(--mongodb-text-light);
+            --bg-light: var(--mongodb-light-gray);
+            --bg-white: var(--mongodb-white);
+            --border-color: var(--mongodb-border);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--mongodb-blue) 0%, var(--mongodb-dark-green) 100%);
+            color: white;
+            padding: 120px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero .lead {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-hero {
+            background: var(--mongodb-green);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            color: var(--mongodb-blue);
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+
+        .btn-hero:hover {
+            background: var(--mongodb-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 237, 100, 0.3);
+            color: var(--mongodb-blue);
+        }
+
+        .btn-outline-hero {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 13px 28px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+
+        .btn-outline-hero:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 0;
+            background: var(--bg-white);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .section-title p {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--mongodb-green), var(--mongodb-teal));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--mongodb-blue);
+            font-size: 2rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* Security Section */
+        .security {
+            background: var(--bg-light);
+            padding: 100px 0;
+        }
+
+        .security-badge {
+            display: inline-block;
+            background: var(--mongodb-green);
+            color: var(--mongodb-blue);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .compliance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .compliance-item {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .compliance-item i {
+            font-size: 3rem;
+            color: var(--mongodb-green);
+            margin-bottom: 1rem;
+        }
+
+        /* Demo Section */
+        .demo {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .demo-container {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 25px;
+            padding: 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 237, 100, 0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .demo-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .demo-button {
+            background: var(--mongodb-green);
+            color: var(--mongodb-blue);
+            padding: 18px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin-top: 2rem;
+        }
+
+        .demo-button:hover {
+            background: var(--mongodb-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0, 237, 100, 0.3);
+            color: var(--mongodb-blue);
+        }
+
+        /* Testimonials */
+        .testimonials {
+            background: var(--bg-light);
+            padding: 100px 0;
+        }
+
+        .testimonial-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            height: 100%;
+        }
+
+        .testimonial-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--mongodb-green), var(--mongodb-teal));
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--mongodb-blue);
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .testimonial-quote {
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .testimonial-role {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* CTA Section */
+        .cta {
+            background: linear-gradient(135deg, var(--mongodb-blue) 0%, var(--mongodb-dark-green) 100%);
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta p {
+            font-size: 1.2rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-cta {
+            background: var(--mongodb-green);
+            color: var(--mongodb-blue);
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cta:hover {
+            background: var(--mongodb-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 237, 100, 0.3);
+            color: var(--mongodb-blue);
+        }
+
+        .btn-cta-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 13px 28px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cta-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--text-dark);
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer h5 {
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer a {
+            color: #9ca3af;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #374151;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            text-align: center;
+            color: #9ca3af;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero .lead {
+                font-size: 1.1rem;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
+            }
+            
+            .demo-container {
+                padding: 2rem;
+            }
+            
+            .cta h2 {
+                font-size: 2rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.6s ease;
+        }
+
+        .slide-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.6s ease;
+        }
+
+        .slide-in-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="#" style="color: var(--mongodb-green);">
+                <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                <small class="text-muted ms-2" style="font-size: 0.7rem;">Powered by MongoDB</small>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#security">Security</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#demo">Demo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#testimonials">Testimonials</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact.html">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="hero-content">
+                        <div class="hero-badge">
+                            <i class="fas fa-lock me-2"></i>HIPAA Compliant with MongoDB Queryable Encryption
+                        </div>
+                        <h1>Secure Patient Data with MongoDB Queryable Encryption</h1>
+                        <p class="lead">Build HIPAA-compliant healthcare applications that protect patient data while maintaining query performance. Leverage MongoDB's cutting-edge Queryable Encryption technology for maximum security and compliance.</p>
+                        <div class="hero-buttons">
+                            <a href="/visitor-router.html" class="btn-hero">
+                                <i class="fas fa-route me-2"></i>Find Your Path
+                            </a>
+                            <a href="#demo" class="btn-outline-hero">
+                                <i class="fas fa-play me-2"></i>View Demo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="text-center">
+                        <div class="position-relative d-inline-block">
+                            <div class="bg-white rounded-4 p-4 shadow-lg" style="transform: rotate(3deg);">
+                                <i class="fas fa-database text-primary" style="font-size: 4rem;"></i>
+                            </div>
+                            <div class="bg-white rounded-4 p-3 shadow-lg position-absolute" style="top: 20px; left: 20px; transform: rotate(-2deg);">
+                                <i class="fas fa-shield-alt text-success" style="font-size: 2rem;"></i>
+                            </div>
+                            <div class="bg-white rounded-4 p-2 shadow-lg position-absolute" style="top: -10px; right: 10px; transform: rotate(1deg);">
+                                <i class="fas fa-user-md text-warning" style="font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-title fade-in">
+                <h2>Why Choose MongoDB Queryable Encryption?</h2>
+                <p>Experience the next generation of database security with client-side encryption that maintains query performance while protecting sensitive healthcare data.</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h3>Client-Side Encryption</h3>
+                        <p>Data is encrypted before it reaches the database server, ensuring maximum security even if the server is compromised. Your encryption keys never leave your application.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>Queryable Data</h3>
+                        <p>Perform equality and range queries directly on encrypted data without decryption. Maintain search functionality while keeping sensitive information protected.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <h3>HIPAA Compliance</h3>
+                        <p>Built-in compliance features including comprehensive audit logging, role-based access control, and data protection mechanisms required for healthcare applications.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <h3>High Performance</h3>
+                        <p>Optimized for healthcare workloads with fast query execution on encrypted data. No performance penalty for security - get both speed and protection.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-users-cog"></i>
+                        </div>
+                        <h3>Role-Based Access</h3>
+                        <p>Fine-grained permissions system that ensures healthcare staff only access the data they need. Doctors, nurses, and administrators see role-appropriate information.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Audit & Monitoring</h3>
+                        <p>Comprehensive audit trails for all PHI access with detailed logging, compliance reporting, and real-time monitoring capabilities for security teams.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section id="security" class="security">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="slide-in-left">
+                        <div class="security-badge">
+                            <i class="fas fa-shield-alt me-2"></i>Enterprise Security
+                        </div>
+                        <h2 class="mb-4">Bank-Grade Security for Healthcare Data</h2>
+                        <p class="mb-4">MongoDB Queryable Encryption provides military-grade security for your most sensitive patient information. Built on proven cryptographic principles and designed specifically for healthcare compliance requirements.</p>
+                        <ul class="list-unstyled">
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>End-to-End Encryption:</strong> Data encrypted from client to database
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Zero-Knowledge Architecture:</strong> Server never sees unencrypted data
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Key Management:</strong> Secure key storage and rotation
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Compliance Ready:</strong> HIPAA, SOC 2, and GDPR compliant
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="compliance-grid slide-in-right">
+                        <div class="compliance-item">
+                            <i class="fas fa-certificate"></i>
+                            <h5>HIPAA Compliant</h5>
+                            <p>Full compliance with healthcare data protection regulations</p>
+                        </div>
+                        <div class="compliance-item">
+                            <i class="fas fa-shield-virus"></i>
+                            <h5>SOC 2 Type II</h5>
+                            <p>Enterprise-grade security controls and monitoring</p>
+                        </div>
+                        <div class="compliance-item">
+                            <i class="fas fa-user-secret"></i>
+                            <h5>GDPR Ready</h5>
+                            <p>Data protection and privacy controls for global compliance</p>
+                        </div>
+                        <div class="compliance-item">
+                            <i class="fas fa-award"></i>
+                            <h5>FIPS 140-2</h5>
+                            <p>Validated cryptographic modules for government use</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo">
+        <div class="container">
+            <div class="demo-container">
+                <div class="demo-content">
+                    <h2 class="mb-4">See Queryable Encryption in Action</h2>
+                    <p class="lead mb-4">Experience how MongoDB Queryable Encryption protects patient data while maintaining full search capabilities. Try our interactive demo to see the power of encrypted queries.</p>
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-md-8">
+                            <div class="bg-white rounded-4 p-4 shadow-sm border">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="bg-primary text-white rounded-circle p-2 me-3">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Patient Database Query</h6>
+                                        <small class="text-muted">Searching encrypted patient records</small>
+                                    </div>
+                                </div>
+                                <div class="code-block bg-light p-3 rounded">
+                                    <code>
+                                        db.patients.find({<br>
+                                        &nbsp;&nbsp;"ssn": "***-***-1234",<br>
+                                        &nbsp;&nbsp;"diagnosis": "encrypted_value"<br>
+                                        })
+                                    </code>
+                                </div>
+                                <div class="mt-3">
+                                    <span class="badge bg-success me-2">
+                                        <i class="fas fa-lock me-1"></i>Encrypted
+                                    </span>
+                                    <span class="badge bg-primary me-2">
+                                        <i class="fas fa-search me-1"></i>Queryable
+                                    </span>
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-shield-alt me-1"></i>HIPAA Compliant
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/login.html" class="demo-button">
+                        <i class="fas fa-play me-2"></i>Try Live Demo
+                    </a>
+                    <p class="mt-3 text-muted">
+                        <small>Demo includes sample patient data and encryption testing tools</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="testimonials">
+        <div class="container">
+            <div class="section-title fade-in">
+                <h2>Trusted by Healthcare Organizations</h2>
+                <p>See how healthcare providers are using MongoDB Queryable Encryption to secure their patient data.</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="testimonial-card fade-in">
+                        <div class="testimonial-avatar">JD</div>
+                        <p class="testimonial-quote">"MongoDB Queryable Encryption has revolutionized how we handle patient data. We can now perform complex queries on encrypted records without compromising security or performance."</p>
+                        <div class="testimonial-author">Dr. Sarah Johnson</div>
+                        <div class="testimonial-role">Chief Medical Officer, MedTech Solutions</div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="testimonial-card fade-in">
+                        <div class="testimonial-avatar">MR</div>
+                        <p class="testimonial-quote">"The HIPAA compliance features are outstanding. We passed our audit with flying colors thanks to the comprehensive audit logging and role-based access controls."</p>
+                        <div class="testimonial-author">Michael Rodriguez</div>
+                        <div class="testimonial-role">IT Director, Regional Health System</div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="testimonial-card fade-in">
+                        <div class="testimonial-avatar">AL</div>
+                        <p class="testimonial-quote">"Implementation was seamless. Our development team was able to integrate Queryable Encryption into our existing MongoDB infrastructure without any major changes."</p>
+                        <div class="testimonial-author">Alex Liu</div>
+                        <div class="testimonial-role">Lead Developer, HealthTech Innovations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2 class="fade-in">Ready to Secure Your Patient Data?</h2>
+            <p class="fade-in">Join leading healthcare organizations using MongoDB Queryable Encryption to protect sensitive patient information while maintaining application performance.</p>
+            <div class="cta-buttons fade-in">
+                <a href="/visitor-router.html" class="btn-cta">
+                    <i class="fas fa-route me-2"></i>Find Your Path
+                </a>
+                <a href="/login.html" class="btn-cta">
+                    <i class="fas fa-rocket me-2"></i>Start Free Demo
+                </a>
+                <a href="/contact.html" class="btn-cta-outline">
+                    <i class="fas fa-phone me-2"></i>Contact Sales
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5>
+                        <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                    </h5>
+                    <p class="text-muted">Building secure, HIPAA-compliant healthcare applications with MongoDB Queryable Encryption technology.</p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-muted"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-muted"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-muted"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Product</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#security">Security</a></li>
+                        <li><a href="#demo">Demo</a></li>
+                        <li><a href="/login.html">Login</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/docs/">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">Tutorials</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Company</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Press</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Legal</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">HIPAA Compliance</a></li>
+                        <li><a href="#">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 SecureHealth. All rights reserved. Built with MongoDB Queryable Encryption. MongoDB is a trademark of MongoDB, Inc.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all animated elements
+        document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                navbar.style.backdropFilter = 'blur(10px)';
+            } else {
+                navbar.style.background = 'white';
+                navbar.style.backdropFilter = 'none';
+            }
+        });
+
+        // Add loading animation to demo button
+        document.querySelector('.demo-button')?.addEventListener('click', function(e) {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading Demo...';
+            this.style.pointerEvents = 'none';
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.style.pointerEvents = 'auto';
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

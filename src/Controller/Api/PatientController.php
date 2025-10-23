@@ -307,22 +307,23 @@ class PatientController extends AbstractController
 
         $this->denyAccessUnlessGranted(PatientVoter::EDIT, $patient);
 
-        // Check if verification is required for updates
+        // Check if verification is required for sensitive operations only
         $user = $this->getUser();
-        if ($this->verificationService->isVerificationRequired($user)) {
+        $data = json_decode($request->getContent(), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return $this->json(['message' => 'Invalid JSON'], Response::HTTP_BAD_REQUEST);
+        }
+        
+        // Only require verification for sensitive operations
+        if ($this->isSensitiveOperation($data) && $this->verificationService->isVerificationRequired($user)) {
             $verificationResult = $this->checkVerification($request, $user, $id);
             if (!$verificationResult['success']) {
                 return $this->json([
-                    'message' => 'Patient identity verification required for updates',
+                    'message' => 'Patient identity verification required for sensitive operations',
                     'verificationRequired' => true,
                     'requirements' => $this->verificationService->getVerificationRequirements()
                 ], Response::HTTP_FORBIDDEN);
             }
-        }
-
-        $data = json_decode($request->getContent(), true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return $this->json(['message' => 'Invalid JSON'], Response::HTTP_BAD_REQUEST);
         }
 
         // Track which fields are updated
@@ -583,5 +584,33 @@ class PatientController extends AbstractController
             'success' => false,
             'message' => 'Verification data not provided'
         ];
+    }
+
+    /**
+     * Check if the operation involves sensitive data that requires verification
+     *
+     * @param array $data The update data
+     * @return bool
+     */
+    private function isSensitiveOperation(array $data): bool
+    {
+        // Define sensitive fields that require verification
+        $sensitiveFields = [
+            'ssn',
+            'diagnosis',
+            'medications',
+            'insuranceDetails'
+        ];
+
+        // Check if any sensitive fields are being updated
+        foreach ($sensitiveFields as $field) {
+            if (isset($data[$field])) {
+                return true;
+            }
+        }
+
+        // Note additions and updates are not considered sensitive operations
+        // as they are routine clinical documentation
+        return false;
     }
 }

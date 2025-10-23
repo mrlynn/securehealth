@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Path - SecureHealth Visitor Router</title>
+    <meta name="description" content="Discover the right resources for your role in healthcare technology. Get personalized guidance for MongoDB Queryable Encryption implementation.">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* MongoDB Brand Colors */
+            --mongodb-green: #00ed64;
+            --mongodb-green-dark: #00d151;
+            --mongodb-green-darker: #00b444;
+            --mongodb-dark-green: #13aa52;
+            --mongodb-teal: #00d4aa;
+            --mongodb-blue: #001e2b;
+            --mongodb-gray: #001e2b;
+            --mongodb-light-gray: #f7f7f7;
+            --mongodb-white: #ffffff;
+            --mongodb-text-dark: #001e2b;
+            --mongodb-text-light: #5e6b73;
+            --mongodb-border: #e8e8e8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--mongodb-text-dark);
+            background: var(--mongodb-light-gray);
+        }
+
+        /* Hero Section */
+        .hero-router {
+            background: linear-gradient(135deg, var(--mongodb-blue) 0%, var(--mongodb-dark-green) 100%);
+            color: white;
+            padding: 100px 0 60px;
+            text-align: center;
+        }
+
+        .hero-router h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .hero-router p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Router Container */
+        .router-container {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            margin: -2rem auto 4rem;
+            max-width: 1000px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Step Indicator */
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 1rem;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--mongodb-border);
+            color: var(--mongodb-text-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-number {
+            background: var(--mongodb-green);
+            color: var(--mongodb-blue);
+        }
+
+        .step.completed .step-number {
+            background: var(--mongodb-green);
+            color: var(--mongodb-blue);
+        }
+
+        .step.completed .step-number::after {
+            content: '✓';
+        }
+
+        .step-label {
+            font-weight: 500;
+            color: var(--mongodb-text-light);
+        }
+
+        .step.active .step-label {
+            color: var(--mongodb-text-dark);
+        }
+
+        /* Persona Cards */
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .persona-card {
+            background: white;
+            border: 2px solid var(--mongodb-border);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .persona-card:hover {
+            border-color: var(--mongodb-green);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 237, 100, 0.15);
+        }
+
+        .persona-card.selected {
+            border-color: var(--mongodb-green);
+            background: linear-gradient(135deg, rgba(0, 237, 100, 0.05), rgba(0, 212, 170, 0.05));
+        }
+
+        .persona-card.selected::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--mongodb-green);
+        }
+
+        .persona-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--mongodb-green), var(--mongodb-teal));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: var(--mongodb-blue);
+            font-size: 2rem;
+        }
+
+        .persona-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--mongodb-text-dark);
+        }
+
+        .persona-card p {
+            color: var(--mongodb-text-light);
+            margin-bottom: 1rem;
+        }
+
+        .persona-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .persona-tag {
+            background: var(--mongodb-light-gray);
+            color: var(--mongodb-text-light);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .persona-card.selected .persona-tag {
+            background: var(--mongodb-green);
+            color: var(--mongodb-blue);
+        }
+
+        /* Interest Selection */
+        .interest-section {
+            display: none;
+        }
+
+        .interest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .interest-card {
+            background: white;
+            border: 2px solid var(--mongodb-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .interest-card:hover {
+            border-color: var(--mongodb-green);
+            transform: translateY(-2px);
+        }
+
+        .interest-card.selected {
+            border-color: var(--mongodb-green);
+            background: linear-gradient(135deg, rgba(0, 237, 100, 0.05), rgba(0, 212, 170, 0.05));
+        }
+
+        .interest-icon {
+            font-size: 2rem;
+            color: var(--mongodb-green);
+            margin-bottom: 1rem;
+        }
+
+        .interest-card h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .interest-card p {
+            font-size: 0.9rem;
+            color: var(--mongodb-text-light);
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+        }
+
+        .results-card {
+            background: linear-gradient(135deg, var(--mongodb-green), var(--mongodb-teal));
+            color: var(--mongodb-blue);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .results-card h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .results-card p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .resource-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .resource-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--mongodb-green), var(--mongodb-teal));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--mongodb-blue);
+            font-size: 1.5rem;
+        }
+
+        .resource-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--mongodb-text-dark);
+        }
+
+        .resource-card p {
+            color: var(--mongodb-text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .resource-btn {
+            background: var(--mongodb-green);
+            color: var(--mongodb-blue);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .resource-btn:hover {
+            background: var(--mongodb-green-dark);
+            transform: translateY(-2px);
+            color: var(--mongodb-blue);
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        .btn-nav {
+            background: var(--mongodb-green);
+            color: var(--mongodb-blue);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-nav:hover {
+            background: var(--mongodb-green-dark);
+            transform: translateY(-2px);
+            color: var(--mongodb-blue);
+        }
+
+        .btn-nav:disabled {
+            background: var(--mongodb-border);
+            color: var(--mongodb-text-light);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-nav-secondary {
+            background: transparent;
+            color: var(--mongodb-text-light);
+            border: 2px solid var(--mongodb-border);
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-nav-secondary:hover {
+            border-color: var(--mongodb-green);
+            color: var(--mongodb-text-dark);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-router h1 {
+                font-size: 2rem;
+            }
+            
+            .router-container {
+                margin: -1rem 1rem 2rem;
+                padding: 2rem;
+            }
+            
+            .persona-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .step {
+                margin: 0 0.5rem;
+            }
+            
+            .step-label {
+                display: none;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-in {
+            opacity: 0;
+            transform: translateX(30px);
+            transition: all 0.6s ease;
+        }
+
+        .slide-in.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="/secure-health-marketing.html" style="color: var(--mongodb-green);">
+                <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                <small class="text-muted ms-2" style="font-size: 0.7rem;">Powered by MongoDB</small>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/secure-health-marketing.html">Overview</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact.html">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-router">
+        <div class="container">
+            <h1>Find Your Perfect Path</h1>
+            <p>Discover the right resources for your role in healthcare technology. Get personalized guidance for MongoDB Queryable Encryption implementation.</p>
+        </div>
+    </section>
+
+    <!-- Router Container -->
+    <div class="container">
+        <div class="router-container">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Who are you?</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">What interests you?</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Your resources</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Persona Selection -->
+            <div id="persona-section" class="fade-in visible">
+                <h2 class="text-center mb-4">I am a...</h2>
+                <div class="persona-grid">
+                    <div class="persona-card" data-persona="developer">
+                        <div class="persona-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <h3>Healthcare Developer</h3>
+                        <p>Building secure healthcare applications with MongoDB Queryable Encryption</p>
+                        <div class="persona-tags">
+                            <span class="persona-tag">Technical Implementation</span>
+                            <span class="persona-tag">API Documentation</span>
+                            <span class="persona-tag">Code Examples</span>
+                        </div>
+                    </div>
+
+                    <div class="persona-card" data-persona="provider">
+                        <div class="persona-icon">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <h3>Healthcare Provider</h3>
+                        <p>Doctor, nurse, or clinical staff using secure patient data systems</p>
+                        <div class="persona-tags">
+                            <span class="persona-tag">Clinical Workflows</span>
+                            <span class="persona-tag">Patient Data Access</span>
+                            <span class="persona-tag">System Usability</span>
+                        </div>
+                    </div>
+
+                    <div class="persona-card" data-persona="decision-maker">
+                        <div class="persona-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>IT Decision Maker</h3>
+                        <p>Evaluating technology solutions for healthcare organizations</p>
+                        <div class="persona-tags">
+                            <span class="persona-tag">ROI Analysis</span>
+                            <span class="persona-tag">Security Architecture</span>
+                            <span class="persona-tag">Vendor Evaluation</span>
+                        </div>
+                    </div>
+
+                    <div class="persona-card" data-persona="compliance">
+                        <div class="persona-icon">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <h3>Compliance Officer</h3>
+                        <p>Ensuring HIPAA compliance and regulatory adherence</p>
+                        <div class="persona-tags">
+                            <span class="persona-tag">HIPAA Compliance</span>
+                            <span class="persona-tag">Audit Capabilities</span>
+                            <span class="persona-tag">Data Governance</span>
+                        </div>
+                    </div>
+
+                    <div class="persona-card" data-persona="admin">
+                        <div class="persona-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h3>System Administrator</h3>
+                        <p>Managing and maintaining secure healthcare infrastructure</p>
+                        <div class="persona-tags">
+                            <span class="persona-tag">Deployment</span>
+                            <span class="persona-tag">Monitoring</span>
+                            <span class="persona-tag">Security Management</span>
+                        </div>
+                    </div>
+
+                    <div class="persona-card" data-persona="student">
+                        <div class="persona-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h3>Student/Researcher</h3>
+                        <p>Learning about healthcare technology and data security</p>
+                        <div class="persona-tags">
+                            <span class="persona-tag">Educational Resources</span>
+                            <span class="persona-tag">Research Materials</span>
+                            <span class="persona-tag">Learning Paths</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Interest Selection -->
+            <div id="interest-section" class="interest-section">
+                <h2 class="text-center mb-4">What interests you most?</h2>
+                <div class="interest-grid" id="interest-grid">
+                    <!-- Dynamic content based on persona selection -->
+                </div>
+            </div>
+
+            <!-- Step 3: Results -->
+            <div id="results-section" class="results-section">
+                <div class="results-card">
+                    <h2>Your Personalized Resources</h2>
+                    <p>Based on your role and interests, here are the most relevant resources for you:</p>
+                </div>
+                <div class="resource-grid" id="resource-grid">
+                    <!-- Dynamic content based on selections -->
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons">
+                <button class="btn-nav-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">
+                    <i class="fas fa-arrow-left me-2"></i>Previous
+                </button>
+                <div></div>
+                <button class="btn-nav" id="nextBtn" onclick="nextStep()" disabled>
+                    Next<i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        let currentStep = 1;
+        let selectedPersona = null;
+        let selectedInterests = [];
+
+        // Persona data with interests and resources
+        const personaData = {
+            developer: {
+                interests: [
+                    { id: 'implementation', icon: 'fas fa-tools', title: 'Implementation Guide', desc: 'Step-by-step setup and configuration' },
+                    { id: 'api', icon: 'fas fa-code', title: 'API Documentation', desc: 'Technical reference and examples' },
+                    { id: 'performance', icon: 'fas fa-tachometer-alt', title: 'Performance Optimization', desc: 'Query performance and scaling' },
+                    { id: 'security', icon: 'fas fa-shield-alt', title: 'Security Best Practices', desc: 'Encryption and security patterns' },
+                    { id: 'integration', icon: 'fas fa-plug', title: 'System Integration', desc: 'Connecting with existing systems' },
+                    { id: 'troubleshooting', icon: 'fas fa-bug', title: 'Troubleshooting', desc: 'Common issues and solutions' }
+                ],
+                resources: [
+                    { icon: 'fas fa-book', title: 'Developer Documentation', desc: 'Complete technical documentation for MongoDB Queryable Encryption', link: '/docs/', type: 'documentation' },
+                    { icon: 'fas fa-code', title: 'Code Examples', desc: 'Ready-to-use code samples and implementation patterns', link: '/login.html', type: 'demo' },
+                    { icon: 'fas fa-play', title: 'Interactive Demo', desc: 'Try MongoDB Queryable Encryption in action', link: '/login.html', type: 'demo' },
+                    { icon: 'fas fa-video', title: 'Video Tutorials', desc: 'Step-by-step video guides for implementation', link: '#', type: 'tutorial' },
+                    { icon: 'fas fa-users', title: 'Developer Community', desc: 'Connect with other healthcare developers', link: '#', type: 'community' },
+                    { icon: 'fas fa-tools', title: 'Development Tools', desc: 'SDKs, CLI tools, and development utilities', link: '#', type: 'tools' }
+                ]
+            },
+            provider: {
+                interests: [
+                    { id: 'workflow', icon: 'fas fa-clipboard-list', title: 'Clinical Workflows', desc: 'How the system supports patient care' },
+                    { id: 'data-access', icon: 'fas fa-database', title: 'Data Access Patterns', desc: 'Understanding patient data security' },
+                    { id: 'usability', icon: 'fas fa-mouse-pointer', title: 'System Usability', desc: 'User interface and experience' },
+                    { id: 'training', icon: 'fas fa-chalkboard-teacher', title: 'Training Resources', desc: 'Learning to use the system effectively' },
+                    { id: 'compliance', icon: 'fas fa-check-circle', title: 'Compliance Features', desc: 'HIPAA compliance in daily workflows' },
+                    { id: 'support', icon: 'fas fa-life-ring', title: 'Support & Help', desc: 'Getting help when you need it' }
+                ],
+                resources: [
+                    { icon: 'fas fa-play', title: 'Live Demo', desc: 'Experience the system as a healthcare provider', link: '/login.html', type: 'demo' },
+                    { icon: 'fas fa-book-open', title: 'User Guide', desc: 'Comprehensive guide for healthcare providers', link: '/docs/', type: 'documentation' },
+                    { icon: 'fas fa-video', title: 'Training Videos', desc: 'Learn how to use the system effectively', link: '#', type: 'tutorial' },
+                    { icon: 'fas fa-shield-alt', title: 'Security Overview', desc: 'Understanding data protection in your workflow', link: '/secure-health-marketing.html#security', type: 'overview' },
+                    { icon: 'fas fa-question-circle', title: 'FAQ', desc: 'Frequently asked questions from providers', link: '/contact.html', type: 'support' },
+                    { icon: 'fas fa-headset', title: 'Support Portal', desc: 'Get help and technical support', link: '/contact.html', type: 'support' }
+                ]
+            },
+            'decision-maker': {
+                interests: [
+                    { id: 'roi', icon: 'fas fa-dollar-sign', title: 'ROI & Business Value', desc: 'Return on investment and cost benefits' },
+                    { id: 'architecture', icon: 'fas fa-sitemap', title: 'System Architecture', desc: 'Technical architecture and scalability' },
+                    { id: 'compliance', icon: 'fas fa-gavel', title: 'Compliance & Risk', desc: 'Regulatory compliance and risk management' },
+                    { id: 'security', icon: 'fas fa-shield-alt', title: 'Security Features', desc: 'Enterprise security capabilities' },
+                    { id: 'integration', icon: 'fas fa-plug', title: 'Integration Options', desc: 'Connecting with existing systems' },
+                    { id: 'support', icon: 'fas fa-handshake', title: 'Support & Services', desc: 'Implementation and ongoing support' }
+                ],
+                resources: [
+                    { icon: 'fas fa-chart-line', title: 'Business Case', desc: 'ROI analysis and business value proposition', link: '/secure-health-marketing.html', type: 'overview' },
+                    { icon: 'fas fa-shield-alt', title: 'Security Whitepaper', desc: 'Comprehensive security and compliance overview', link: '/secure-health-marketing.html#security', type: 'whitepaper' },
+                    { icon: 'fas fa-calendar', title: 'Schedule Demo', desc: 'Personalized demonstration for your organization', link: '/contact.html', type: 'demo' },
+                    { icon: 'fas fa-file-contract', title: 'Implementation Guide', desc: 'Planning and implementation roadmap', link: '/docs/', type: 'documentation' },
+                    { icon: 'fas fa-users', title: 'Customer Stories', desc: 'Success stories from similar organizations', link: '/secure-health-marketing.html#testimonials', type: 'testimonials' },
+                    { icon: 'fas fa-phone', title: 'Contact Sales', desc: 'Speak with our solutions team', link: '/contact.html', type: 'contact' }
+                ]
+            },
+            compliance: {
+                interests: [
+                    { id: 'hipaa', icon: 'fas fa-gavel', title: 'HIPAA Compliance', desc: 'Meeting HIPAA requirements and regulations' },
+                    { id: 'audit', icon: 'fas fa-clipboard-check', title: 'Audit Capabilities', desc: 'Comprehensive audit logging and reporting' },
+                    { id: 'governance', icon: 'fas fa-balance-scale', title: 'Data Governance', desc: 'Data management and governance policies' },
+                    { id: 'risk', icon: 'fas fa-exclamation-triangle', title: 'Risk Assessment', desc: 'Identifying and mitigating security risks' },
+                    { id: 'training', icon: 'fas fa-graduation-cap', title: 'Compliance Training', desc: 'Staff training and awareness programs' },
+                    { id: 'documentation', icon: 'fas fa-file-alt', title: 'Documentation', desc: 'Compliance documentation and policies' }
+                ],
+                resources: [
+                    { icon: 'fas fa-file-alt', title: 'Compliance Guide', desc: 'Complete HIPAA compliance documentation', link: '/docs/', type: 'documentation' },
+                    { icon: 'fas fa-chart-bar', title: 'Audit Reports', desc: 'Sample audit reports and compliance metrics', link: '/login.html', type: 'demo' },
+                    { icon: 'fas fa-shield-alt', title: 'Security Assessment', desc: 'Security and compliance assessment tools', link: '/secure-health-marketing.html#security', type: 'assessment' },
+                    { icon: 'fas fa-gavel', title: 'Regulatory Updates', desc: 'Latest HIPAA and healthcare regulations', link: '#', type: 'updates' },
+                    { icon: 'fas fa-users', title: 'Compliance Community', desc: 'Connect with other compliance professionals', link: '#', type: 'community' },
+                    { icon: 'fas fa-phone', title: 'Compliance Consultation', desc: 'Speak with our compliance experts', link: '/contact.html', type: 'consultation' }
+                ]
+            },
+            admin: {
+                interests: [
+                    { id: 'deployment', icon: 'fas fa-rocket', title: 'Deployment Guide', desc: 'System deployment and configuration' },
+                    { id: 'monitoring', icon: 'fas fa-chart-line', title: 'Monitoring & Alerts', desc: 'System monitoring and alerting setup' },
+                    { id: 'maintenance', icon: 'fas fa-tools', title: 'Maintenance', desc: 'Ongoing system maintenance and updates' },
+                    { id: 'backup', icon: 'fas fa-save', title: 'Backup & Recovery', desc: 'Data backup and disaster recovery' },
+                    { id: 'scaling', icon: 'fas fa-expand-arrows-alt', title: 'Scaling', desc: 'System scaling and performance tuning' },
+                    { id: 'troubleshooting', icon: 'fas fa-bug', title: 'Troubleshooting', desc: 'Common issues and resolution guides' }
+                ],
+                resources: [
+                    { icon: 'fas fa-book', title: 'Admin Documentation', desc: 'Complete system administration guide', link: '/docs/', type: 'documentation' },
+                    { icon: 'fas fa-tools', title: 'Admin Tools', desc: 'Administrative tools and utilities', link: '/login.html', type: 'tools' },
+                    { icon: 'fas fa-chart-line', title: 'Monitoring Dashboard', desc: 'System monitoring and analytics', link: '/login.html', type: 'demo' },
+                    { icon: 'fas fa-video', title: 'Training Videos', desc: 'Administrative training and best practices', link: '#', type: 'tutorial' },
+                    { icon: 'fas fa-users', title: 'Admin Community', desc: 'Connect with other system administrators', link: '#', type: 'community' },
+                    { icon: 'fas fa-headset', title: 'Technical Support', desc: '24/7 technical support and assistance', link: '/contact.html', type: 'support' }
+                ]
+            },
+            student: {
+                interests: [
+                    { id: 'learning', icon: 'fas fa-graduation-cap', title: 'Learning Paths', desc: 'Structured learning curriculum' },
+                    { id: 'tutorials', icon: 'fas fa-play', title: 'Tutorials', desc: 'Step-by-step learning tutorials' },
+                    { id: 'research', icon: 'fas fa-microscope', title: 'Research Materials', desc: 'Academic papers and research resources' },
+                    { id: 'projects', icon: 'fas fa-project-diagram', title: 'Sample Projects', desc: 'Hands-on project examples' },
+                    { id: 'community', icon: 'fas fa-users', title: 'Student Community', desc: 'Connect with other students and researchers' },
+                    { id: 'certification', icon: 'fas fa-certificate', title: 'Certification', desc: 'Professional certification programs' }
+                ],
+                resources: [
+                    { icon: 'fas fa-book-open', title: 'Learning Center', desc: 'Comprehensive educational resources', link: '/docs/', type: 'education' },
+                    { icon: 'fas fa-play', title: 'Interactive Tutorials', desc: 'Hands-on learning with MongoDB Queryable Encryption', link: '/login.html', type: 'tutorial' },
+                    { icon: 'fas fa-graduation-cap', title: 'Academic Resources', desc: 'Research papers and academic materials', link: '#', type: 'research' },
+                    { icon: 'fas fa-project-diagram', title: 'Sample Projects', desc: 'Real-world project examples and case studies', link: '#', type: 'projects' },
+                    { icon: 'fas fa-users', title: 'Student Community', desc: 'Connect with peers and mentors', link: '#', type: 'community' },
+                    { icon: 'fas fa-certificate', title: 'Certification Program', desc: 'Professional certification in healthcare data security', link: '#', type: 'certification' }
+                ]
+            }
+        };
+
+        // Initialize the router
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeRouter();
+        });
+
+        function initializeRouter() {
+            // Add click handlers to persona cards
+            document.querySelectorAll('.persona-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    selectPersona(this.dataset.persona);
+                });
+            });
+        }
+
+        function selectPersona(persona) {
+            // Remove previous selection
+            document.querySelectorAll('.persona-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selection to clicked card
+            document.querySelector(`[data-persona="${persona}"]`).classList.add('selected');
+            
+            selectedPersona = persona;
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function nextStep() {
+            if (currentStep === 1) {
+                showInterestSelection();
+            } else if (currentStep === 2) {
+                showResults();
+            }
+        }
+
+        function previousStep() {
+            if (currentStep === 2) {
+                showPersonaSelection();
+            } else if (currentStep === 3) {
+                showInterestSelection();
+            }
+        }
+
+        function showPersonaSelection() {
+            currentStep = 1;
+            updateStepIndicator();
+            
+            document.getElementById('persona-section').classList.add('visible');
+            document.getElementById('interest-section').style.display = 'none';
+            document.getElementById('results-section').style.display = 'none';
+            
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').disabled = !selectedPersona;
+        }
+
+        function showInterestSelection() {
+            currentStep = 2;
+            updateStepIndicator();
+            
+            document.getElementById('persona-section').classList.remove('visible');
+            document.getElementById('interest-section').style.display = 'block';
+            document.getElementById('results-section').style.display = 'none';
+            
+            document.getElementById('prevBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').disabled = selectedInterests.length === 0;
+            
+            // Populate interests based on selected persona
+            populateInterests();
+        }
+
+        function showResults() {
+            currentStep = 3;
+            updateStepIndicator();
+            
+            document.getElementById('persona-section').classList.remove('visible');
+            document.getElementById('interest-section').style.display = 'none';
+            document.getElementById('results-section').style.display = 'block';
+            
+            document.getElementById('prevBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'none';
+            
+            // Populate resources based on selections
+            populateResources();
+        }
+
+        function updateStepIndicator() {
+            document.querySelectorAll('.step').forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index + 1 < currentStep) {
+                    step.classList.add('completed');
+                } else if (index + 1 === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        function populateInterests() {
+            const interestGrid = document.getElementById('interest-grid');
+            const interests = personaData[selectedPersona].interests;
+            
+            interestGrid.innerHTML = '';
+            
+            interests.forEach(interest => {
+                const card = document.createElement('div');
+                card.className = 'interest-card';
+                card.dataset.interest = interest.id;
+                card.innerHTML = `
+                    <div class="interest-icon">
+                        <i class="${interest.icon}"></i>
+                    </div>
+                    <h4>${interest.title}</h4>
+                    <p>${interest.desc}</p>
+                `;
+                
+                card.addEventListener('click', function() {
+                    toggleInterest(this.dataset.interest);
+                });
+                
+                interestGrid.appendChild(card);
+            });
+        }
+
+        function toggleInterest(interestId) {
+            const card = document.querySelector(`[data-interest="${interestId}"]`);
+            
+            if (selectedInterests.includes(interestId)) {
+                selectedInterests = selectedInterests.filter(id => id !== interestId);
+                card.classList.remove('selected');
+            } else {
+                selectedInterests.push(interestId);
+                card.classList.add('selected');
+            }
+            
+            document.getElementById('nextBtn').disabled = selectedInterests.length === 0;
+        }
+
+        function populateResources() {
+            const resourceGrid = document.getElementById('resource-grid');
+            const resources = personaData[selectedPersona].resources;
+            
+            resourceGrid.innerHTML = '';
+            
+            resources.forEach(resource => {
+                const card = document.createElement('div');
+                card.className = 'resource-card fade-in';
+                card.innerHTML = `
+                    <div class="resource-icon">
+                        <i class="${resource.icon}"></i>
+                    </div>
+                    <h3>${resource.title}</h3>
+                    <p>${resource.desc}</p>
+                    <a href="${resource.link}" class="resource-btn">
+                        ${getButtonText(resource.type)}
+                    </a>
+                `;
+                
+                resourceGrid.appendChild(card);
+            });
+            
+            // Trigger animation
+            setTimeout(() => {
+                document.querySelectorAll('.resource-card').forEach(card => {
+                    card.classList.add('visible');
+                });
+            }, 100);
+        }
+
+        function getButtonText(type) {
+            const buttonTexts = {
+                'demo': 'Try Demo',
+                'documentation': 'View Docs',
+                'tutorial': 'Watch Video',
+                'overview': 'Learn More',
+                'whitepaper': 'Download',
+                'assessment': 'Start Assessment',
+                'community': 'Join Community',
+                'support': 'Get Support',
+                'contact': 'Contact Us',
+                'tools': 'Get Tools',
+                'education': 'Start Learning',
+                'research': 'View Research',
+                'projects': 'View Projects',
+                'certification': 'Learn More',
+                'consultation': 'Schedule Call',
+                'testimonials': 'Read Stories',
+                'updates': 'View Updates'
+            };
+            
+            return buttonTexts[type] || 'Learn More';
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                navbar.style.backdropFilter = 'blur(10px)';
+            } else {
+                navbar.style.background = 'white';
+                navbar.style.backdropFilter = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

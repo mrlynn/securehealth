@@ -156,6 +156,12 @@ class SecureHealthNavbar {
                     <li><a class="dropdown-item" href="https://docs.securehealth.dev" target="_blank">
                         <i class="fas fa-book me-1"></i>Developer Docs
                     </a></li>
+                    <li><a class="dropdown-item" href="/visitor-router.html">
+                        <i class="fas fa-route me-1"></i>Find Your Path
+                    </a></li>
+                    <li><a class="dropdown-item" href="/secure-health-marketing.html">
+                        <i class="fas fa-rocket me-1"></i>Marketing Overview
+                    </a></li>
                     <li><a class="dropdown-item" href="/index.html#features">
                         <i class="fas fa-star me-1"></i>Features
                     </a></li>
