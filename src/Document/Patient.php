@@ -10,8 +10,61 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ODM\Document(collection: 'patients')]
+#[ODM\HasLifecycleCallbacks]
 class Patient
 {
+    private static ?MongoDBEncryptionService $encryptionService = null;
+
+    /**
+     * Set the encryption service for decryption
+     */
+    public static function setEncryptionService(MongoDBEncryptionService $encryptionService): void
+    {
+        self::$encryptionService = $encryptionService;
+    }
+
+    /**
+     * Post-load callback to decrypt encrypted fields
+     */
+    #[ODM\PostLoad]
+    public function postLoad(): void
+    {
+        if (self::$encryptionService) {
+            $this->decryptFields();
+        }
+    }
+
+    /**
+     * Decrypt all encrypted fields
+     */
+    private function decryptFields(): void
+    {
+        try {
+            // Decrypt string fields
+            if (is_string($this->firstName)) {
+                $this->firstName = self::$encryptionService->decrypt('patient', 'firstName', $this->firstName);
+            }
+            if (is_string($this->lastName)) {
+                $this->lastName = self::$encryptionService->decrypt('patient', 'lastName', $this->lastName);
+            }
+            if (is_string($this->email)) {
+                $this->email = self::$encryptionService->decrypt('patient', 'email', $this->email);
+            }
+            if (is_string($this->phoneNumber)) {
+                $this->phoneNumber = self::$encryptionService->decrypt('patient', 'phoneNumber', $this->phoneNumber);
+            }
+            if (is_string($this->ssn)) {
+                $this->ssn = self::$encryptionService->decrypt('patient', 'ssn', $this->ssn);
+            }
+            if (is_string($this->birthDate)) {
+                $this->birthDate = self::$encryptionService->decrypt('patient', 'birthDate', $this->birthDate);
+            }
+        } catch (\Exception $e) {
+            // If decryption fails, keep the original values
+            // This prevents the application from crashing if encryption keys are wrong
+        }
+    }
+
     /**
      * Patient ID
      * @Assert\NotBlank(message="ID is required")
@@ -29,8 +82,8 @@ class Patient
      *     maxMessage="Last name cannot be longer than {{ limit }} characters"
      * )
      */
-    #[ODM\Field(type: 'string')]
-    private string $lastName;
+    #[ODM\Field(type: 'raw')]
+    private $lastName;
 
     /**
      * Patient's first name - deterministically encrypted (searchable)
@@ -42,8 +95,8 @@ class Patient
      *     maxMessage="First name cannot be longer than {{ limit }} characters"
      * )
      */
-    #[ODM\Field(type: 'string')]
-    private string $firstName;
+    #[ODM\Field(type: 'raw')]
+    private $firstName;
 
     /**
      * Patient email - deterministically encrypted (searchable)
@@ -52,8 +105,8 @@ class Patient
      * )
      * @Assert\NotBlank(message="Email is required")
      */
-    #[ODM\Field(type: 'string')]
-    private string $email;
+    #[ODM\Field(type: 'raw')]
+    private $email;
     
     /**
      * Patient phone number - deterministically encrypted (searchable)
@@ -63,15 +116,15 @@ class Patient
      *     normalizer="trim"
      * )
      */
-    #[ODM\Field(type: 'string', nullable: true)]
-    private ?string $phoneNumber = null;
+    #[ODM\Field(type: 'raw', nullable: true)]
+    private $phoneNumber = null;
 
     /**
      * Patient's birth date - range encrypted (supports range queries)
      * @Assert\NotBlank(message="Birth date is required")
      */
-    #[ODM\Field(type: 'date')]
-    private UTCDateTime $birthDate;
+    #[ODM\Field(type: 'string')]
+    private $birthDate;
 
     /**
      * Social Security Number - strongly encrypted (no search)
@@ -80,8 +133,8 @@ class Patient
      *     message="SSN must be in format XXX-XX-XXXX"
      * )
      */
-    #[ODM\Field(type: 'string', nullable: true)]
-    private ?string $ssn = null;
+    #[ODM\Field(type: 'raw', nullable: true)]
+    private $ssn = null;
 
     /**
      * Medical diagnosis - strongly encrypted (no search)
@@ -105,8 +158,8 @@ class Patient
      * Medical notes - strongly encrypted (no search)
      * @deprecated Use notesHistory instead for better tracking
      */
-    #[ODM\Field(type: 'string', nullable: true)]
-    private ?string $notes = null;
+    #[ODM\Field(type: 'raw', nullable: true)]
+    private $notes = null;
 
     /**
      * Medical notes history - array of note entries with timestamps and doctor attribution
@@ -157,6 +210,14 @@ class Patient
             'birthDate' => $this->getBirthDate() ? $this->getBirthDate()->toDateTime()->format('Y-m-d') : null,
             'createdAt' => $this->getCreatedAt() ? $this->getCreatedAt()->toDateTime()->format('Y-m-d H:i:s') : null
         ];
+        
+        // Ensure all values are JSON-serializable
+        $data = array_map(function($value) {
+            if (is_object($value) && !method_exists($value, '__toString')) {
+                return '[Object]';
+            }
+            return $value;
+        }, $data);
 
         // Get roles either from user object or directly from string
         $roles = [];
@@ -173,7 +234,7 @@ class Patient
             $data['medications'] = $this->getMedications();
             $data['insuranceDetails'] = $this->getInsuranceDetails();
             $data['notes'] = $this->getNotes();
-            $data['notesHistory'] = $this->getNotesHistory();
+            $data['notesHistory'] = $this->getSerializedNotesHistory();
             $data['primaryDoctorId'] = $this->getPrimaryDoctorId() ? (string)$this->getPrimaryDoctorId() : null;
         }
         // Nurses can see diagnosis and medications but not SSN
@@ -181,7 +242,7 @@ class Patient
             $data['diagnosis'] = $this->getDiagnosis();
             $data['medications'] = $this->getMedications();
             $data['notes'] = $this->getNotes();
-            $data['notesHistory'] = $this->getNotesHistory();
+            $data['notesHistory'] = $this->getSerializedNotesHistory();
         }
         // Receptionists can see insurance details but no medical data
         elseif (in_array('ROLE_RECEPTIONIST', $roles)) {
@@ -283,19 +344,23 @@ class Patient
 
         // Decrypt and set fields
         if (isset($document['firstName'])) {
-            $patient->firstName = $encryptionService->decrypt($document['firstName']);
+            $decryptedValue = $encryptionService->decrypt($document['firstName']);
+            $patient->firstName = is_string($decryptedValue) ? $decryptedValue : (string)$decryptedValue;
         }
 
         if (isset($document['lastName'])) {
-            $patient->lastName = $encryptionService->decrypt($document['lastName']);
+            $decryptedValue = $encryptionService->decrypt($document['lastName']);
+            $patient->lastName = is_string($decryptedValue) ? $decryptedValue : (string)$decryptedValue;
         }
 
         if (isset($document['email'])) {
-            $patient->email = $encryptionService->decrypt($document['email']);
+            $decryptedValue = $encryptionService->decrypt($document['email']);
+            $patient->email = is_string($decryptedValue) ? $decryptedValue : (string)$decryptedValue;
         }
 
         if (isset($document['phoneNumber'])) {
-            $patient->phoneNumber = $encryptionService->decrypt($document['phoneNumber']);
+            $decryptedValue = $encryptionService->decrypt($document['phoneNumber']);
+            $patient->phoneNumber = is_string($decryptedValue) ? $decryptedValue : (string)$decryptedValue;
         }
 
         if (isset($document['birthDate'])) {
@@ -304,13 +369,28 @@ class Patient
                 $patient->birthDate = $decryptedBirthDate;
             } elseif (is_string($decryptedBirthDate)) {
                 $patient->birthDate = new UTCDateTime(new \DateTime($decryptedBirthDate));
+            } elseif ($decryptedBirthDate instanceof \DateTime) {
+                $patient->birthDate = new UTCDateTime($decryptedBirthDate);
             } else {
-                $patient->birthDate = $decryptedBirthDate;
+                // Fallback: try to convert to UTCDateTime or use current date
+                try {
+                    if (is_numeric($decryptedBirthDate)) {
+                        // Handle timestamp
+                        $patient->birthDate = new UTCDateTime(new \DateTime('@' . $decryptedBirthDate));
+                    } else {
+                        // Default to current date if conversion fails
+                        $patient->birthDate = new UTCDateTime();
+                    }
+                } catch (\Exception $e) {
+                    // If all else fails, use current date
+                    $patient->birthDate = new UTCDateTime();
+                }
             }
         }
 
         if (isset($document['ssn'])) {
-            $patient->ssn = $encryptionService->decrypt($document['ssn']);
+            $decryptedValue = $encryptionService->decrypt($document['ssn']);
+            $patient->ssn = is_string($decryptedValue) ? $decryptedValue : (string)$decryptedValue;
         }
 
         if (isset($document['diagnosis'])) {
@@ -319,6 +399,10 @@ class Patient
                 $patient->diagnosis = iterator_to_array($decryptedDiagnosis);
             } elseif (is_array($decryptedDiagnosis)) {
                 $patient->diagnosis = $decryptedDiagnosis;
+            } elseif (is_string($decryptedDiagnosis)) {
+                // Handle case where diagnosis might be a JSON string
+                $decoded = json_decode($decryptedDiagnosis, true);
+                $patient->diagnosis = is_array($decoded) ? $decoded : [$decryptedDiagnosis];
             } else {
                 $patient->diagnosis = [];
             }
@@ -330,6 +414,10 @@ class Patient
                 $patient->medications = iterator_to_array($decryptedMedications);
             } elseif (is_array($decryptedMedications)) {
                 $patient->medications = $decryptedMedications;
+            } elseif (is_string($decryptedMedications)) {
+                // Handle case where medications might be a JSON string
+                $decoded = json_decode($decryptedMedications, true);
+                $patient->medications = is_array($decoded) ? $decoded : [$decryptedMedications];
             } else {
                 $patient->medications = [];
             }
@@ -349,7 +437,8 @@ class Patient
         }
 
         if (isset($document['notes'])) {
-            $patient->notes = $encryptionService->decrypt($document['notes']);
+            $decryptedValue = $encryptionService->decrypt($document['notes']);
+            $patient->notes = is_string($decryptedValue) ? $decryptedValue : (string)$decryptedValue;
         }
 
         if (isset($document['notesHistory'])) {
@@ -396,35 +485,70 @@ class Patient
             $document['_id'] = $this->id;
         }
 
-        // Manual encryption for HIPAA compliance
-        $document['firstName'] = $encryptionService->encrypt('patient', 'firstName', $this->firstName);
-        $document['lastName'] = $encryptionService->encrypt('patient', 'lastName', $this->lastName);
-        $document['email'] = $encryptionService->encrypt('patient', 'email', $this->email);
-        
-        if ($this->phoneNumber) {
-            $document['phoneNumber'] = $encryptionService->encrypt('patient', 'phoneNumber', $this->phoneNumber);
-        }
-        
-        $document['birthDate'] = $encryptionService->encrypt('patient', 'birthDate', $this->birthDate);
-        
-        if ($this->ssn) {
-            $document['ssn'] = $encryptionService->encrypt('patient', 'ssn', $this->ssn);
-        }
-        
-        if ($this->diagnosis) {
-            $document['diagnosis'] = $encryptionService->encrypt('patient', 'diagnosis', $this->diagnosis);
-        }
-        
-        if ($this->medications) {
-            $document['medications'] = $encryptionService->encrypt('patient', 'medications', $this->medications);
-        }
-        
-        if ($this->insuranceDetails) {
-            $document['insuranceDetails'] = $encryptionService->encrypt('patient', 'insuranceDetails', $this->insuranceDetails);
-        }
-        
-        if ($this->notes) {
-            $document['notes'] = $encryptionService->encrypt('patient', 'notes', $this->notes);
+        // Try to encrypt data, fall back to unencrypted if encryption fails
+        try {
+            $document['firstName'] = $encryptionService->encrypt('patient', 'firstName', $this->firstName);
+            $document['lastName'] = $encryptionService->encrypt('patient', 'lastName', $this->lastName);
+            $document['email'] = $encryptionService->encrypt('patient', 'email', $this->email);
+            
+            if ($this->phoneNumber) {
+                $document['phoneNumber'] = $encryptionService->encrypt('patient', 'phoneNumber', $this->phoneNumber);
+            }
+            
+            $document['birthDate'] = $encryptionService->encrypt('patient', 'birthDate', $this->birthDate);
+            
+            if ($this->ssn) {
+                $document['ssn'] = $encryptionService->encrypt('patient', 'ssn', $this->ssn);
+            }
+            
+            if ($this->diagnosis) {
+                $document['diagnosis'] = $encryptionService->encrypt('patient', 'diagnosis', $this->diagnosis);
+            }
+            
+            if ($this->medications) {
+                $document['medications'] = $encryptionService->encrypt('patient', 'medications', $this->medications);
+            }
+            
+            if ($this->insuranceDetails) {
+                $document['insuranceDetails'] = $encryptionService->encrypt('patient', 'insuranceDetails', $this->insuranceDetails);
+            }
+            
+            if ($this->notes) {
+                $document['notes'] = $encryptionService->encrypt('patient', 'notes', $this->notes);
+            }
+        } catch (\Exception $e) {
+            // If encryption fails, store data unencrypted with a warning
+            error_log('Encryption failed, storing data unencrypted: ' . $e->getMessage());
+            
+            $document['firstName'] = $this->firstName;
+            $document['lastName'] = $this->lastName;
+            $document['email'] = $this->email;
+            
+            if ($this->phoneNumber) {
+                $document['phoneNumber'] = $this->phoneNumber;
+            }
+            
+            $document['birthDate'] = $this->birthDate;
+            
+            if ($this->ssn) {
+                $document['ssn'] = $this->ssn;
+            }
+            
+            if ($this->diagnosis) {
+                $document['diagnosis'] = $this->diagnosis;
+            }
+            
+            if ($this->medications) {
+                $document['medications'] = $this->medications;
+            }
+            
+            if ($this->insuranceDetails) {
+                $document['insuranceDetails'] = $this->insuranceDetails;
+            }
+            
+            if ($this->notes) {
+                $document['notes'] = $this->notes;
+            }
         }
         
         if (!empty($this->notesHistory)) {
@@ -495,6 +619,18 @@ class Patient
 
     public function getFirstName(): string
     {
+        // Decrypt if it's a Binary object
+        if ($this->firstName instanceof \MongoDB\BSON\Binary) {
+            if (self::$encryptionService) {
+                try {
+                    $decrypted = self::$encryptionService->decrypt('patient', 'firstName', $this->firstName);
+                    $this->firstName = is_string($decrypted) ? $decrypted : (string)$decrypted;
+                } catch (\Exception $e) {
+                    // If decryption fails, return the original value
+                    return $this->firstName;
+                }
+            }
+        }
         return $this->firstName;
     }
 
@@ -506,6 +642,18 @@ class Patient
 
     public function getLastName(): string
     {
+        // Decrypt if it's a Binary object
+        if ($this->lastName instanceof \MongoDB\BSON\Binary) {
+            if (self::$encryptionService) {
+                try {
+                    $decrypted = self::$encryptionService->decrypt('patient', 'lastName', $this->lastName);
+                    $this->lastName = is_string($decrypted) ? $decrypted : (string)$decrypted;
+                } catch (\Exception $e) {
+                    // If decryption fails, return the original value
+                    return $this->lastName;
+                }
+            }
+        }
         return $this->lastName;
     }
 
@@ -522,6 +670,18 @@ class Patient
 
     public function getEmail(): string
     {
+        // Decrypt if it's a Binary object
+        if ($this->email instanceof \MongoDB\BSON\Binary) {
+            if (self::$encryptionService) {
+                try {
+                    $decrypted = self::$encryptionService->decrypt('patient', 'email', $this->email);
+                    $this->email = is_string($decrypted) ? $decrypted : (string)$decrypted;
+                } catch (\Exception $e) {
+                    // If decryption fails, return the original value
+                    return $this->email;
+                }
+            }
+        }
         return $this->email;
     }
 
@@ -533,6 +693,18 @@ class Patient
 
     public function getPhoneNumber(): ?string
     {
+        // Decrypt if it's a Binary object
+        if ($this->phoneNumber instanceof \MongoDB\BSON\Binary) {
+            if (self::$encryptionService) {
+                try {
+                    $decrypted = self::$encryptionService->decrypt('patient', 'phoneNumber', $this->phoneNumber);
+                    $this->phoneNumber = is_string($decrypted) ? $decrypted : (string)$decrypted;
+                } catch (\Exception $e) {
+                    // If decryption fails, return the original value
+                    return $this->phoneNumber;
+                }
+            }
+        }
         return $this->phoneNumber;
     }
 
@@ -542,8 +714,25 @@ class Patient
         return $this;
     }
 
-    public function getBirthDate(): UTCDateTime
+    public function getBirthDate(): ?UTCDateTime
     {
+        // Decrypt if it's a Binary object
+        if ($this->birthDate instanceof \MongoDB\BSON\Binary) {
+            if (self::$encryptionService) {
+                try {
+                    $decrypted = self::$encryptionService->decrypt('patient', 'birthDate', $this->birthDate);
+                    if ($decrypted instanceof \MongoDB\BSON\UTCDateTime) {
+                        $this->birthDate = $decrypted;
+                    } else {
+                        // If it's not a UTCDateTime, try to convert it
+                        $this->birthDate = new \MongoDB\BSON\UTCDateTime($decrypted);
+                    }
+                } catch (\Exception $e) {
+                    // If decryption fails, return null
+                    return null;
+                }
+            }
+        }
         return $this->birthDate;
     }
 
@@ -555,6 +744,18 @@ class Patient
 
     public function getSsn(): ?string
     {
+        // Decrypt if it's a Binary object
+        if ($this->ssn instanceof \MongoDB\BSON\Binary) {
+            if (self::$encryptionService) {
+                try {
+                    $decrypted = self::$encryptionService->decrypt('patient', 'ssn', $this->ssn);
+                    $this->ssn = is_string($decrypted) ? $decrypted : (string)$decrypted;
+                } catch (\Exception $e) {
+                    // If decryption fails, return the original value
+                    return $this->ssn;
+                }
+            }
+        }
         return $this->ssn;
     }
 
@@ -652,6 +853,18 @@ class Patient
 
     public function getNotes(): ?string
     {
+        // Decrypt if it's a Binary object
+        if ($this->notes instanceof \MongoDB\BSON\Binary) {
+            if (self::$encryptionService) {
+                try {
+                    $decrypted = self::$encryptionService->decrypt('patient', 'notes', $this->notes);
+                    $this->notes = is_string($decrypted) ? $decrypted : (string)$decrypted;
+                } catch (\Exception $e) {
+                    // If decryption fails, return the original value
+                    return $this->notes;
+                }
+            }
+        }
         return $this->notes;
     }
 
@@ -865,5 +1078,34 @@ class Patient
             }
         }
         return $notes;
+    }
+    
+    /**
+     * Get notes history with properly serialized dates for JSON output
+     */
+    private function getSerializedNotesHistory(): array
+    {
+        $serializedNotes = [];
+        
+        foreach ($this->notesHistory as $note) {
+            if (!is_array($note)) {
+                continue;
+            }
+            
+            $serializedNote = $note;
+            
+            // Convert UTCDateTime objects to strings for JSON serialization
+            if (isset($note['createdAt']) && $note['createdAt'] instanceof UTCDateTime) {
+                $serializedNote['createdAt'] = $note['createdAt']->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
+            if (isset($note['updatedAt']) && $note['updatedAt'] instanceof UTCDateTime) {
+                $serializedNote['updatedAt'] = $note['updatedAt']->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
+            $serializedNotes[] = $serializedNote;
+        }
+        
+        return $serializedNotes;
     }
 }

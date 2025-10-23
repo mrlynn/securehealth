@@ -69,8 +69,26 @@ class PatientController extends AbstractController
         $totalPatients = $this->patientRepository->countByCriteria($criteria);
 
         // Convert to array representation with proper role-based filtering
-        $patientsArray = array_map(function(Patient $patient) {
-            return $patient->toArray($this->getUser());
+        $user = $this->getUser();
+        $userRole = 'ROLE_DOCTOR'; // Default role
+        
+        if ($user) {
+            $userRoles = $user->getRoles();
+            if (in_array('ROLE_DOCTOR', $userRoles)) {
+                $userRole = 'ROLE_DOCTOR';
+            } elseif (in_array('ROLE_NURSE', $userRoles)) {
+                $userRole = 'ROLE_NURSE';
+            } elseif (in_array('ROLE_ADMIN', $userRoles)) {
+                $userRole = 'ROLE_ADMIN';
+            } elseif (in_array('ROLE_RECEPTIONIST', $userRoles)) {
+                $userRole = 'ROLE_RECEPTIONIST';
+            } elseif (in_array('ROLE_PATIENT', $userRoles)) {
+                $userRole = 'ROLE_PATIENT';
+            }
+        }
+        
+        $patientsArray = array_map(function(Patient $patient) use ($userRole) {
+            return $this->serializePatient($patient, $userRole);
         }, $patients);
 
         // Log the action
@@ -90,6 +108,81 @@ class PatientController extends AbstractController
             'limit' => $limit,
             'patients' => $patientsArray,
         ]);
+    }
+    
+    /**
+     * Serialize patient data safely for JSON output
+     */
+    private function serializePatient(Patient $patient, ?string $userRole = null): array
+    {
+        // Start with basic data - now showing actual values since data is unencrypted
+        $data = [
+            'id' => (string)$patient->getId(),
+            'firstName' => $this->safeGetString($patient->getFirstName()),
+            'lastName' => $this->safeGetString($patient->getLastName()),
+            'email' => $this->safeGetString($patient->getEmail()),
+            'phoneNumber' => $this->safeGetString($patient->getPhoneNumber()),
+            'birthDate' => $this->safeGetDate($patient->getBirthDate()),
+            'createdAt' => $this->safeGetDate($patient->getCreatedAt())
+        ];
+        
+        return $data;
+    }
+    
+    /**
+     * Safely get string value, handling Binary objects
+     */
+    private function safeGetString($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        
+        if (is_object($value) && !method_exists($value, '__toString')) {
+            return '[Encrypted]';
+        }
+        
+        return (string)$value;
+    }
+    
+    /**
+     * Safely get date value, handling Binary objects
+     */
+    private function safeGetDate($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        
+        if ($value instanceof \MongoDB\BSON\UTCDateTime) {
+            return $value->toDateTime()->format('Y-m-d');
+        }
+        
+        if (is_object($value) && !method_exists($value, '__toString')) {
+            return '[Encrypted]';
+        }
+        
+        return (string)$value;
+    }
+    
+    /**
+     * Safely get array value, handling Binary objects
+     */
+    private function safeGetArray($value): array
+    {
+        if ($value === null) {
+            return [];
+        }
+        
+        if (is_array($value)) {
+            return $value;
+        }
+        
+        if (is_object($value) && !method_exists($value, '__toString')) {
+            return ['[Encrypted]'];
+        }
+        
+        return [(string)$value];
     }
 
     #[Route('/{id}', name: 'patient_show', methods: ['GET'])]
@@ -127,7 +220,22 @@ class PatientController extends AbstractController
             ]
         );
 
-        return $this->json($patient->toArray($user));
+        // Get user role for serialization
+        $userRoles = $user->getRoles();
+        $userRole = 'ROLE_DOCTOR'; // Default
+        if (in_array('ROLE_DOCTOR', $userRoles)) {
+            $userRole = 'ROLE_DOCTOR';
+        } elseif (in_array('ROLE_NURSE', $userRoles)) {
+            $userRole = 'ROLE_NURSE';
+        } elseif (in_array('ROLE_ADMIN', $userRoles)) {
+            $userRole = 'ROLE_ADMIN';
+        } elseif (in_array('ROLE_RECEPTIONIST', $userRoles)) {
+            $userRole = 'ROLE_RECEPTIONIST';
+        } elseif (in_array('ROLE_PATIENT', $userRoles)) {
+            $userRole = 'ROLE_PATIENT';
+        }
+        
+        return $this->json($patient->toArray($userRole));
     }
 
     #[Route('', name: 'patient_create', methods: ['POST'])]
@@ -166,8 +274,24 @@ class PatientController extends AbstractController
             ]
         );
 
+        // Get user role for serialization
+        $user = $this->getUser();
+        $userRoles = $user->getRoles();
+        $userRole = 'ROLE_DOCTOR'; // Default
+        if (in_array('ROLE_DOCTOR', $userRoles)) {
+            $userRole = 'ROLE_DOCTOR';
+        } elseif (in_array('ROLE_NURSE', $userRoles)) {
+            $userRole = 'ROLE_NURSE';
+        } elseif (in_array('ROLE_ADMIN', $userRoles)) {
+            $userRole = 'ROLE_ADMIN';
+        } elseif (in_array('ROLE_RECEPTIONIST', $userRoles)) {
+            $userRole = 'ROLE_RECEPTIONIST';
+        } elseif (in_array('ROLE_PATIENT', $userRoles)) {
+            $userRole = 'ROLE_PATIENT';
+        }
+        
         return $this->json(
-            $patient->toArray($this->getUser()),
+            $patient->toArray($userRole),
             Response::HTTP_CREATED
         );
     }
@@ -294,7 +418,23 @@ class PatientController extends AbstractController
             ]
         );
 
-        return $this->json($patient->toArray($this->getUser()));
+        // Get user role for serialization
+        $user = $this->getUser();
+        $userRoles = $user->getRoles();
+        $userRole = 'ROLE_DOCTOR'; // Default
+        if (in_array('ROLE_DOCTOR', $userRoles)) {
+            $userRole = 'ROLE_DOCTOR';
+        } elseif (in_array('ROLE_NURSE', $userRoles)) {
+            $userRole = 'ROLE_NURSE';
+        } elseif (in_array('ROLE_ADMIN', $userRoles)) {
+            $userRole = 'ROLE_ADMIN';
+        } elseif (in_array('ROLE_RECEPTIONIST', $userRoles)) {
+            $userRole = 'ROLE_RECEPTIONIST';
+        } elseif (in_array('ROLE_PATIENT', $userRoles)) {
+            $userRole = 'ROLE_PATIENT';
+        }
+        
+        return $this->json($patient->toArray($userRole));
     }
 
     #[Route('/{id}', name: 'patient_delete', methods: ['DELETE'])]

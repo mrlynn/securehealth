@@ -204,6 +204,56 @@ class DebugController extends AbstractController
     }
 
     /**
+     * Test encryption service
+     */
+    #[Route('/encryption', name: 'debug_encryption', methods: ['GET'])]
+    public function testEncryption(): JsonResponse
+    {
+        try {
+            // Test MongoDB client creation
+            $mongoUrl = $this->params->get('mongodb_url');
+            $client = new \MongoDB\Client($mongoUrl);
+            $db = $client->selectDatabase('securehealth');
+            $collections = $db->listCollections();
+            $collectionNames = [];
+            foreach ($collections as $collection) {
+                $collectionNames[] = $collection->getName();
+            }
+            
+            // Test encryption with different field names
+            $testValue = 'test_value';
+            $encrypted1 = $this->encryptionService->encrypt('patient', 'firstName', $testValue);
+            $decrypted1 = $this->encryptionService->decrypt('patient', 'firstName', $encrypted1);
+            
+            $encrypted2 = $this->encryptionService->encrypt('message', 'direction', 'to_staff');
+            $decrypted2 = $this->encryptionService->decrypt('message', 'direction', $encrypted2);
+            
+            return $this->json([
+                'success' => true,
+                'mongodb_connected' => true,
+                'collections' => $collectionNames,
+                'test_value' => $testValue,
+                'patient_encryption' => [
+                    'encrypted_type' => is_object($encrypted1) ? get_class($encrypted1) : gettype($encrypted1),
+                    'decrypted_value' => $decrypted1,
+                    'working' => $decrypted1 === $testValue
+                ],
+                'message_encryption' => [
+                    'encrypted_type' => is_object($encrypted2) ? get_class($encrypted2) : gettype($encrypted2),
+                    'decrypted_value' => $decrypted2,
+                    'working' => $decrypted2 === 'to_staff'
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile() . ':' . $e->getLine()
+            ]);
+        }
+    }
+
+    /**
      * Test authentication system
      */
     #[Route('/auth', name: 'debug_auth', methods: ['GET'])]

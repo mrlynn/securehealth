@@ -28,6 +28,11 @@ services:
         arguments: ['%env(resolve:MONGODB_URI)%']
         public: false
 
+    # MongoDB Encryption Service with shared client
+    App\Service\MongoDBEncryptionService:
+        arguments:
+            $mongoClient: '@MongoDB\Client'
+
     # Robust MongoDB service for handling replica set issues
     App\Service\RobustMongoDBService:
         arguments:

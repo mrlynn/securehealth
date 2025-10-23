@@ -27,6 +27,9 @@ class PatientRepository
         $this->databaseName = $databaseName;
         $this->collectionName = $collectionName;
         $this->collection = $this->mongoClient->selectCollection($databaseName, $collectionName);
+        
+        // Set the encryption service for Patient document decryption
+        \App\Document\Patient::setEncryptionService($encryptionService);
     }
 
     /**
@@ -114,6 +117,26 @@ class PatientRepository
                 '$lte' => $endDateUtc
             ]
         ]);
+        
+        $patients = [];
+        foreach ($cursor as $document) {
+            $patients[] = Patient::fromDocument((array) $document, $this->encryptionService);
+        }
+        
+        return $patients;
+    }
+
+    /**
+     * Find patients by primary doctor ID
+     */
+    public function findByPrimaryDoctorId($doctorId): array
+    {
+        // Convert string ID to ObjectId if needed
+        if (is_string($doctorId)) {
+            $doctorId = new ObjectId($doctorId);
+        }
+        
+        $cursor = $this->collection->find(['primaryDoctorId' => $doctorId]);
         
         $patients = [];
         foreach ($cursor as $document) {

@@ -29,7 +29,8 @@ class MongoDBEncryptionService
 
     public function __construct(
         ParameterBagInterface $params,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ?Client $mongoClient = null
     ) {
         $this->logger = $logger;
         
@@ -86,17 +87,23 @@ class MongoDBEncryptionService
             return;
         }
         
-        // Get connection parameters
-        $mongoUrl = $params->get('mongodb_url', 'mongodb://localhost:27017');
+        // Get connection parameters - use environment variable directly
+        $mongoUrl = $_ENV['MONGODB_URI'] ?? 'mongodb://localhost:27017';
+        
         $this->keyVaultNamespace = $_ENV['MONGODB_KEY_VAULT_NAMESPACE'] ?? 'encryption.__keyVault';
         
         try {
             try {
-                // Initialize MongoDB client with readPreference: primary
-                $this->client = new Client($mongoUrl, [
-                    'readPreference' => 'primary',
-                    'serverSelectionTimeoutMS' => 5000 // 5 second timeout for server selection
-                ]);
+                // Use provided client or create new one
+                if ($mongoClient) {
+                    $this->client = $mongoClient;
+                } else {
+                    // Initialize MongoDB client with readPreference: primary
+                    $this->client = new Client($mongoUrl, [
+                        'readPreference' => 'primary',
+                        'serverSelectionTimeoutMS' => 5000 // 5 second timeout for server selection
+                    ]);
+                }
                 
                 // Verify connection with a ping command
                 $this->client->selectDatabase('admin')->command(['ping' => 1]);
@@ -324,8 +331,8 @@ class MongoDBEncryptionService
             return null;
         }
         
-        // If MongoDB encryption is disabled, return the value as-is
-        if (!isset($this->clientEncryption) || !isset($this->keyVaultCollection)) {
+        // If MongoDB encryption is disabled or not available, return the value as-is
+        if (!$this->isEncryptionAvailable() || !isset($this->clientEncryption) || !isset($this->keyVaultCollection)) {
             return $value;
         }
         
@@ -361,6 +368,24 @@ class MongoDBEncryptionService
             }
             
             return $this->clientEncryption->encrypt($value, $encryptOptions);
+        } catch (\MongoDB\Driver\Exception\EncryptionException $e) {
+            // If HMAC validation fails, try to regenerate the DEK
+            if (strpos($e->getMessage(), 'HMAC validation failure') !== false) {
+                $this->logger->warning('HMAC validation failure detected, attempting to regenerate DEK');
+                try {
+                    // Delete the existing DEK and create a new one
+                    $this->keyVaultCollection->deleteMany(['keyAltNames' => $keyAltName]);
+                    $dataKeyId = $this->getOrCreateDataKey($keyAltName);
+                    
+                    // Retry encryption with new DEK
+                    $encryptOptions['keyId'] = $dataKeyId;
+                    return $this->clientEncryption->encrypt($value, $encryptOptions);
+                } catch (\Exception $retryException) {
+                    $this->logger->error('Failed to regenerate DEK and retry encryption: ' . $retryException->getMessage());
+                    throw $e; // Re-throw original exception
+                }
+            }
+            throw $e;
         } catch (\Exception $e) {
             $this->logger->error(sprintf(
                 'Failed to encrypt %s.%s: %s', 
@@ -386,7 +411,13 @@ class MongoDBEncryptionService
             return $value;
         }
         
-        if ($value instanceof Binary && $value->getType() === 6) { // Binary subtype 6 is for encrypted data
+        // If value is not a Binary object or not encrypted, return as-is
+        if (!$value instanceof Binary) {
+            return $value;
+        }
+        
+        // Check if this is encrypted data (subtype 6 is for encrypted data)
+        if ($value->getType() === 6) {
             if (!$this->clientEncryption) {
                 $this->logger->warning('Client encryption not available - returning raw binary data');
                 return $value;
@@ -403,6 +434,17 @@ class MongoDBEncryptionService
                 $this->logger->error('Unexpected error during decryption: ' . $e->getMessage());
                 $this->logger->warning('Falling back to raw binary data due to unexpected error');
                 // Return the raw binary value instead of throwing exception
+                return $value;
+            }
+        }
+        
+        // For non-encrypted Binary objects, try to extract the string value
+        if ($value instanceof Binary) {
+            try {
+                // Try to get the string representation of the binary data
+                return $value->getData();
+            } catch (\Exception $e) {
+                $this->logger->debug('Could not extract data from Binary object: ' . $e->getMessage());
                 return $value;
             }
         }

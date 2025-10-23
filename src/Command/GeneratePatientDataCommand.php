@@ -86,6 +86,9 @@ class GeneratePatientDataCommand extends Command
     {
         $patients = [];
         
+        // Get a doctor ID to assign as primary doctor
+        $doctorId = $this->getDoctorId();
+        
         // Sample data arrays
         $firstNames = [
             'John', 'Jane', 'Michael', 'Sarah', 'David', 'Emily', 'Robert', 'Jessica',
@@ -162,11 +165,40 @@ class GeneratePatientDataCommand extends Command
             ]);
             $patient->setCreatedAt(new \MongoDB\BSON\UTCDateTime());
             $patient->setUpdatedAt(new \MongoDB\BSON\UTCDateTime());
+            
+            // Set primary doctor ID
+            if ($doctorId) {
+                $patient->setPrimaryDoctorId(new \MongoDB\BSON\ObjectId($doctorId));
+            }
 
             $patients[] = $patient;
         }
 
         return $patients;
+    }
+    
+    private function getDoctorId(): ?string
+    {
+        try {
+            // Find a doctor user
+            $userRepo = $this->documentManager->getRepository(\App\Document\User::class);
+            $doctor = $userRepo->findOneBy(['email' => 'doctor@example.com']);
+            
+            if ($doctor) {
+                return $doctor->getId();
+            }
+            
+            // If no doctor found, try to find any user with ROLE_DOCTOR
+            $doctors = $userRepo->findBy(['roles' => ['$in' => ['ROLE_DOCTOR']]]);
+            if (!empty($doctors)) {
+                return $doctors[0]->getId();
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            // If there's an error finding a doctor, return null
+            return null;
+        }
     }
 
     private function savePatients(array $patients): void

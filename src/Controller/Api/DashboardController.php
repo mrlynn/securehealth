@@ -124,8 +124,8 @@ private function getAdminDashboardData(UserInterface $user): JsonResponse
                 throw new \Exception('User document not found in database');
             }
             
-            // Get doctor's patients
-            $patients = $this->patientRepository->findBy(['primaryDoctorId' => $userDocument->getId()]);
+            // Get doctor's patients using custom repository method
+            $patients = $this->patientRepository->findByPrimaryDoctorId($userDocument->getId());
             $patientCount = count($patients);
 
             // Get today's appointments
