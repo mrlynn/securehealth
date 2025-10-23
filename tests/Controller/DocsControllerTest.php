@@ -11,36 +11,23 @@ class DocsControllerTest extends WebTestCase
         $client = static::createClient();
         $client->request('GET', '/docs');
 
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('h1', 'SecureHealth Documentation');
+        $this->assertResponseRedirects('https://docs.securehealth.dev', 301);
     }
 
     public function testCategoryPage()
     {
-        // Skip this test if the category doesn't exist yet
-        if (!is_dir(__DIR__ . '/../../public/docs/getting-started')) {
-            $this->markTestSkipped('Getting started category directory does not exist.');
-        }
-
         $client = static::createClient();
         $client->request('GET', '/docs/getting-started');
 
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('h3', 'Getting-started');
+        $this->assertResponseRedirects('https://docs.securehealth.dev', 301);
     }
 
     public function testDocumentationPage()
     {
-        // Skip this test if the page doesn't exist yet
-        if (!file_exists(__DIR__ . '/../../public/docs/getting-started/introduction.md')) {
-            $this->markTestSkipped('Introduction page does not exist.');
-        }
-
         $client = static::createClient();
         $client->request('GET', '/docs/getting-started/introduction');
 
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('h1', 'Introduction');
+        $this->assertResponseRedirects('https://docs.securehealth.dev', 301);
     }
 
     public function test404ForNonExistentCategory()
@@ -48,7 +35,7 @@ class DocsControllerTest extends WebTestCase
         $client = static::createClient();
         $client->request('GET', '/docs/non-existent-category');
 
-        $this->assertResponseStatusCodeSame(404);
+        $this->assertResponseRedirects('https://docs.securehealth.dev', 301);
     }
 
     public function test404ForNonExistentPage()
@@ -56,6 +43,6 @@ class DocsControllerTest extends WebTestCase
         $client = static::createClient();
         $client->request('GET', '/docs/getting-started/non-existent-page');
 
-        $this->assertResponseStatusCodeSame(404);
+        $this->assertResponseRedirects('https://docs.securehealth.dev', 301);
     }
 }

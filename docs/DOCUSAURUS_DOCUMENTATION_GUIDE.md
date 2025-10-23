@@ -336,7 +336,7 @@ module.exports = {
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/getting-started/introduction',
+              to: 'https://docs.securehealth.dev',
             },
             {
               label: 'API Reference',

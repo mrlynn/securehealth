@@ -487,18 +487,26 @@
     <script>
         // Check authentication
         async function checkAuthentication() {
+            console.log('=== AUTHENTICATION CHECK STARTING ===');
+            
             // First, try to get current user from session via API
             try {
+                console.log('Trying session API call...');
                 const response = await fetch('/api/user', {
                     credentials: 'include',
                     method: 'GET'
                 });
                 
+                console.log('Session API response status:', response.status);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Session API response data:', data);
+                    
                     if (data.success && data.user) {
                         const user = data.user;
                         const userRoles = user.roles || [];
+                        console.log('User roles:', userRoles);
                         
                         // Check if user has required role (doctors, nurses, admins)
                         if (userRoles.includes('ROLE_DOCTOR') || userRoles.includes('ROLE_NURSE') || userRoles.includes('ROLE_ADMIN')) {
@@ -507,10 +515,12 @@
                             console.log('Authentication successful via session API');
                             return true;
                         } else {
-                            alert('Access denied. This feature requires doctor, nurse, or admin privileges.');
-                            window.location.href = 'login.html';
+                            console.log('User does not have required role');
+                            // Don't redirect, just return false
                             return false;
                         }
+                    } else {
+                        console.log('Session API returned no user data');
                     }
                 } else {
                     console.log('Session API returned status:', response.status);
@@ -520,34 +530,99 @@
             }
             
             // Fallback: check localStorage if session API failed
+            console.log('Checking localStorage...');
             const userData = localStorage.getItem('securehealth_user');
             if (!userData) {
-                alert('Please log in to access the medical knowledge base.');
-                window.location.href = 'login.html';
+                console.log('No user data in localStorage');
                 return false;
             }
 
             const user = JSON.parse(userData);
             const userRoles = user.roles || [];
+            console.log('LocalStorage user roles:', userRoles);
             
             // Check if user has required role (doctors, nurses, admins)
             if (!userRoles.includes('ROLE_DOCTOR') && !userRoles.includes('ROLE_NURSE') && !userRoles.includes('ROLE_ADMIN')) {
-                alert('Access denied. This feature requires doctor, nurse, or admin privileges.');
-                window.location.href = 'login.html';
+                console.log('LocalStorage user does not have required role');
                 return false;
             }
             
+            console.log('Authentication successful via localStorage');
             return true;
         }
 
+        // Immediate test - this should show right away
+        console.log('=== KNOWLEDGE BASE STATS DEBUG ===');
+        console.log('Page loaded, JavaScript is running');
+        
+        // Test if we can find the element immediately
+        setTimeout(() => {
+            const statsDiv = document.getElementById('knowledgeStats');
+            console.log('Found knowledgeStats element:', statsDiv);
+            if (statsDiv) {
+                console.log('Element innerHTML:', statsDiv.innerHTML);
+                // Show immediate test message
+                statsDiv.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>JavaScript Working!</strong> The page is loading correctly. Checking authentication...
+                        </div>
+                    </div>
+                `;
+            } else {
+                console.error('Could not find knowledgeStats element!');
+            }
+        }, 100);
+
+        // Debug: Add immediate logging
+        console.log('Script loaded, setting up authentication check...');
+        
         // Only proceed if authentication is successful
         checkAuthentication().then(isAuthenticated => {
-            if (isAuthenticated) {
-                // Load knowledge base stats on page load
-                document.addEventListener('DOMContentLoaded', function() {
+            console.log('Authentication check completed, result:', isAuthenticated);
+            
+            // Update the message immediately
+            const statsDiv = document.getElementById('knowledgeStats');
+            if (statsDiv) {
+                if (isAuthenticated) {
+                    statsDiv.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Authenticated!</strong> Loading knowledge base statistics...
+                            </div>
+                        </div>
+                    `;
+                    // Load stats immediately
                     loadKnowledgeBaseStats();
-                    setupRoleBasedUI();
-                });
+                } else {
+                    statsDiv.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Authentication Required:</strong> Please log in as a doctor or admin to view knowledge base statistics.
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Setup role-based UI
+            setupRoleBasedUI();
+        }).catch(error => {
+            console.error('Authentication check failed:', error);
+            // Show error message in stats section
+            const statsDiv = document.getElementById('knowledgeStats');
+            if (statsDiv) {
+                statsDiv.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Error:</strong> Failed to check authentication. ${error.message}
+                        </div>
+                    </div>
+                `;
             }
         });
 
@@ -901,15 +976,37 @@
         }
 
         async function loadKnowledgeBaseStats() {
-            if (!(await checkAuthentication())) return;
+            console.log('Loading knowledge base stats...');
+            if (!(await checkAuthentication())) {
+                console.log('Authentication failed, not loading stats');
+                return;
+            }
             
+            console.log('Making stats API call...');
             fetch('/api/medical-knowledge/stats', {
                 credentials: 'include'
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Stats API response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Stats API response data:', data);
                 if (data.error) {
                     console.error('Failed to load stats:', data.error);
+                    // Show error message in the stats section
+                    const statsDiv = document.getElementById('knowledgeStats');
+                    statsDiv.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Unable to load statistics: ${data.error}
+                            </div>
+                        </div>
+                    `;
                     return;
                 }
 
@@ -963,9 +1060,16 @@
             })
             .catch(error => {
                 console.error('Error loading stats:', error);
-                if (error.message.includes('Unexpected token')) {
-                    console.log('Session expired, stats not loaded');
-                }
+                // Show error message in the stats section
+                const statsDiv = document.getElementById('knowledgeStats');
+                statsDiv.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Error loading statistics: ${error.message}
+                        </div>
+                    </div>
+                `;
             });
         }
 
@@ -978,6 +1082,25 @@
             localStorage.removeItem('securehealth_user');
             window.location.href = 'login.html';
         }
+
+        // Fallback: Show message immediately if nothing else works
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, checking if stats section is still empty...');
+            setTimeout(() => {
+                const statsDiv = document.getElementById('knowledgeStats');
+                if (statsDiv && statsDiv.innerHTML.trim() === '') {
+                    console.log('Stats section is still empty, showing fallback message...');
+                    statsDiv.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Statistics Loading:</strong> Please wait while we load the knowledge base statistics, or log in as a doctor/admin to view them.
+                            </div>
+                        </div>
+                    `;
+                }
+            }, 2000); // Wait 2 seconds before showing fallback
+        });
     </script>
 </body>
 </html>

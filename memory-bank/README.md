@@ -147,7 +147,7 @@ When updating Memory Bank documents:
 ## Related Documentation
 
 ### In This Repository
-- `/docs/` - Additional documentation (guides, blog articles)
+- `https://docs.securehealth.dev` - External documentation (guides, blog articles)
 - `NAVIGATION_IMPROVEMENTS.md` - Recent navigation changes
 - `README.md` (root) - General project README
 - `/config/` - Configuration files with inline comments

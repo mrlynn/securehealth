@@ -23,94 +23,30 @@ class DocsController extends AbstractController
     }
 
     /**
-     * Documentation homepage
+     * Documentation homepage - redirect to external docs
      */
     #[Route('/docs', name: 'docs_index')]
     public function index(): Response
     {
-        // Get documentation categories from directory structure
-        $categories = [];
-        $finder = new Finder();
-        
-        // Ensure directory exists
-        if (!is_dir($this->docsDir)) {
-            mkdir($this->docsDir, 0755, true);
-        }
-        
-        if (is_dir($this->docsDir)) {
-            $finder->directories()->in($this->docsDir)->depth(0);
-            
-            foreach ($finder as $dir) {
-                $categories[] = [
-                    'name' => ucfirst($dir->getRelativePathname()),
-                    'path' => $dir->getRelativePathname()
-                ];
-            }
-        }
-
-        // Get index content
-        $indexContent = $this->renderMarkdownFile('index.md');
-        if (!$indexContent) {
-            $indexContent = '<h1>Documentation</h1><p>Welcome to the SecureHealth Documentation. Please select a category from the sidebar.</p>';
-        }
-
-        return $this->render('docs/index.html.twig', [
-            'title' => 'Documentation',
-            'content' => $indexContent,
-            'categories' => $categories
-        ]);
+        return $this->redirect('https://docs.securehealth.dev', 301);
     }
 
     /**
-     * Display documentation page
+     * Display documentation page - redirect to external docs
      */
     #[Route('/docs/{category}/{page}', name: 'docs_page')]
     public function page(string $category, string $page): Response
     {
-        // Build sidebar navigation for the category
-        $navigation = $this->buildNavigation($category);
-        
-        // Get the content for the requested page
-        $content = $this->renderMarkdownFile("$category/$page.md");
-        
-        // If file doesn't exist, show 404
-        if (!$content) {
-            throw $this->createNotFoundException('Documentation page not found');
-        }
-
-        return $this->render('docs/page.html.twig', [
-            'title' => ucfirst($page),
-            'category' => ucfirst($category),
-            'content' => $content,
-            'navigation' => $navigation,
-            'current_page' => $page
-        ]);
+        return $this->redirect('https://docs.securehealth.dev', 301);
     }
 
     /**
-     * Display category index
+     * Display category index - redirect to external docs
      */
     #[Route('/docs/{category}', name: 'docs_category')]
     public function category(string $category): Response
     {
-        // Build sidebar navigation for the category
-        $navigation = $this->buildNavigation($category);
-        
-        // Get the content for the category index
-        $content = $this->renderMarkdownFile("$category/index.md");
-        
-        // If file doesn't exist, show 404
-        if (!$content) {
-            throw $this->createNotFoundException('Category not found');
-        }
-
-        return $this->render('docs/page.html.twig', [
-            'title' => ucfirst($category),
-            'category' => ucfirst($category),
-            'content' => $content,
-            'navigation' => $navigation,
-            'current_page' => 'index'
-        ]);
+        return $this->redirect('https://docs.securehealth.dev', 301);
     }
 
     /**

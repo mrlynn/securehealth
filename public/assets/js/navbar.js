@@ -146,7 +146,7 @@ class SecureHealthNavbar {
                 <a class="nav-link ${currentPage === '/dashboard.html' ? 'active' : ''}" href="/dashboard.html">Dashboard</a>
             </li>
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle ${currentPage === '/documentation.html' || currentPage.includes('/docs/') ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link dropdown-toggle ${currentPage === '/documentation.html' ? 'active' : ''}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Resources
                 </a>
                 <ul class="dropdown-menu">
