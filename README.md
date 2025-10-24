@@ -234,18 +234,12 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 | **Key Rotation** | <1 second | Automatic key management |
 | **Audit Logging** | <10ms | Asynchronous logging |
 
-## 🏆 **Recognition**
-
-- **Featured on MongoDB Blog** - Queryable Encryption showcase
-- **Healthcare Innovation Award** - Security implementation
-- **Developer Community Choice** - Best encryption demo
-
 ## 📞 **Support & Community**
 
 - **GitHub Issues**: [Report bugs and request features](https://github.com/mrlynn/securehealth/issues)
 - **Discussions**: [Community discussions and Q&A](https://github.com/mrlynn/securehealth/discussions)
 - **Documentation**: [Comprehensive guides and tutorials](https://docs.securehealth.dev)
-- **Email**: [support@securehealth.dev](mailto:support@securehealth.dev)
+- **Email**: [michael.lynn@mongodb.com](mailto:michael.lynn@mongodb.com)
 
 ## 📄 **License**
 
