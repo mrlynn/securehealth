@@ -177,6 +177,12 @@ try {
                     $decryptedData[$key] = $value->format('c');
                 }
             }
+        } else {
+            $decryptedData = [
+                'error' => 'Failed to create Patient object',
+                'message' => 'Patient::fromDocument returned null',
+                'patientId' => $patientId
+            ];
         }
     } catch (Exception $e) {
         // If decryption fails, we'll still return the encrypted data
@@ -188,9 +194,31 @@ try {
         ];
     }
 
+    // Convert BSON objects to JSON-serializable format for encrypted data
+    $serializedEncryptedData = [];
+    foreach ($encryptedData as $key => $value) {
+        if ($value instanceof ObjectId) {
+            $serializedEncryptedData[$key] = ['$oid' => (string) $value];
+        } elseif ($value instanceof UTCDateTime) {
+            $serializedEncryptedData[$key] = ['$date' => $value->toDateTime()->format('c')];
+        } elseif ($value instanceof \MongoDB\BSON\Binary) {
+            // For encrypted fields, show the binary data info
+            $serializedEncryptedData[$key] = [
+                '$binary' => [
+                    'base64' => base64_encode($value->getData()),
+                    'subType' => $value->getType()
+                ]
+            ];
+        } elseif (is_array($value)) {
+            $serializedEncryptedData[$key] = $value;
+        } else {
+            $serializedEncryptedData[$key] = $value;
+        }
+    }
+
     // Return both views
     $response = [
-        'encrypted' => $encryptedData,
+        'encrypted' => $serializedEncryptedData,
         'decrypted' => $decryptedData,
         'metadata' => [
             'patientId' => $patientId,
@@ -199,7 +227,19 @@ try {
         ]
     ];
 
-    echo json_encode($response, JSON_PRETTY_PRINT);
+    // Ensure proper JSON encoding
+    $jsonResponse = json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    
+    if ($jsonResponse === false) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => true,
+            'message' => 'Failed to encode response as JSON: ' . json_last_error_msg(),
+        ]);
+        exit;
+    }
+
+    echo $jsonResponse;
 
 } catch (Exception $e) {
     http_response_code(500);

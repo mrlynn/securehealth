@@ -159,7 +159,7 @@ class SecureHealthNavbar {
                     <li><a class="dropdown-item" href="/visitor-router.html">
                         <i class="fas fa-route me-1"></i>Find Your Path
                     </a></li>
-                    <li><a class="dropdown-item" href="/secure-health-marketing.html">
+                    <li><a class="dropdown-item" href="/home.html">
                         <i class="fas fa-rocket me-1"></i>Marketing Overview
                     </a></li>
                     <li><a class="dropdown-item" href="/index.html#features">

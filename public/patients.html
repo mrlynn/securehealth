@@ -785,11 +785,39 @@
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
       
+      // Check if response is actually JSON
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(`Invalid response format. Expected JSON but got: ${contentType}. Response: ${text.substring(0, 200)}...`);
+      }
+      
       const data = await res.json();
+      
+      // Check if the response contains an error
+      if (data.error) {
+        throw new Error(data.message || 'API returned an error');
+      }
+      
       showXRayModal(data);
     } catch (e) {
       console.error('Failed to load X-Ray data:', e);
-      alert('Failed to load X-Ray data: ' + e.message);
+      
+      // Show a more user-friendly error message
+      let errorMessage = 'Failed to load X-Ray data: ';
+      if (e.message.includes('Unexpected end of JSON input')) {
+        errorMessage += 'The server returned invalid data. This might be due to a server error or incomplete response.';
+      } else if (e.message.includes('HTTP 500')) {
+        errorMessage += 'Server error occurred. Please check the server logs.';
+      } else if (e.message.includes('HTTP 404')) {
+        errorMessage += 'Patient not found.';
+      } else if (e.message.includes('HTTP 400')) {
+        errorMessage += 'Invalid patient ID format.';
+      } else {
+        errorMessage += e.message;
+      }
+      
+      alert(errorMessage);
     }
   }
   

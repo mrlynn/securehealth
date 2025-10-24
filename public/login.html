@@ -283,20 +283,38 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      background-color: #28a745;
+      background: linear-gradient(135deg, var(--mongodb-dark-green), #0d9488);
       color: white;
-      padding: 12px 24px;
-      border-radius: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.3s ease;
       margin-top: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portal-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .portal-button:hover::before {
+      left: 100%;
     }
 
     .portal-button:hover {
-      background-color: #218838;
+      background: linear-gradient(135deg, #0d9488, #0891b2);
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 20px rgba(19, 170, 82, 0.3);
+      color: white;
     }
 
     .resources-footer {
@@ -313,7 +331,7 @@
     }
 
     .resources-footer a:hover {
-      color: var(--primary-color);
+      color: var(--mongodb-green);
     }
 
     @media (max-width: 768px) {
@@ -392,9 +410,9 @@
       
       <!-- Resources Footer -->
       <div class="resources-footer">
+        <a href="/visitor-router.html"><i class="fas fa-route me-1"></i>Find Your Path</a>
+        <a href="/home.html"><i class="fas fa-rocket me-1"></i>Overview</a>
         <a href="/documentation.html" target="_blank"><i class="fas fa-book me-1"></i>Documentation</a>
-        <a href="/index.html#features"><i class="fas fa-star me-1"></i>Features</a>
-        <a href="/index.html#security"><i class="fas fa-shield me-1"></i>Security</a>
         <a href="/queryable-encryption-search.html"><i class="fas fa-search me-1"></i>Encryption Demo</a>
       </div>
     </div>

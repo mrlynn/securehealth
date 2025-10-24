@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIPAA Compliance Audit Reports - SecureHealth</title>
+    <meta name="description" content="View sample HIPAA compliance audit reports demonstrating MongoDB Queryable Encryption security and data protection capabilities.">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* MongoDB Brand Colors */
+            --mongodb-green: #00ed64;
+            --mongodb-green-dark: #00d151;
+            --mongodb-green-darker: #00b444;
+            --mongodb-dark-green: #13aa52;
+            --mongodb-teal: #00d4aa;
+            --mongodb-blue: #001e2b;
+            --mongodb-gray: #001e2b;
+            --mongodb-light-gray: #f7f7f7;
+            --mongodb-white: #ffffff;
+            --mongodb-text-dark: #001e2b;
+            --mongodb-text-light: #5e6b73;
+            --mongodb-border: #e8e8e8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--mongodb-text-dark);
+            background: var(--mongodb-light-gray);
+        }
+
+        /* Hero Section */
+        .hero-audit {
+            background: linear-gradient(135deg, var(--mongodb-blue) 0%, var(--mongodb-dark-green) 100%);
+            color: white;
+            padding: 100px 0 60px;
+        }
+
+        .hero-audit h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .hero-audit p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Report Cards */
+        .report-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border: 1px solid var(--mongodb-border);
+            transition: all 0.3s ease;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--mongodb-light-gray);
+        }
+
+        .report-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--mongodb-text-dark);
+            margin: 0;
+        }
+
+        .report-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-compliant {
+            background: rgba(0, 237, 100, 0.1);
+            color: var(--mongodb-green);
+            border: 1px solid var(--mongodb-green);
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .status-critical {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+
+        .report-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .metric-card {
+            background: var(--mongodb-light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--mongodb-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--mongodb-text-light);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .compliance-section {
+            margin: 2rem 0;
+        }
+
+        .compliance-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--mongodb-border);
+        }
+
+        .compliance-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .compliance-pass {
+            background: rgba(0, 237, 100, 0.1);
+            color: var(--mongodb-green);
+        }
+
+        .compliance-fail {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .compliance-warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+
+        .compliance-details {
+            flex: 1;
+        }
+
+        .compliance-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .compliance-desc {
+            font-size: 0.9rem;
+            color: var(--mongodb-text-light);
+        }
+
+        .download-btn {
+            background: var(--mongodb-green);
+            color: var(--mongodb-blue);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: var(--mongodb-green-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 237, 100, 0.3);
+            color: var(--mongodb-blue);
+        }
+
+        .chart-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+            border: 1px solid var(--mongodb-border);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--mongodb-text-dark);
+        }
+
+        .chart-placeholder {
+            height: 300px;
+            background: linear-gradient(135deg, var(--mongodb-light-gray), white);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--mongodb-text-light);
+            font-style: italic;
+        }
+
+        .summary-stats {
+            background: linear-gradient(135deg, var(--mongodb-green), var(--mongodb-teal));
+            color: var(--mongodb-blue);
+            padding: 2rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+
+        .summary-stats h3 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-audit h1 {
+                font-size: 2rem;
+            }
+            
+            .report-metrics {
+                grid-template-columns: 1fr;
+            }
+            
+            .compliance-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .compliance-icon {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard.html">
+                <img src="/images/securehealth-logo.png" alt="SecureHealth Logo" height="60" class="me-2">SecureHealth
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/visitor-router.html">Find Your Path</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/home.html">Overview</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact.html">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-audit">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1><i class="fas fa-clipboard-check me-3"></i>HIPAA Compliance Audit Reports</h1>
+                    <p>Comprehensive audit reports demonstrating MongoDB Queryable Encryption security and HIPAA compliance capabilities.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="py-5">
+        <div class="container">
+            <!-- Executive Summary -->
+            <div class="summary-stats">
+                <h3><i class="fas fa-chart-line me-2"></i>Executive Summary</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-value">98.7%</div>
+                        <div class="summary-label">Compliance Score</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">0</div>
+                        <div class="summary-label">Security Incidents</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">100%</div>
+                        <div class="summary-label">Data Encrypted</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">24/7</div>
+                        <div class="summary-label">Monitoring</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quarterly Compliance Report -->
+            <div class="report-card">
+                <div class="report-header">
+                    <h2 class="report-title">Q4 2024 HIPAA Compliance Report</h2>
+                    <span class="report-status status-compliant">✓ COMPLIANT</span>
+                </div>
+                
+                <p class="text-muted mb-4">
+                    Comprehensive quarterly audit covering all HIPAA administrative, physical, and technical safeguards 
+                    for the SecureHealth platform using MongoDB Queryable Encryption.
+                </p>
+
+                <div class="report-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value">2,847</div>
+                        <div class="metric-label">Audit Events Logged</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">156</div>
+                        <div class="metric-label">PHI Access Requests</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">0</div>
+                        <div class="metric-label">Unauthorized Access</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">99.9%</div>
+                        <div class="metric-label">Uptime</div>
+                    </div>
+                </div>
+
+                <div class="compliance-section">
+                    <h4 class="mb-3">Compliance Checklist</h4>
+                    
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Administrative Safeguards</div>
+                            <div class="compliance-desc">Security officer assigned, workforce training completed, access management procedures implemented</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Physical Safeguards</div>
+                            <div class="compliance-desc">Facility access controls, workstation security, and device controls properly implemented</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Technical Safeguards</div>
+                            <div class="compliance-desc">MongoDB Queryable Encryption, access controls, audit controls, and integrity controls active</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Encryption at Rest</div>
+                            <div class="compliance-desc">All PHI encrypted using MongoDB Queryable Encryption with client-side key management</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Encryption in Transit</div>
+                            <div class="compliance-desc">TLS 1.3 encryption for all data transmission between client and server</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Audit Logging</div>
+                            <div class="compliance-desc">Comprehensive audit trail for all PHI access with immutable logging</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <a href="#" class="download-btn" onclick="downloadReport('q4-2024-hipaa-report.pdf')">
+                        <i class="fas fa-download me-2"></i>Download Full Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Security Assessment Report -->
+            <div class="report-card">
+                <div class="report-header">
+                    <h2 class="report-title">MongoDB Queryable Encryption Security Assessment</h2>
+                    <span class="report-status status-compliant">✓ SECURE</span>
+                </div>
+                
+                <p class="text-muted mb-4">
+                    Independent security assessment of MongoDB Queryable Encryption implementation 
+                    for healthcare data protection and HIPAA compliance.
+                </p>
+
+                <div class="chart-container">
+                    <div class="chart-title">Encryption Coverage Analysis</div>
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Interactive chart showing 100% PHI field encryption coverage
+                    </div>
+                </div>
+
+                <div class="compliance-section">
+                    <h4 class="mb-3">Security Assessment Results</h4>
+                    
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Client-Side Encryption</div>
+                            <div class="compliance-desc">All sensitive data encrypted before transmission to database server</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Key Management</div>
+                            <div class="compliance-desc">Encryption keys stored securely with proper rotation and access controls</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Queryable Encryption</div>
+                            <div class="compliance-desc">Equality and range queries supported on encrypted data without decryption</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Access Controls</div>
+                            <div class="compliance-desc">Role-based access control with principle of least privilege implemented</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <a href="#" class="download-btn" onclick="downloadReport('security-assessment-2024.pdf')">
+                        <i class="fas fa-download me-2"></i>Download Security Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Data Breach Simulation Report -->
+            <div class="report-card">
+                <div class="report-header">
+                    <h2 class="report-title">Data Breach Simulation & Recovery Test</h2>
+                    <span class="report-status status-compliant">✓ PASSED</span>
+                </div>
+                
+                <p class="text-muted mb-4">
+                    Simulated data breach scenario to test MongoDB Queryable Encryption effectiveness 
+                    and incident response procedures.
+                </p>
+
+                <div class="report-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value">0</div>
+                        <div class="metric-label">Data Exposed</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">2.3s</div>
+                        <div class="metric-label">Detection Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">15min</div>
+                        <div class="metric-label">Containment Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">100%</div>
+                        <div class="metric-label">Data Integrity</div>
+                    </div>
+                </div>
+
+                <div class="compliance-section">
+                    <h4 class="mb-3">Simulation Results</h4>
+                    
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Encryption Effectiveness</div>
+                            <div class="compliance-desc">All PHI remained encrypted and unreadable during simulated breach</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Alert System</div>
+                            <div class="compliance-desc">Real-time alerts triggered within 2.3 seconds of unauthorized access attempt</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-stop-circle"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Access Termination</div>
+                            <div class="compliance-desc">Unauthorized access terminated within 15 minutes of detection</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Audit Trail</div>
+                            <div class="compliance-desc">Complete audit trail maintained throughout incident for compliance reporting</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <a href="#" class="download-btn" onclick="downloadReport('breach-simulation-2024.pdf')">
+                        <i class="fas fa-download me-2"></i>Download Simulation Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Performance Impact Report -->
+            <div class="report-card">
+                <div class="report-header">
+                    <h2 class="report-title">Queryable Encryption Performance Impact Analysis</h2>
+                    <span class="report-status status-compliant">✓ OPTIMIZED</span>
+                </div>
+                
+                <p class="text-muted mb-4">
+                    Performance analysis comparing query execution times with and without MongoDB Queryable Encryption 
+                    to demonstrate minimal performance impact.
+                </p>
+
+                <div class="chart-container">
+                    <div class="chart-title">Query Performance Comparison</div>
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Performance metrics showing <5% overhead for encrypted queries
+                    </div>
+                </div>
+
+                <div class="compliance-section">
+                    <h4 class="mb-3">Performance Metrics</h4>
+                    
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Query Performance</div>
+                            <div class="compliance-desc">Average query time increased by only 3.2% with encryption enabled</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-memory"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Memory Usage</div>
+                            <div class="compliance-desc">Client-side encryption adds minimal memory overhead (~2MB per connection)</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Storage Impact</div>
+                            <div class="compliance-desc">Encrypted data storage increased by 8% due to encryption overhead</div>
+                        </div>
+                    </div>
+
+                    <div class="compliance-item">
+                        <div class="compliance-icon compliance-pass">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="compliance-details">
+                            <div class="compliance-title">Concurrent Users</div>
+                            <div class="compliance-desc">System supports 500+ concurrent users with encryption enabled</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <a href="#" class="download-btn" onclick="downloadReport('performance-analysis-2024.pdf')">
+                        <i class="fas fa-download me-2"></i>Download Performance Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5>
+                        <i class="fas fa-shield-alt me-2"></i>SecureHealth
+                    </h5>
+                    <p class="text-muted">Building secure, HIPAA-compliant healthcare applications with MongoDB Queryable Encryption technology.</p>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/visitor-router.html" class="text-muted text-decoration-none">Find Your Path</a></li>
+                        <li><a href="/home.html" class="text-muted text-decoration-none">Overview</a></li>
+                        <li><a href="/github.html" class="text-muted text-decoration-none">GitHub</a></li>
+                        <li><a href="/login.html" class="text-muted text-decoration-none">Demo</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Compliance</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">HIPAA Compliance</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Security Reports</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Audit Logs</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Support</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/contact.html" class="text-muted text-decoration-none">Contact Us</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Documentation</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Help Center</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Status</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Legal</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">Terms of Service</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Privacy Policy</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Security</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Compliance</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center text-muted">
+                <p>&copy; 2024 SecureHealth. All rights reserved. Built with MongoDB Queryable Encryption. MongoDB is a trademark of MongoDB, Inc.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        function downloadReport(filename) {
+            // Simulate download - in a real implementation, this would trigger actual file download
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-success position-fixed';
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+            notification.innerHTML = `
+                <i class="fas fa-download me-2"></i>Downloading ${filename}...
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                navbar.style.backdropFilter = 'blur(10px)';
+            } else {
+                navbar.style.background = 'white';
+                navbar.style.backdropFilter = 'none';
+            }
+        });
+
+        // Animate metrics on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateMetric(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.metric-value').forEach(metric => {
+            observer.observe(metric);
+        });
+
+        function animateMetric(element) {
+            const finalValue = element.textContent;
+            const isPercentage = finalValue.includes('%');
+            const isNumber = !isNaN(parseFloat(finalValue));
+            
+            if (isNumber) {
+                const targetValue = parseFloat(finalValue);
+                const duration = 2000;
+                const steps = 60;
+                const increment = targetValue / steps;
+                let currentValue = 0;
+                
+                const timer = setInterval(() => {
+                    currentValue += increment;
+                    if (currentValue >= targetValue) {
+                        currentValue = targetValue;
+                        clearInterval(timer);
+                    }
+                    
+                    if (isPercentage) {
+                        element.textContent = Math.round(currentValue) + '%';
+                    } else {
+                        element.textContent = Math.round(currentValue).toLocaleString();
+                    }
+                }, duration / steps);
+            }
+        }
+    </script>
+</body>
+</html>
