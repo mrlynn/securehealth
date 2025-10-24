@@ -77,6 +77,11 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 use MongoDB\Client;
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
+use App\Document\Patient;
+use App\Service\MongoDBEncryptionService;
+use App\Service\AuditLogService;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Psr\Log\LoggerInterface;
 
 header('Content-Type: application/json');
 
@@ -116,6 +121,8 @@ try {
         throw new Exception('MongoDB connection string missing. Set MONGODB_URI in the environment.');
     }
     $dbName = getenv('MONGODB_DB') ?: 'securehealth';
+    $keyVaultNamespace = getenv('MONGODB_KEY_VAULT_NAMESPACE') ?: 'encryption.__keyVault';
+    $keyFile = getenv('MONGODB_ENCRYPTION_KEY_PATH') ?: __DIR__ . '/../docker/encryption.key';
 
     // Test MongoDB connection first
     try {
@@ -148,32 +155,32 @@ try {
     // Convert BSON document to array for encrypted view
     $encryptedData = iterator_to_array($rawDoc);
 
-    // Get decrypted data using a production-safe approach
+    // Get decrypted data using proper Symfony services for real decryption
     $decryptedData = null;
     try {
-        // For production deployment, we'll show a simplified decrypted view
-        // This avoids Symfony dependency issues in Railway deployment
-        $decryptedData = [
-            '_id' => (string) $objectId,
-            'firstName' => '[Encrypted - Decryption requires full Symfony setup]',
-            'lastName' => '[Encrypted - Decryption requires full Symfony setup]',
-            'dateOfBirth' => '[Encrypted - Decryption requires full Symfony setup]',
-            'ssn' => '[Encrypted - Decryption requires full Symfony setup]',
-            'phoneNumber' => '[Encrypted - Decryption requires full Symfony setup]',
-            'email' => '[Encrypted - Decryption requires full Symfony setup]',
-            'address' => [
-                'street' => '[Encrypted - Decryption requires full Symfony setup]',
-                'city' => '[Encrypted - Decryption requires full Symfony setup]',
-                'state' => '[Encrypted - Decryption requires full Symfony setup]',
-                'zipCode' => '[Encrypted - Decryption requires full Symfony setup]'
-            ],
-            'diagnosis' => '[Encrypted - Decryption requires full Symfony setup]',
-            'medications' => '[Encrypted - Decryption requires full Symfony setup]',
-            'notes' => '[Encrypted - Decryption requires full Symfony setup]',
-            'createdAt' => isset($rawDoc['createdAt']) ? $rawDoc['createdAt']->toDateTime()->format('c') : null,
-            'updatedAt' => isset($rawDoc['updatedAt']) ? $rawDoc['updatedAt']->toDateTime()->format('c') : null,
-            'note' => 'This is a production-safe view. Full decryption requires local development environment with complete Symfony setup.'
-        ];
+        // Initialize Symfony services for proper decryption
+        $params = new ParameterBag([
+            'mongodb_url' => $mongoUri,
+            'mongodb_uri' => $mongoUri,
+            'mongodb_db' => $dbName,
+            'mongodb_key_vault_namespace' => $keyVaultNamespace,
+            'mongodb_encryption_key_path' => $keyFile
+        ]);
+        
+        $encryptionService = new MongoDBEncryptionService($params, $logger);
+        
+        // Create Patient object from the raw document for proper decryption
+        // Convert BSONDocument to array first
+        $patientArray = iterator_to_array($rawDoc);
+        $patient = Patient::fromDocument($patientArray, $encryptionService);
+        
+        // Convert to array with proper decryption
+        $decryptedData = $patient->toArray();
+        
+        // Add metadata to show this is real decryption
+        $decryptedData['_xray_note'] = '🎉 REAL DECRYPTED DATA - MongoDB Queryable Encryption in Action!';
+        $decryptedData['_encryption_demo'] = 'All sensitive fields above are properly decrypted from encrypted storage';
+        $decryptedData['_demo_info'] = 'This demonstrates the power of MongoDB Queryable Encryption - data is encrypted at rest but readable by authorized applications';
         
         // Convert any remaining UTCDateTime objects to ISO strings
         foreach ($decryptedData as $key => $value) {
@@ -185,13 +192,19 @@ try {
         }
         
     } catch (Exception $e) {
-        // If even the simplified view fails, provide a basic error response
-        error_log("X-Ray simplified view failed for patient {$patientId}: " . $e->getMessage());
+        // If decryption fails, provide detailed error information
+        error_log("X-Ray decryption failed for patient {$patientId}: " . $e->getMessage());
         $decryptedData = [
-            'error' => 'Production-safe view generation failed',
+            'error' => 'Decryption failed',
             'message' => $e->getMessage(),
             'patientId' => $patientId,
-            'note' => 'X-Ray feature shows encrypted data structure for debugging purposes'
+            'note' => 'This may occur if encryption keys are not properly configured',
+            'debug_info' => [
+                'error_type' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ],
+            '_xray_note' => '❌ Decryption failed - check encryption configuration'
         ];
     }
 
