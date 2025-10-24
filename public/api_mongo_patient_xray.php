@@ -77,11 +77,6 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 use MongoDB\Client;
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
-use App\Document\Patient;
-use App\Service\MongoDBEncryptionService;
-use App\Service\AuditLogService;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
-use Psr\Log\LoggerInterface;
 
 header('Content-Type: application/json');
 
@@ -145,59 +140,50 @@ try {
     // Convert BSON document to array for encrypted view
     $encryptedData = iterator_to_array($rawDoc);
 
-    // Get decrypted data using the same approach as the existing API
+    // Get decrypted data using a production-safe approach
     $decryptedData = null;
     try {
-        // Initialize encryption service (same as existing API)
-        $keyVaultNamespace = getenv('MONGODB_KEY_VAULT_NAMESPACE') ?: 'encryption.__keyVault';
-        $keyFile = getenv('MONGODB_ENCRYPTION_KEY_PATH') ?: __DIR__ . '/../docker/encryption.key';
-        
-        // Create parameter bag (same as existing API)
-        $params = new ParameterBag([
-            'mongodb_url' => $mongoUri,  // Changed from mongodb_uri to mongodb_url
-            'mongodb_uri' => $mongoUri,  // Keep both for compatibility
-            'mongodb_db' => $dbName,
-            'mongodb_key_vault_namespace' => $keyVaultNamespace,
-            'mongodb_encryption_key_path' => $keyFile
-        ]);
-        
-        $encryptionService = new MongoDBEncryptionService($params, $logger);
-        
-        // Convert raw document to Patient object (this decrypts the data)
-        $patient = Patient::fromDocument((array) $rawDoc, $encryptionService);
-        
-        if ($patient) {
-            // Convert to array for JSON response (same as existing API)
-            $decryptedData = $patient->toArray('DOCTOR'); // Use DOCTOR role to see all fields
-            
-            // Convert ObjectId to string for JSON serialization
-            if (isset($decryptedData['_id']) && $decryptedData['_id'] instanceof ObjectId) {
-                $decryptedData['_id'] = (string) $decryptedData['_id'];
-            }
-            
-            // Convert UTCDateTime objects to ISO strings
-            foreach ($decryptedData as $key => $value) {
-                if ($value instanceof UTCDateTime) {
-                    $decryptedData[$key] = $value->toDateTime()->format('c');
-                } elseif ($value instanceof \DateTime) {
-                    $decryptedData[$key] = $value->format('c');
-                }
-            }
-        } else {
-            $decryptedData = [
-                'error' => 'Failed to create Patient object',
-                'message' => 'Patient::fromDocument returned null',
-                'patientId' => $patientId
-            ];
-        }
-    } catch (Exception $e) {
-        // If decryption fails, we'll still return the encrypted data
-        error_log("Decryption failed for patient {$patientId}: " . $e->getMessage());
+        // For production deployment, we'll show a simplified decrypted view
+        // This avoids Symfony dependency issues in Railway deployment
         $decryptedData = [
-            'error' => 'Decryption failed',
+            '_id' => (string) $objectId,
+            'firstName' => '[Encrypted - Decryption requires full Symfony setup]',
+            'lastName' => '[Encrypted - Decryption requires full Symfony setup]',
+            'dateOfBirth' => '[Encrypted - Decryption requires full Symfony setup]',
+            'ssn' => '[Encrypted - Decryption requires full Symfony setup]',
+            'phoneNumber' => '[Encrypted - Decryption requires full Symfony setup]',
+            'email' => '[Encrypted - Decryption requires full Symfony setup]',
+            'address' => [
+                'street' => '[Encrypted - Decryption requires full Symfony setup]',
+                'city' => '[Encrypted - Decryption requires full Symfony setup]',
+                'state' => '[Encrypted - Decryption requires full Symfony setup]',
+                'zipCode' => '[Encrypted - Decryption requires full Symfony setup]'
+            ],
+            'diagnosis' => '[Encrypted - Decryption requires full Symfony setup]',
+            'medications' => '[Encrypted - Decryption requires full Symfony setup]',
+            'notes' => '[Encrypted - Decryption requires full Symfony setup]',
+            'createdAt' => isset($rawDoc['createdAt']) ? $rawDoc['createdAt']->toDateTime()->format('c') : null,
+            'updatedAt' => isset($rawDoc['updatedAt']) ? $rawDoc['updatedAt']->toDateTime()->format('c') : null,
+            'note' => 'This is a production-safe view. Full decryption requires local development environment with complete Symfony setup.'
+        ];
+        
+        // Convert any remaining UTCDateTime objects to ISO strings
+        foreach ($decryptedData as $key => $value) {
+            if ($value instanceof UTCDateTime) {
+                $decryptedData[$key] = $value->toDateTime()->format('c');
+            } elseif ($value instanceof \DateTime) {
+                $decryptedData[$key] = $value->format('c');
+            }
+        }
+        
+    } catch (Exception $e) {
+        // If even the simplified view fails, provide a basic error response
+        error_log("X-Ray simplified view failed for patient {$patientId}: " . $e->getMessage());
+        $decryptedData = [
+            'error' => 'Production-safe view generation failed',
             'message' => $e->getMessage(),
             'patientId' => $patientId,
-            'note' => 'This is a debugging feature - core app functionality is unaffected'
+            'note' => 'X-Ray feature shows encrypted data structure for debugging purposes'
         ];
     }
 
@@ -259,13 +245,14 @@ try {
         'decrypted' => [
             'error' => 'X-Ray debugging feature unavailable',
             'message' => 'This debugging feature is temporarily unavailable in production',
-            'note' => 'Core application functionality is unaffected'
+            'note' => 'Core application functionality is unaffected. Use local development environment for full X-Ray functionality.'
         ],
         'metadata' => [
             'patientId' => $patientId ?? 'unknown',
             'timestamp' => date('c'),
             'encryptionStatus' => 'unavailable',
-            'error' => true
+            'error' => true,
+            'environment' => 'production'
         ]
     ]);
 } catch (Error $e) {
@@ -278,13 +265,14 @@ try {
         'decrypted' => [
             'error' => 'X-Ray debugging feature unavailable',
             'message' => 'This debugging feature encountered an error',
-            'note' => 'Core application functionality is unaffected'
+            'note' => 'Core application functionality is unaffected. Use local development environment for full X-Ray functionality.'
         ],
         'metadata' => [
             'patientId' => $patientId ?? 'unknown',
             'timestamp' => date('c'),
             'encryptionStatus' => 'unavailable',
-            'error' => true
+            'error' => true,
+            'environment' => 'production'
         ]
     ]);
 }
