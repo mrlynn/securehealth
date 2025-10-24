@@ -125,6 +125,8 @@
           showStatus('Patient verification system not available. Please refresh the page.', 'error');
         } else {
           console.log("Patient verification system loaded successfully");
+          // Initialize the verification system
+          window.patientVerification.init();
         }
       }
       
@@ -143,14 +145,17 @@
         console.log("Loading patient detail for ID:", id);
         
         try {
-          // Fetch patient data from API using verification system
-          const response = await window.patientVerification.fetchWithVerification(`${window.location.origin}/api/patients/${id}`, {
+          // Use the verification system to handle patient data loading
+          const apiUrl = `${window.location.origin}/api/patients/${id}`;
+          console.log("Fetching from API URL:", apiUrl);
+          
+          const response = await window.patientVerification.fetchWithVerification(apiUrl, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
             },
             credentials: 'include'
-          });
+          }, 'view');
           
           if (!response.ok) {
             if (response.status === 404) {
@@ -162,6 +167,8 @@
           
           const patient = await response.json();
           console.log("API response:", patient);
+          console.log("Response status:", response.status);
+          console.log("Response headers:", response.headers);
           
           // Process patient data
           const userRole = determineUserRole(currentUser);

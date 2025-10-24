@@ -48,11 +48,10 @@ security:
         - { path: ^/api/patient-portal/health, roles: PUBLIC_ACCESS }
         - { path: ^/api/patient-portal/appointments, roles: ROLE_PATIENT }
         - { path: ^/api/patient-portal, roles: ROLE_PATIENT }
-        # Create operations allowed for healthcare staff
-        - { path: ^/api/patients$, methods: [POST], roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
-        - { path: '^/api/patients/[a-f0-9]{24}$', methods: [PUT, DELETE], roles: ROLE_DOCTOR }
-        # Read operations allowed for healthcare staff (admins access through admin interface only)
-        - { path: ^/api/patients, methods: [GET], roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
+        # Patient operations - specific patterns first (more specific to less specific)
+        - { path: '^/api/patients/[a-f0-9]{24}$', methods: [GET, PUT, DELETE], roles: [ROLE_ADMIN, ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
+        - { path: ^/api/patients$, methods: [POST], roles: [ROLE_ADMIN, ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
+        - { path: ^/api/patients, methods: [GET], roles: [ROLE_ADMIN, ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST] }
         # Admin API access control
         - { path: ^/api/admin, roles: [ROLE_ADMIN, ROLE_DOCTOR] }
         # Admin web interface access control
@@ -81,8 +80,10 @@ security:
         - { path: ^/api/chatbot, roles: [ROLE_DOCTOR, ROLE_NURSE, ROLE_ADMIN] }
 
     role_hierarchy:
-        # Doctor has all permissions
-        ROLE_DOCTOR: [ROLE_NURSE, ROLE_RECEPTIONIST, ROLE_ADMIN]
+        # Admin has all permissions including doctor permissions
+        ROLE_ADMIN: [ROLE_DOCTOR, ROLE_NURSE, ROLE_RECEPTIONIST]
+        # Doctor has nurse and receptionist permissions
+        ROLE_DOCTOR: [ROLE_NURSE, ROLE_RECEPTIONIST]
         # Nurse has more permissions than receptionist
         ROLE_NURSE: [ROLE_RECEPTIONIST]
         # Patients have their own separate role hierarchy

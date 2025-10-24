@@ -65,6 +65,14 @@ class SessionAuthenticator extends AbstractAuthenticator implements Authenticati
             throw new CustomUserMessageAuthenticationException('No session found');
         }
 
+        // Validate that user data has required fields
+        if (!isset($userData['email']) || !isset($userData['roles'])) {
+            error_log("SessionAuthenticator::authenticate - Invalid user data structure: " . json_encode($userData));
+            throw new CustomUserMessageAuthenticationException('Invalid session data');
+        }
+
+        error_log("SessionAuthenticator::authenticate - User: " . $userData['email'] . ", Roles: " . json_encode($userData['roles']));
+
         // Create a user badge that will load the user from session data
         $userBadge = new UserBadge($userData['email'], function() use ($userData) {
             return new SessionUser(

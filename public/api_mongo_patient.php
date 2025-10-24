@@ -84,7 +84,17 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
+// Check if Patient class exists
+if (!class_exists('App\Document\Patient')) {
+    error_log("Patient class not found - this might be a Symfony autoloading issue");
+}
+
 header('Content-Type: application/json');
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Create a simple logger
 $logger = new class() implements LoggerInterface {
@@ -130,13 +140,43 @@ try {
     ]);
 
     // Create encryption service
-    $encryptionService = new MongoDBEncryptionService($params, $logger);
+    try {
+        $encryptionService = new MongoDBEncryptionService($params, $logger);
+        error_log("Encryption service created successfully");
+    } catch (Exception $e) {
+        error_log("Error creating encryption service: " . $e->getMessage());
+        // Continue without encryption service for now
+        $encryptionService = null;
+    }
 
     // Create MongoDB client
-    $client = new Client($mongoUri);
+    try {
+        $client = new Client($mongoUri);
+        error_log("MongoDB client created successfully");
+    } catch (Exception $e) {
+        error_log("Error creating MongoDB client: " . $e->getMessage());
+        throw $e;
+    }
 
     // Get user role from request (would normally come from authentication)
+    // For now, we'll determine role based on session or default to doctor
     $userRole = 'ROLE_DOCTOR'; // Default to doctor role for demo
+    
+    // Try to get user role from session or headers
+    if (isset($_SESSION['user_role'])) {
+        $userRole = $_SESSION['user_role'];
+    } elseif (isset($_SERVER['HTTP_X_USER_ROLE'])) {
+        $userRole = $_SERVER['HTTP_X_USER_ROLE'];
+    }
+    
+    // Validate role
+    $validRoles = ['ROLE_DOCTOR', 'ROLE_NURSE', 'ROLE_RECEPTIONIST', 'ROLE_ADMIN', 'ROLE_PATIENT'];
+    if (!in_array($userRole, $validRoles)) {
+        $userRole = 'ROLE_DOCTOR'; // Fallback to doctor
+    }
+    
+    // Log the role being used for debugging
+    error_log("API using user role: " . $userRole);
 
     // Basic implementation of audit log service
     $auditLogService = new class($client, $dbName) extends AuditLogService {
@@ -175,31 +215,110 @@ try {
     }
 
     // Find patient by ID
+    error_log("Looking for patient with ID: " . $patientId);
     $document = $patientsCollection->findOne(['_id' => $objectId]);
+    error_log("Document found: " . ($document ? "yes" : "no"));
 
     if (!$document) {
+        error_log("Patient not found in database");
         http_response_code(404);
         echo json_encode(['error' => true, 'message' => 'Patient not found']);
         exit;
     }
+    
+    // Log document structure for debugging
+    error_log("Document structure: " . json_encode(array_keys(iterator_to_array($document))));
 
     // Convert to Patient object
-    $patient = Patient::fromDocument((array) $document, $encryptionService);
+    error_log("Encryption service available: " . ($encryptionService ? "yes" : "no"));
+    if ($encryptionService) {
+        try {
+            error_log("Calling Patient::fromDocument");
+            $patient = Patient::fromDocument((array) $document, $encryptionService);
+            error_log("Patient::fromDocument completed successfully");
+        } catch (Exception $e) {
+            error_log("Error creating Patient object: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            // Fallback: return raw document data
+            error_log("Using fallback: returning raw document data");
+            $patientData = [];
+            foreach ($document as $key => $value) {
+                if ($value instanceof ObjectId) {
+                    $patientData[$key] = (string) $value;
+                } elseif ($value instanceof UTCDateTime) {
+                    $patientData[$key] = $value->toDateTime()->format('c');
+                } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                    $patientData[$key] = '[Encrypted Field]';
+                } else {
+                    $patientData[$key] = $value;
+                }
+            }
+            $patientData['id'] = $patientData['_id'] ?? $patientId;
+            echo json_encode($patientData);
+            exit;
+        }
+    } else {
+        // No encryption service - return raw document data
+        error_log("No encryption service available, returning raw document data");
+        error_log("Document keys: " . json_encode(array_keys(iterator_to_array($document))));
+        $patientData = [];
+        foreach ($document as $key => $value) {
+            if ($value instanceof ObjectId) {
+                $patientData[$key] = (string) $value;
+            } elseif ($value instanceof UTCDateTime) {
+                $patientData[$key] = $value->toDateTime()->format('c');
+            } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                $patientData[$key] = '[Encrypted Field]';
+            } else {
+                $patientData[$key] = $value;
+            }
+        }
+        $patientData['id'] = $patientData['_id'] ?? $patientId;
+        error_log("Returning patient data: " . json_encode($patientData));
+        echo json_encode($patientData);
+        exit;
+    }
 
     // Log the access
-    $auditLogService->logEvent(
-        'read',
-        'patient',
-        (string)$patient->getId(),
-        'api_user',
-        ['action' => 'get_patient']
-    );
+    try {
+        $auditLogService->logEvent(
+            'read',
+            'patient',
+            (string)$patient->getId(),
+            'api_user',
+            ['action' => 'get_patient']
+        );
+    } catch (Exception $e) {
+        error_log("Error logging audit event: " . $e->getMessage());
+    }
 
     // Return patient data with role-based access control
-    echo json_encode($patient->toArray($userRole));
+    error_log("Final return section - patient object available: " . (isset($patient) ? "yes" : "no"));
+    if (isset($patient)) {
+        try {
+            error_log("Calling patient->toArray with role: " . $userRole);
+            $patientArray = $patient->toArray($userRole);
+            error_log("Patient array generated successfully");
+            echo json_encode($patientArray);
+        } catch (Exception $e) {
+            error_log("Error serializing patient data: " . $e->getMessage());
+            // Fallback: return basic data
+            echo json_encode([
+                'id' => (string)$patient->getId(),
+                'firstName' => '[Error loading data]',
+                'lastName' => '[Error loading data]',
+                'error' => 'Data serialization error'
+            ]);
+        }
+    } else {
+        error_log("No patient object available");
+        echo json_encode(['error' => true, 'message' => 'Failed to process patient data']);
+    }
 
 } catch (Exception $e) {
     // Return error
+    error_log("Final catch block - Exception: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'error' => true,

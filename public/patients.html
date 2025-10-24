@@ -777,7 +777,7 @@
     try {
       // Use the current host and port for the API call
       const baseUrl = `${window.location.protocol}//${window.location.host}`;
-      const res = await fetch(`${baseUrl}/api_mongo_patient_xray.php?id=${encodeURIComponent(id)}`, {
+      const res = await fetch(`${baseUrl}/api_mongo_patient_xray_simple.php?id=${encodeURIComponent(id)}`, {
         credentials: 'include'
       });
       

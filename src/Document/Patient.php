@@ -123,7 +123,7 @@ class Patient
      * Patient's birth date - range encrypted (supports range queries)
      * @Assert\NotBlank(message="Birth date is required")
      */
-    #[ODM\Field(type: 'string')]
+    #[ODM\Field(type: 'raw')]
     private $birthDate;
 
     /**
@@ -211,12 +211,33 @@ class Patient
             'createdAt' => $this->getCreatedAt() ? $this->getCreatedAt()->toDateTime()->format('Y-m-d H:i:s') : null
         ];
         
-        // Ensure all values are JSON-serializable
+        // Ensure all values are JSON-serializable and UTF-8 encoded
         $data = array_map(function($value) {
-            if (is_object($value) && !method_exists($value, '__toString')) {
-                return '[Object]';
+            if (is_object($value)) {
+                if (method_exists($value, '__toString')) {
+                    $stringValue = (string)$value;
+                } elseif ($value instanceof \MongoDB\BSON\UTCDateTime) {
+                    $stringValue = $value->toDateTime()->format('Y-m-d H:i:s');
+                } elseif ($value instanceof \MongoDB\BSON\ObjectId) {
+                    $stringValue = (string)$value;
+                } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                    $stringValue = '[Encrypted]';
+                } else {
+                    $stringValue = '[Object: ' . get_class($value) . ']';
+                }
+            } else {
+                $stringValue = $value;
             }
-            return $value;
+            
+            // Ensure UTF-8 encoding
+            if (is_string($stringValue)) {
+                // Remove or replace invalid UTF-8 characters
+                $stringValue = mb_convert_encoding($stringValue, 'UTF-8', 'UTF-8');
+                // Replace any remaining invalid characters
+                $stringValue = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $stringValue);
+            }
+            
+            return $stringValue;
         }, $data);
 
         // Get roles either from user object or directly from string
@@ -236,6 +257,33 @@ class Patient
             $data['notes'] = $this->getNotes();
             $data['notesHistory'] = $this->getSerializedNotesHistory();
             $data['primaryDoctorId'] = $this->getPrimaryDoctorId() ? (string)$this->getPrimaryDoctorId() : null;
+            
+            // Ensure all role-specific data is serializable and UTF-8 encoded
+            $data = array_map(function($value) {
+                if (is_object($value)) {
+                    if (method_exists($value, '__toString')) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\UTCDateTime) {
+                        $stringValue = $value->toDateTime()->format('Y-m-d H:i:s');
+                    } elseif ($value instanceof \MongoDB\BSON\ObjectId) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                        $stringValue = '[Encrypted]';
+                    } else {
+                        $stringValue = '[Object: ' . get_class($value) . ']';
+                    }
+                } else {
+                    $stringValue = $value;
+                }
+                
+                // Ensure UTF-8 encoding
+                if (is_string($stringValue)) {
+                    $stringValue = mb_convert_encoding($stringValue, 'UTF-8', 'UTF-8');
+                    $stringValue = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $stringValue);
+                }
+                
+                return $stringValue;
+            }, $data);
         }
         // Nurses can see diagnosis and medications but not SSN
         elseif (in_array('ROLE_NURSE', $roles)) {
@@ -243,21 +291,129 @@ class Patient
             $data['medications'] = $this->getMedications();
             $data['notes'] = $this->getNotes();
             $data['notesHistory'] = $this->getSerializedNotesHistory();
+            
+            // Ensure all role-specific data is serializable and UTF-8 encoded
+            $data = array_map(function($value) {
+                if (is_object($value)) {
+                    if (method_exists($value, '__toString')) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\UTCDateTime) {
+                        $stringValue = $value->toDateTime()->format('Y-m-d H:i:s');
+                    } elseif ($value instanceof \MongoDB\BSON\ObjectId) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                        $stringValue = '[Encrypted]';
+                    } else {
+                        $stringValue = '[Object: ' . get_class($value) . ']';
+                    }
+                } else {
+                    $stringValue = $value;
+                }
+                
+                // Ensure UTF-8 encoding
+                if (is_string($stringValue)) {
+                    $stringValue = mb_convert_encoding($stringValue, 'UTF-8', 'UTF-8');
+                    $stringValue = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $stringValue);
+                }
+                
+                return $stringValue;
+            }, $data);
         }
         // Receptionists can see insurance details but no medical data
         elseif (in_array('ROLE_RECEPTIONIST', $roles)) {
             $data['insuranceDetails'] = $this->getInsuranceDetails();
+            
+            // Ensure all role-specific data is serializable and UTF-8 encoded
+            $data = array_map(function($value) {
+                if (is_object($value)) {
+                    if (method_exists($value, '__toString')) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\UTCDateTime) {
+                        $stringValue = $value->toDateTime()->format('Y-m-d H:i:s');
+                    } elseif ($value instanceof \MongoDB\BSON\ObjectId) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                        $stringValue = '[Encrypted]';
+                    } else {
+                        $stringValue = '[Object: ' . get_class($value) . ']';
+                    }
+                } else {
+                    $stringValue = $value;
+                }
+                
+                // Ensure UTF-8 encoding
+                if (is_string($stringValue)) {
+                    $stringValue = mb_convert_encoding($stringValue, 'UTF-8', 'UTF-8');
+                    $stringValue = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $stringValue);
+                }
+                
+                return $stringValue;
+            }, $data);
         }
         // Admins can see basic patient info and insurance for administrative purposes but NOT medical data
         elseif (in_array('ROLE_ADMIN', $roles)) {
             $data['insuranceDetails'] = $this->getInsuranceDetails();
             // Admins cannot see diagnosis, medications, SSN, or medical notes for HIPAA compliance
+            
+            // Ensure all role-specific data is serializable and UTF-8 encoded
+            $data = array_map(function($value) {
+                if (is_object($value)) {
+                    if (method_exists($value, '__toString')) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\UTCDateTime) {
+                        $stringValue = $value->toDateTime()->format('Y-m-d H:i:s');
+                    } elseif ($value instanceof \MongoDB\BSON\ObjectId) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                        $stringValue = '[Encrypted]';
+                    } else {
+                        $stringValue = '[Object: ' . get_class($value) . ']';
+                    }
+                } else {
+                    $stringValue = $value;
+                }
+                
+                // Ensure UTF-8 encoding
+                if (is_string($stringValue)) {
+                    $stringValue = mb_convert_encoding($stringValue, 'UTF-8', 'UTF-8');
+                    $stringValue = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $stringValue);
+                }
+                
+                return $stringValue;
+            }, $data);
         }
         // Patients can see their own basic info, medications, and appointments but not SSN or provider notes
         elseif (in_array('ROLE_PATIENT', $roles)) {
             $data['medications'] = $this->getMedications();
             $data['insuranceDetails'] = $this->getInsuranceDetails();
             // Patients don't see diagnosis details, SSN, or provider notes for privacy
+            
+            // Ensure all role-specific data is serializable and UTF-8 encoded
+            $data = array_map(function($value) {
+                if (is_object($value)) {
+                    if (method_exists($value, '__toString')) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\UTCDateTime) {
+                        $stringValue = $value->toDateTime()->format('Y-m-d H:i:s');
+                    } elseif ($value instanceof \MongoDB\BSON\ObjectId) {
+                        $stringValue = (string)$value;
+                    } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                        $stringValue = '[Encrypted]';
+                    } else {
+                        $stringValue = '[Object: ' . get_class($value) . ']';
+                    }
+                } else {
+                    $stringValue = $value;
+                }
+                
+                // Ensure UTF-8 encoding
+                if (is_string($stringValue)) {
+                    $stringValue = mb_convert_encoding($stringValue, 'UTF-8', 'UTF-8');
+                    $stringValue = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $stringValue);
+                }
+                
+                return $stringValue;
+            }, $data);
         }
 
         return $data;

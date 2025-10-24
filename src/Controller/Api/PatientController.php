@@ -130,7 +130,7 @@ class PatientController extends AbstractController
     }
     
     /**
-     * Safely get string value, handling Binary objects
+     * Safely get string value, handling Binary objects and UTF-8 encoding
      */
     private function safeGetString($value): ?string
     {
@@ -138,15 +138,33 @@ class PatientController extends AbstractController
             return null;
         }
         
-        if (is_object($value) && !method_exists($value, '__toString')) {
-            return '[Encrypted]';
+        if (is_object($value)) {
+            if (method_exists($value, '__toString')) {
+                $stringValue = (string)$value;
+            } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                $stringValue = '[Encrypted]';
+            } elseif ($value instanceof \MongoDB\BSON\ObjectId) {
+                $stringValue = (string)$value;
+            } elseif ($value instanceof \MongoDB\BSON\UTCDateTime) {
+                $stringValue = $value->toDateTime()->format('Y-m-d H:i:s');
+            } else {
+                $stringValue = '[Object: ' . get_class($value) . ']';
+            }
+        } else {
+            $stringValue = (string)$value;
         }
         
-        return (string)$value;
+        // Ensure UTF-8 encoding
+        if (is_string($stringValue)) {
+            $stringValue = mb_convert_encoding($stringValue, 'UTF-8', 'UTF-8');
+            $stringValue = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $stringValue);
+        }
+        
+        return $stringValue;
     }
     
     /**
-     * Safely get date value, handling Binary objects
+     * Safely get date value, handling Binary objects and UTF-8 encoding
      */
     private function safeGetDate($value): ?string
     {
@@ -158,15 +176,31 @@ class PatientController extends AbstractController
             return $value->toDateTime()->format('Y-m-d');
         }
         
-        if (is_object($value) && !method_exists($value, '__toString')) {
-            return '[Encrypted]';
+        if (is_object($value)) {
+            if (method_exists($value, '__toString')) {
+                $stringValue = (string)$value;
+            } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                $stringValue = '[Encrypted]';
+            } elseif ($value instanceof \MongoDB\BSON\ObjectId) {
+                $stringValue = (string)$value;
+            } else {
+                $stringValue = '[Object: ' . get_class($value) . ']';
+            }
+        } else {
+            $stringValue = (string)$value;
         }
         
-        return (string)$value;
+        // Ensure UTF-8 encoding
+        if (is_string($stringValue)) {
+            $stringValue = mb_convert_encoding($stringValue, 'UTF-8', 'UTF-8');
+            $stringValue = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $stringValue);
+        }
+        
+        return $stringValue;
     }
     
     /**
-     * Safely get array value, handling Binary objects
+     * Safely get array value, handling Binary objects and UTF-8 encoding
      */
     private function safeGetArray($value): array
     {
@@ -178,20 +212,61 @@ class PatientController extends AbstractController
             return $value;
         }
         
-        if (is_object($value) && !method_exists($value, '__toString')) {
-            return ['[Encrypted]'];
+        if (is_object($value)) {
+            if (method_exists($value, '__toString')) {
+                $stringValue = (string)$value;
+            } elseif ($value instanceof \MongoDB\BSON\Binary) {
+                $stringValue = '[Encrypted]';
+            } elseif ($value instanceof \MongoDB\BSON\ObjectId) {
+                $stringValue = (string)$value;
+            } elseif ($value instanceof \MongoDB\BSON\UTCDateTime) {
+                $stringValue = $value->toDateTime()->format('Y-m-d H:i:s');
+            } else {
+                $stringValue = '[Object: ' . get_class($value) . ']';
+            }
+        } else {
+            $stringValue = (string)$value;
         }
         
-        return [(string)$value];
+        // Ensure UTF-8 encoding
+        if (is_string($stringValue)) {
+            $stringValue = mb_convert_encoding($stringValue, 'UTF-8', 'UTF-8');
+            $stringValue = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $stringValue);
+        }
+        
+        return [$stringValue];
     }
+
 
     #[Route('/{id}', name: 'patient_show', methods: ['GET'])]
     public function show(string $id, Request $request): JsonResponse
     {
+        error_log("PatientController::show - START - Patient ID: " . $id);
         $patient = $this->getPatientById($id);
 
         if (!$patient) {
             return $this->json(['message' => 'Patient not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Debug: Check user authentication and roles
+        $user = $this->getUser();
+        if (!$user) {
+            error_log("PatientController::show - No authenticated user found");
+            return $this->json(['message' => 'Authentication required'], Response::HTTP_UNAUTHORIZED);
+        }
+        
+        $userRoles = $user->getRoles();
+        error_log("PatientController::show - User: " . $user->getUserIdentifier() . ", Roles: " . json_encode($userRoles));
+        
+        // Check if user has any healthcare roles
+        $hasHealthcareRole = in_array('ROLE_DOCTOR', $userRoles) || 
+                             in_array('ROLE_NURSE', $userRoles) || 
+                             in_array('ROLE_RECEPTIONIST', $userRoles) ||
+                             in_array('ROLE_ADMIN', $userRoles);
+        
+        if (!$hasHealthcareRole) {
+            error_log("PatientController::show - User does not have healthcare role");
+            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
         $this->denyAccessUnlessGranted(PatientVoter::VIEW, $patient);
@@ -544,9 +619,16 @@ class PatientController extends AbstractController
     private function getPatientById(string $id): ?Patient
     {
         try {
+            error_log("PatientController::getPatientById - Looking for patient ID: " . $id);
             $objectId = new ObjectId($id);
-            return $this->patientRepository->findById($objectId);
+            $patient = $this->patientRepository->findById($objectId);
+            error_log("PatientController::getPatientById - Patient found: " . ($patient ? "yes" : "no"));
+            if ($patient) {
+                error_log("PatientController::getPatientById - Patient ID: " . (string)$patient->getId());
+            }
+            return $patient;
         } catch (\Exception $e) {
+            error_log("PatientController::getPatientById - Error: " . $e->getMessage());
             return null;
         }
     }

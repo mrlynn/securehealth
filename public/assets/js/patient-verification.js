@@ -136,30 +136,31 @@ class PatientVerification {
         console.log(`checkVerificationRequired called with patientId: ${patientId}, operation: "${operation}"`);
         
         try {
-            // For simple operations like viewing, basic editing, or note management, verification is not required
-            // Only sensitive operations like editing medical data require verification
-            const sensitiveOperations = ['edit_medical', 'edit_diagnosis', 'edit_medications', 'edit_ssn', 'edit_insurance'];
-            console.log(`Sensitive operations: ${JSON.stringify(sensitiveOperations)}`);
-            console.log(`Operation "${operation}" in sensitive operations: ${sensitiveOperations.includes(operation)}`);
-            
-            if (!sensitiveOperations.includes(operation)) {
-                console.log(`Verification not required for operation: "${operation}"`);
+            // Always check with the backend API to determine if verification is required
+            // The backend knows the user's role and can determine if verification is needed
+            console.log(`Checking backend API for verification requirements`);
+
+            try {
+                const response = await fetch(`/api/patients/${patientId}/verify/check`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(`Backend verification check result:`, data);
+                    return data.verificationRequired || false;
+                } else {
+                    console.log(`Verification API returned ${response.status}, defaulting to no verification required`);
+                    return false;
+                }
+            } catch (error) {
+                console.log(`Verification API error: ${error.message}, defaulting to no verification required`);
                 return false;
             }
-            
-            console.log(`Operation "${operation}" IS sensitive, checking backend API`);
-
-            // Only call the backend API for sensitive operations
-            const response = await fetch(`/api/patients/${patientId}/verify/check`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include'
-            });
-
-            const data = await response.json();
-            return data.verificationRequired || false;
         } catch (error) {
             console.error('Error checking verification requirements:', error);
             return false;
@@ -543,11 +544,14 @@ class PatientVerification {
             console.log(`No patient ID found in URL: ${url}, proceeding without verification`);
             return fetch(url, options);
         }
+        
+        console.log(`Patient verification system processing URL: ${url}`);
 
         const patientId = patientIdMatch[1];
         console.log(`Patient ID extracted: ${patientId}`);
         
         // Check if verification is required for this operation
+        console.log(`About to check verification requirements for patient ${patientId} and operation ${operation}`);
         const verificationRequired = await this.checkVerificationRequired(patientId, operation);
         console.log(`Verification required result: ${verificationRequired}`);
         

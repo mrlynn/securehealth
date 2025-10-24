@@ -62,16 +62,27 @@ class PatientVoter extends Voter
         ];
 
         if (!in_array($attribute, $supportedAttributes)) {
+            error_log("PatientVoter::supports - Attribute not supported: " . $attribute);
             return false;
         }
 
-        // For CREATE and VIEW permissions we don't need a subject (for listing)
-        if ($attribute === self::CREATE || $attribute === self::VIEW) {
+        // For CREATE permission we don't need a subject (for creating new patients)
+        if ($attribute === self::CREATE) {
+            error_log("PatientVoter::supports - " . $attribute . " permission, no subject needed");
+            return true;
+        }
+        
+        // For VIEW permission, we support both with and without a subject
+        if ($attribute === self::VIEW) {
+            error_log("PatientVoter::supports - " . $attribute . " permission, subject: " . ($subject ? get_class($subject) : 'NULL'));
             return true;
         }
 
         // For all other permissions we need a Patient object
-        return $subject instanceof Patient;
+        $hasPatient = $subject instanceof Patient;
+        $subjectType = $subject ? get_class($subject) : 'NULL';
+        error_log("PatientVoter::supports - Attribute: " . $attribute . ", Subject type: " . $subjectType . ", Has Patient: " . ($hasPatient ? "yes" : "no"));
+        return $hasPatient;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
@@ -80,10 +91,12 @@ class PatientVoter extends Voter
         
         // User must be logged in
         if (!$user instanceof UserInterface) {
+            error_log("PatientVoter::voteOnAttribute - No user found in token");
             return false;
         }
 
         $roles = $user->getRoles();
+        error_log("PatientVoter::voteOnAttribute - User: " . $user->getUserIdentifier() . ", Roles: " . json_encode($roles) . ", Attribute: " . $attribute);
 
         // Audit the access attempt - regardless of permission result
         if ($subject instanceof Patient) {
@@ -96,13 +109,31 @@ class PatientVoter extends Voter
                     'granted' => null // Will update this after determining permission
                 ]
             );
+        } elseif ($attribute === self::VIEW) {
+            // Log general patient access (list or specific patient)
+            $this->auditLogService->log(
+                $user,
+                'security_access',
+                [
+                    'attribute' => $attribute,
+                    'patientId' => null,
+                    'description' => $subject === null ? 'Patient list access' : 'Patient access',
+                    'granted' => null
+                ]
+            );
         }
 
         // Check permission based on role and attribute
         $granted = $this->checkPermission($attribute, $roles, $subject, $user);
+        error_log("PatientVoter::voteOnAttribute - Permission granted: " . ($granted ? "yes" : "no"));
 
         // Update audit log with result
         if ($subject instanceof Patient) {
+            $this->auditLogService->updateLastLog([
+                'granted' => $granted
+            ]);
+        } elseif ($attribute === self::VIEW) {
+            // Update general patient access log
             $this->auditLogService->updateLastLog([
                 'granted' => $granted
             ]);

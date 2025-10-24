@@ -228,6 +228,7 @@ class AdminController extends AbstractController
     #[Route('/patients/{id}', name: 'admin_patient_show', methods: ['GET'])]
     public function getPatient(string $id): JsonResponse
     {
+        error_log("AdminController::getPatient - CALLED with ID: " . $id);
         try {
             $patient = $this->patientRepository->findById(new \MongoDB\BSON\ObjectId($id));
             

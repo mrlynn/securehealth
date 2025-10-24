@@ -117,8 +117,16 @@ try {
     }
     $dbName = getenv('MONGODB_DB') ?: 'securehealth';
 
-    $client = new Client($mongoUri);
-    $collection = $client->selectDatabase($dbName)->selectCollection('patients');
+    // Test MongoDB connection first
+    try {
+        $client = new Client($mongoUri);
+        $collection = $client->selectDatabase($dbName)->selectCollection('patients');
+        
+        // Test the connection
+        $client->selectDatabase($dbName)->command(['ping' => 1]);
+    } catch (Exception $e) {
+        throw new Exception('MongoDB connection failed: ' . $e->getMessage());
+    }
 
     // Validate ObjectId
     try {
@@ -238,14 +246,17 @@ try {
     // Log the error for debugging
     error_log("X-Ray API Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
     
-    // Return a safe error response instead of 500
-    http_response_code(200); // Use 200 to prevent frontend errors
-    echo json_encode([
+    // Always return 200 to prevent frontend errors
+    http_response_code(200);
+    
+    // Ensure we can always return valid JSON
+    $errorResponse = [
         'encrypted' => [],
         'decrypted' => [
             'error' => 'X-Ray debugging feature unavailable',
             'message' => 'This debugging feature is temporarily unavailable in production',
-            'note' => 'Core application functionality is unaffected. Use local development environment for full X-Ray functionality.'
+            'note' => 'Core application functionality is unaffected. Use local development environment for full X-Ray functionality.',
+            'technicalDetails' => $e->getMessage()
         ],
         'metadata' => [
             'patientId' => $patientId ?? 'unknown',
@@ -254,18 +265,29 @@ try {
             'error' => true,
             'environment' => 'production'
         ]
-    ]);
+    ];
+    
+    $jsonOutput = json_encode($errorResponse, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if ($jsonOutput === false) {
+        // Last resort - return a simple error
+        echo '{"error": true, "message": "X-Ray feature unavailable", "encrypted": [], "decrypted": {"error": "Service unavailable"}}';
+    } else {
+        echo $jsonOutput;
+    }
 } catch (Error $e) {
     // Handle PHP fatal errors
     error_log("X-Ray API Fatal Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
     
+    // Always return 200 to prevent frontend errors
     http_response_code(200);
-    echo json_encode([
+    
+    $errorResponse = [
         'encrypted' => [],
         'decrypted' => [
             'error' => 'X-Ray debugging feature unavailable',
             'message' => 'This debugging feature encountered an error',
-            'note' => 'Core application functionality is unaffected. Use local development environment for full X-Ray functionality.'
+            'note' => 'Core application functionality is unaffected. Use local development environment for full X-Ray functionality.',
+            'technicalDetails' => $e->getMessage()
         ],
         'metadata' => [
             'patientId' => $patientId ?? 'unknown',
@@ -274,5 +296,13 @@ try {
             'error' => true,
             'environment' => 'production'
         ]
-    ]);
+    ];
+    
+    $jsonOutput = json_encode($errorResponse, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if ($jsonOutput === false) {
+        // Last resort - return a simple error
+        echo '{"error": true, "message": "X-Ray feature unavailable", "encrypted": [], "decrypted": {"error": "Service unavailable"}}';
+    } else {
+        echo $jsonOutput;
+    }
 }
