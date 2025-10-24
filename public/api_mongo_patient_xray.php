@@ -190,7 +190,8 @@ try {
         $decryptedData = [
             'error' => 'Decryption failed',
             'message' => $e->getMessage(),
-            'patientId' => $patientId
+            'patientId' => $patientId,
+            'note' => 'This is a debugging feature - core app functionality is unaffected'
         ];
     }
 
